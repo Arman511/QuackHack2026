@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from random import choice
 from typing import Annotated
 
 from fastapi.params import Depends
@@ -21,8 +22,10 @@ from backend.models import (
     UserPublic,
     UserRegisterRequest,
     RefreshTokensCompatRequest,
+    BankProviderEnum,
 )
 from backend.repositories.token_denylist_repository import TokenDenylistRepository
+from backend.repositories.bank_account_repository import BankAccountRepository
 from backend.repositories.user_repository import UserRepository
 from backend.services.auth_service import (
     build_scopes_for_user,
@@ -121,6 +124,7 @@ def _require_refresh_token_payload(
 )
 def register(payload: UserRegisterRequest, db: db_dependency):
     user_repo = UserRepository(db)
+    bank_repo = BankAccountRepository(db)
     existing_user = user_repo.get_by_username(payload.username)
     if existing_user is not None:
         raise HTTPException(
@@ -133,6 +137,10 @@ def register(payload: UserRegisterRequest, db: db_dependency):
         full_name=payload.full_name,
         hashed_password=get_password_hash(payload.password),
     )
+    bank_repo.create_default_accounts_for_user(
+        user_id=user.id,
+        provider=choice(list(BankProviderEnum)))
+    
     return UserPublic.model_validate(user)
 
 

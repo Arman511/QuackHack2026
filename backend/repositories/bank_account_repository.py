@@ -89,7 +89,7 @@ class BankAccountRepository:
     def create_default_accounts_for_user(
         self,
         user_id: int,
-        provider: BankProviderEnum = BankProviderEnum.REVOLITE,
+        provider: BankProviderEnum,
     ) -> tuple[BankAccountPublic, BankAccountPublic]:
         """
         Automatically create CURRENT and SAVING accounts for a new user.

@@ -102,7 +102,7 @@ class UserRepository:
         hashed_password: str,
         is_active: bool = True,
         user_type: UserTypeEnum = UserTypeEnum.USER,
-        bank_provider: BankProviderEnum = BankProviderEnum.REVOLITE,
+        bank_provider: BankProviderEnum,
     ) -> tuple[UserDB, BankAccountPublic, BankAccountPublic]:
         """
         Create a new user and automatically create their default bank accounts.
