@@ -8,9 +8,9 @@ export { ApiError, apiRequest, refreshAccessToken, tokenStore } from "@/api/http
 export * from "@/api/types";
 
 export const api = {
-    auth,
-    users,
-    bank,
-    impulses,
-    health,
+  auth,
+  users,
+  bank,
+  impulses,
+  health,
 };
