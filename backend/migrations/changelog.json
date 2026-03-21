@@ -11,30 +11,6 @@
       "description": "Add users created_at index for paged ordering",
       "sqlite": "002_users_created_at_index.sqlite.sql",
       "postgresql": "002_users_created_at_index.postgresql.sql"
-    },
-    {
-      "id": "003_banking_and_impulse_schema",
-      "description": "Add banking structures, impulse zones, and transactions tables",
-      "sqlite": "003_banking_and_impulse_schema.sqlite.sql",
-      "postgresql": "003_banking_and_impulse_schema.postgresql.sql"
-    },
-    {
-      "id": "004_seed_admin_and_impulse_zones",
-      "description": "Seed default admin user and impulse zones",
-      "sqlite": "004_seed_admin_and_impulse_zones.sqlite.sql",
-      "postgresql": "004_seed_admin_and_impulse_zones.postgresql.sql"
-    },
-    {
-      "id": "005_add_user_roles",
-      "description": "Add CSV roles column to users for RBAC scope mapping",
-      "sqlite": "005_add_user_roles.sqlite.sql",
-      "postgresql": "005_add_user_roles.postgresql.sql"
-    },
-    {
-      "id": "006_add_source_account_to_transactions",
-      "description": "Add source account ownership reference to transactions",
-      "sqlite": "006_add_source_account_to_transactions.sqlite.sql",
-      "postgresql": "006_add_source_account_to_transactions.postgresql.sql"
     }
   ]
 }

@@ -5,7 +5,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 
-from backend.utils.config import (
+from backend.config import (
     DATABASE_URL,
     DB_DIALECT,
     DB_HOST,
