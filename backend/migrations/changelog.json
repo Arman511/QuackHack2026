@@ -35,6 +35,12 @@
       "description": "Add source account ownership reference to transactions",
       "sqlite": "006_add_source_account_to_transactions.sqlite.sql",
       "postgresql": "006_add_source_account_to_transactions.postgresql.sql"
+    },
+    {
+      "id": "007_drop_users_type_column",
+      "description": "Drop deprecated users.type column after roles migration",
+      "sqlite": "007_drop_users_type_column.sqlite.sql",
+      "postgresql": "007_drop_users_type_column.postgresql.sql"
     }
   ]
 }

@@ -18,7 +18,6 @@ CREATE TABLE IF NOT EXISTS bank_accounts (
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (account_number, sort_code),
-    CHECK (provider IN ('REVOLITE', 'HAYSBC')),
     CHECK (type IN ('CURRENT', 'SAVING'))
 );
 
