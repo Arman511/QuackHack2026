@@ -11,6 +11,7 @@ const HorseProgressBar = ({ totalSteps, currentStep }: HorseProgressBarProps) =>
   // Always use currentStep if provided, otherwise fall back to onboardingStep
   const step = currentStep !== undefined ? currentStep : onboardingStep;
 
+  // Simple progress calculation: step 1 = 33%, step 2 = 67%, step 3 = 100%
   const progress = (step / totalSteps) * 100;
 
   return (
@@ -39,15 +40,18 @@ const HorseProgressBar = ({ totalSteps, currentStep }: HorseProgressBarProps) =>
           />
         </div>
 
-        {/* Horse galloping */}
+        {/* Horse */}
         <div
           className="absolute top-1/2 -translate-y-1/2 transition-all duration-700 ease-out"
-          style={{ left: `${progress}%`, transform: `translateX(-50%) translateY(-50%)` }}
+          style={{
+            left: `${Math.min(progress, 95)}%`,
+            transform: `translateX(-50%) translateY(-50%)`,
+          }}
         >
           <img
             src="/horse-gallop.png"
             alt="Horse"
-            className="w-16 h-16 animate-gallop object-contain drop-shadow-lg"
+            className="w-20 h-20 animate-gallop object-contain drop-shadow-lg"
           />
         </div>
       </div>
