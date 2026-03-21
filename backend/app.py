@@ -7,9 +7,7 @@ from fastapi import FastAPI, HTTPException, status
 from backend.auth import router as auth_router
 from backend.database import URL_DATABASE, engine
 from backend.sql_migration import run_sql_migrations
-from dotenv import load_dotenv
 
-load_dotenv()
 
 app = FastAPI()
 
