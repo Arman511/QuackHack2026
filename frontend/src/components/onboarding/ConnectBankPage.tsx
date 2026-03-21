@@ -9,7 +9,7 @@ const ConnectBankPage = () => {
   return (
     <div className="space-y-6 animate-fade-up">
       <div className="text-center">
-        <h2 className="text-xl font-bold font-display">Connect your bank</h2>
+        <h2 className="text-xl font-bold">Connect your bank</h2>
         <p className="text-muted-foreground text-sm mt-1">
           We analyze your transactions to detect impulse spending.
         </p>
