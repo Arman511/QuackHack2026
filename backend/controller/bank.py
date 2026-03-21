@@ -8,6 +8,7 @@ from backend.models import (
     CreateBankAccountsResponse,
     TransactionDateRangeQuery,
     TransactionCreate,
+    TransactionWebhookCreate,
     TransactionHydratedPublic,
     TransactionPublic,
 )
@@ -15,6 +16,7 @@ from backend.services.bank_service import (
     admin_search_transactions_by_date,
     admin_transaction_summary,
     create_bank_accounts_for_user,
+    create_webhook_transaction,
     create_user_transaction,
     list_user_transactions_hydrated,
     list_my_accounts,
@@ -34,6 +36,7 @@ def list_accounts(
     db: db_dependency,
     current_user: current_user_dependency,
 ):
+    """List the authenticated user's linked bank accounts."""
     return list_my_accounts(db, current_user=current_user)
 
 
@@ -43,7 +46,17 @@ def create_transaction(
     db: db_dependency,
     current_user: current_user_dependency,
 ):
+    """Create a transaction for the authenticated user."""
     return create_user_transaction(db, current_user=current_user, payload=payload)
+
+
+@router.post("/transactions/webhook", response_model=TransactionPublic)
+def create_transaction_from_webhook(
+    payload: TransactionWebhookCreate,
+    db: db_dependency,
+):
+    """Create a transaction from an external webhook using account number and sort code."""
+    return create_webhook_transaction(db, payload=payload)
 
 
 @router.get("/transactions/me", response_model=list[TransactionHydratedPublic])
@@ -51,6 +64,7 @@ def list_my_transactions(
     db: db_dependency,
     current_user: current_user_dependency,
 ):
+    """List the authenticated user's transactions with impulse labels."""
     return list_user_transactions_hydrated(db, current_user=current_user)
 
 
@@ -61,6 +75,7 @@ def search_my_transactions(
     db: db_dependency,
     current_user: current_user_dependency,
 ):
+    """Search the authenticated user's transactions by date range."""
     return search_user_transactions_by_date(
         db,
         current_user=current_user,
@@ -74,6 +89,7 @@ def create_bank_accounts(
     db: db_dependency,
     current_user: current_user_dependency,
 ):
+    """Create default current and saving accounts for the authenticated user."""
     return create_bank_accounts_for_user(
         db,
         current_user=current_user,
@@ -88,6 +104,7 @@ def admin_summary(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=100, ge=1, le=500),
 ):
+    """List paginated transaction summaries across all users for admins."""
     return admin_transaction_summary(db, page=page, page_size=page_size)
 
 
@@ -101,6 +118,7 @@ def admin_search_transactions(
     db: db_dependency,
     _: admin_user_dependency,
 ):
+    """Search all transactions by date range for admins."""
     return admin_search_transactions_by_date(
         db,
         payload=TransactionDateRangeQuery(start=start, end=end),

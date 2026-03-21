@@ -38,20 +38,27 @@ class ImpulseZoneRepository:
         """)
 
     SQL_CREATE_POSSIBLE_IMPULSE_ZONE = text("""
-        INSERT INTO possible_impulse_zones (name)
-        VALUES (:name)
-        RETURNING id, name, created_at
+        INSERT INTO possible_impulse_zones (user_id, name)
+        VALUES (:user_id, :name)
+        RETURNING id, user_id, name, created_at
         """)
 
     SQL_SELECT_POSSIBLE_IMPULSE_ZONE_BY_ID = text("""
-        SELECT id, name, created_at
+        SELECT id, user_id, name, created_at
         FROM possible_impulse_zones
         WHERE id = :zone_id
         """)
 
     SQL_SELECT_ALL_POSSIBLE_IMPULSE_ZONES = text("""
-        SELECT id, name, created_at
+        SELECT id, user_id, name, created_at
         FROM possible_impulse_zones
+        ORDER BY created_at
+        """)
+
+    SQL_SELECT_POSSIBLE_IMPULSE_ZONES_FOR_USER = text("""
+        SELECT id, user_id, name, created_at
+        FROM possible_impulse_zones
+        WHERE user_id = :user_id OR user_id IS NULL
         ORDER BY created_at
         """)
 
@@ -59,7 +66,7 @@ class ImpulseZoneRepository:
         UPDATE possible_impulse_zones
         SET name = :name
         WHERE id = :zone_id
-        RETURNING id, name, created_at
+        RETURNING id, user_id, name, created_at
         """)
 
     SQL_PROMOTE_POSSIBLE_TO_IMPULSE_ZONE = text("""
@@ -150,12 +157,16 @@ class ImpulseZoneRepository:
         self.db.commit()
         return (result.rowcount or 0) > 0
 
-    def create_possible_impulse_zone(self, name: str) -> PossibleImpulseZonePublic:
+    def create_possible_impulse_zone(
+        self,
+        name: str,
+        user_id: int | None = None,
+    ) -> PossibleImpulseZonePublic:
         """Create a new possible impulse zone."""
         row = (
             self.db.execute(
                 self.SQL_CREATE_POSSIBLE_IMPULSE_ZONE,
-                {"name": name},
+                {"name": name, "user_id": user_id},
             )
             .mappings()
             .first()
@@ -183,6 +194,21 @@ class ImpulseZoneRepository:
         """Get all possible impulse zones."""
         rows = (
             self.db.execute(self.SQL_SELECT_ALL_POSSIBLE_IMPULSE_ZONES).mappings().all()
+        )
+        return [PossibleImpulseZonePublic(**row) for row in rows]
+
+    def get_possible_impulse_zones_for_user(
+        self,
+        user_id: int,
+    ) -> list[PossibleImpulseZonePublic]:
+        """Get global and user-owned possible impulse zones for a user."""
+        rows = (
+            self.db.execute(
+                self.SQL_SELECT_POSSIBLE_IMPULSE_ZONES_FOR_USER,
+                {"user_id": user_id},
+            )
+            .mappings()
+            .all()
         )
         return [PossibleImpulseZonePublic(**row) for row in rows]
 
