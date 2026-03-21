@@ -26,7 +26,7 @@ const DashboardTab = () => {
     <div className="p-4 space-y-5">
       {/* Header */}
       <div className="flex items-center gap-2 animate-fade-up">
-        <span className="text-2xl">🐴</span>
+        <img src="/horse-head.png" alt="Horse" className="w-10 h-10 object-contain" />
         <h1 className="text-lg font-bold font-display">Neigh-ver Go Broke</h1>
       </div>
 
@@ -150,7 +150,11 @@ const DashboardTab = () => {
 
       {/* Punishment History */}
       <div className="card-neigh animate-fade-up" style={{ animationDelay: "500ms" }}>
-        <p className="text-sm font-medium mb-3">Punishment History 🐴💀</p>
+        <div className="flex items-center gap-2 mb-3">
+          <p className="text-sm font-medium">Punishment History</p>
+          <img src="/horse-head.png" alt="Horse" className="w-6 h-6 object-contain inline" />
+          <span className="text-base">💀</span>
+        </div>
         <div className="space-y-3">
           {punishments.map((p, i) => (
             <div
