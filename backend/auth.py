@@ -26,17 +26,13 @@ from backend.models import (
     UserLoginRequest,
     UserPublic,
     UserRegisterRequest,
-    RefreshTokensCompatRequest
+    RefreshTokensCompatRequest,
 )
 from backend.repositories.token_denylist_repository import TokenDenylistRepository
 from backend.repositories.user_repository import UserRepository
 
-
 router = APIRouter(prefix="/auth", tags=["auth"])
 password_hash = PasswordHash.recommended()
-
-
-
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -204,7 +200,11 @@ def login(payload: UserLoginRequest, response: Response, db: db_dependency):
     )
     _set_auth_cookies(response, access_token, refresh_token)
 
-    return TokenPayload(access_token=access_token, refresh_token=refresh_token, expires_in=int(ACCESS_EXPIRES.total_seconds()))
+    return TokenPayload(
+        access_token=access_token,
+        refresh_token=refresh_token,
+        expires_in=int(ACCESS_EXPIRES.total_seconds()),
+    )
 
 
 @router.post("/token", response_model=TokenPayload)
@@ -295,6 +295,7 @@ def refresh_tokens(
         expires_in=int(ACCESS_EXPIRES.total_seconds()),
     )
 
+
 @router.post("/refresh/token", response_model=TokenPayload)
 def refresh_tokens_compat(
     payload: RefreshTokensCompatRequest,
@@ -303,6 +304,7 @@ def refresh_tokens_compat(
 ):
     """Backward-compatible alias for clients using POST /refresh/token."""
     return refresh_tokens(response, db, payload.refresh_token, payload.access_token)
+
 
 def _revoke_payload(db: Session, payload: dict) -> None:
     jti = str(payload.get("jti", ""))

@@ -7,31 +7,25 @@ from sqlalchemy.orm import Session
 class TokenDenylistRepository:
     """Repository for revoked-token SQL operations."""
 
-    SQL_INSERT_REVOKED_TOKEN = text(
-        """
+    SQL_INSERT_REVOKED_TOKEN = text("""
         INSERT INTO revoked_tokens (jti, token_type, expires_at)
         VALUES (:jti, :token_type, :expires_at)
         ON CONFLICT (jti) DO UPDATE
         SET token_type = EXCLUDED.token_type,
             expires_at = EXCLUDED.expires_at
-        """
-    )
+        """)
 
-    SQL_SELECT_REVOKED_TOKEN = text(
-        """
+    SQL_SELECT_REVOKED_TOKEN = text("""
         SELECT jti
         FROM revoked_tokens
         WHERE jti = :jti
           AND expires_at > :now
-        """
-    )
+        """)
 
-    SQL_DELETE_EXPIRED = text(
-        """
+    SQL_DELETE_EXPIRED = text("""
         DELETE FROM revoked_tokens
         WHERE expires_at <= :now
-        """
-    )
+        """)
 
     def __init__(self, db: Session):
         self.db = db
