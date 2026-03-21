@@ -16,39 +16,51 @@ const ConnectBankPage = () => {
       </div>
 
       <div className="grid gap-3">
-        {bankOptions.map((bank, i) => (
-          <button
-            key={bank.name}
-            onClick={() => connectBank(bank.name)}
-            className="card-neigh flex items-center justify-between animate-fade-up"
-            style={{ animationDelay: `${i * 80}ms` }}
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold"
-                style={{ backgroundColor: bank.color + "18", color: bank.color }}
-              >
-                {bank.name[0]}
+        {bankOptions.map((bank, i) => {
+          const isConnected = connectedBank === bank.name;
+          return (
+            <button
+              key={bank.name}
+              onClick={() => connectBank(bank.name)}
+              className={`card-neigh flex items-center justify-between animate-fade-up transition-all duration-200 ${
+                isConnected
+                  ? "ring-2 ring-primary bg-primary/5 shadow-lg shadow-primary/20"
+                  : "hover:shadow-md"
+              }`}
+              style={{ animationDelay: `${i * 80}ms` }}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center ${bank.name === 'Mane-zo' ? 'overflow-hidden' : 'p-1.5'}`}
+                  style={{ backgroundColor: bank.name === 'Rev-o-trot' ? '#ffffff' : bank.color + "18" }}
+                >
+                  <img
+                    src={bank.icon}
+                    alt={bank.name}
+                    className={`w-full h-full ${bank.name === 'Mane-zo' ? 'object-cover' : 'object-contain'}`}
+                  />
+                </div>
+                <span className="font-medium">{bank.name}</span>
               </div>
-              <span className="font-medium">{bank.name}</span>
-            </div>
-            {connectedBank === bank.name ? (
-              <span className="flex items-center gap-1 text-xs font-medium text-primary">
-                <Check size={14} /> Connected
-              </span>
-            ) : (
-              <span className="text-xs text-muted-foreground">Connect</span>
-            )}
-          </button>
-        ))}
+              {isConnected ? (
+                <span className="flex items-center gap-1 text-xs font-medium text-primary">
+                  <Check size={14} /> Connected
+                </span>
+              ) : (
+                <span className="text-xs text-muted-foreground">Connect</span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       <Button
         onClick={() => setOnboardingStep(2)}
         disabled={!connectedBank}
-        className="w-full h-11 active:scale-[0.97]"
+        className="w-full h-11 active:scale-[0.97] flex items-center gap-2 justify-center"
       >
-        Continue 🐴
+        <span>Continue</span>
+        <img src="/horse-head.png" alt="Horse" className="w-5 h-5 object-contain" />
       </Button>
     </div>
   );

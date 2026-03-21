@@ -65,9 +65,12 @@ const GoalsTab = () => {
       {/* Neigh-Tax Rate */}
       <div className="card-neigh animate-fade-up" style={{ animationDelay: "300ms" }}>
         <p className="text-sm font-medium mb-1">Current Neigh-Tax Rate</p>
-        <p className="text-xs text-muted-foreground mb-3">
-          Lowering this requires justification 🐴
-        </p>
+        <div className="flex items-center gap-1 mb-3">
+          <p className="text-xs text-muted-foreground">
+            Lowering this requires justification
+          </p>
+          <img src="/horse-head.png" alt="Horse" className="w-5 h-5 object-contain inline" />
+        </div>
         <div className="grid grid-cols-3 gap-2">
           {[50, 100, 200].map((pct) => (
             <button
@@ -89,7 +92,10 @@ const GoalsTab = () => {
       {justifyModal && (
         <div className="fixed inset-0 bg-foreground/40 flex items-center justify-center z-50 p-4 animate-fade-in">
           <div className="card-neigh w-full max-w-sm animate-fade-up">
-            <h3 className="text-lg font-bold font-display mb-2">Explain yourself 🐴</h3>
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className="text-lg font-bold font-display">Explain yourself</h3>
+              <img src="/horse-head.png" alt="Horse" className="w-6 h-6 object-contain" />
+            </div>
             <p className="text-sm text-muted-foreground mb-4">
               Why are you reducing your Neigh-Tax? The horse demands answers.
             </p>

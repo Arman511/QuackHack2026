@@ -34,14 +34,14 @@ export interface Notification {
 }
 
 export const horseMessages = [
-  "Whoa there cowboy… another impulse buy 🐴",
-  "Stop horsing around! 🐎",
-  "That purchase just fed the savings horse 🌾",
-  "Easy there partner 🤠",
-  "The horse noticed that impulse 👀",
-  "Whoa there partner 🐴",
-  "That purchase just cost you hay 🌾",
-  "The savings stallion approves 🏇",
+  "Whoa there cowboy… another impulse buy",
+  "Stop horsing around!",
+  "That purchase just fed the savings horse",
+  "Easy there partner",
+  "The horse noticed that impulse",
+  "Whoa there partner",
+  "That purchase just cost you hay",
+  "The savings stallion approves",
 ];
 
 export const mockTransactions: Transaction[] = [
@@ -65,15 +65,15 @@ export const mockTransactions: Transaction[] = [
 export const mockPunishments: Punishment[] = [
   {
     id: 'p1', date: '2026-03-17', transactionId: '7', transactionDesc: '£55 ASOS Jacket', transactionAmount: 55,
-    punishment: 'Texted your friends: "Come watch me Hobby Horsing at Local Ground 123 on Friday the 13th of April" 🐴📱',
+    punishment: 'Texted your friends: "Come watch me Hobby Horsing at Local Ground 123 on Friday the 13th of April"',
   },
   {
     id: 'p2', date: '2026-03-14', transactionId: '10', transactionDesc: '£22 Deliveroo Sushi', transactionAmount: 22,
-    punishment: 'Spammed your inbox with 47 horse memes 📧🐎',
+    punishment: 'Spammed your inbox with 47 horse memes',
   },
   {
     id: 'p3', date: '2026-03-03', transactionId: '15', transactionDesc: '£89 JD Sports Trainers', transactionAmount: 89,
-    punishment: 'Played a loud horse neigh when you tapped with NFC. Hah loser 🔊🐴',
+    punishment: 'Played a loud horse neigh when you tapped with NFC. Hah loser',
   },
 ];
 
@@ -84,12 +84,12 @@ export const mockGoals: Goal[] = [
 ];
 
 export const mockNotifications: Notification[] = [
-  { id: 'n1', date: '2026-03-21', title: '£35 Steam purchase detected', message: 'Neigh-Tax applied: £35 saved 🐴', type: 'impulse' },
-  { id: 'n2', date: '2026-03-20', title: 'Impulse budget warning', message: "You've spent 45% of your impulse budget. The horse is watching 👀", type: 'info' },
-  { id: 'n3', date: '2026-03-17', title: 'Impulse budget exceeded!', message: 'Punishment triggered: Texted your friends about hobby horsing 📱🐴', type: 'punishment' },
-  { id: 'n4', date: '2026-03-14', title: 'Late night takeaway detected', message: 'Horse is disappointed 😔🐴', type: 'impulse' },
-  { id: 'n5', date: '2026-03-10', title: 'Weekly savings update', message: "You've saved £45 this week. The stallion approves! 🏇", type: 'savings' },
-  { id: 'n6', date: '2026-03-03', title: 'Budget exceeded again!', message: 'Punishment: Horse neigh on NFC tap activated 🔊', type: 'punishment' },
+  { id: 'n1', date: '2026-03-21', title: '£35 Steam purchase detected', message: 'Neigh-Tax applied: £35 saved', type: 'impulse' },
+  { id: 'n2', date: '2026-03-20', title: 'Impulse budget warning', message: "You've spent 45% of your impulse budget. The horse is watching", type: 'info' },
+  { id: 'n3', date: '2026-03-17', title: 'Impulse budget exceeded!', message: 'Punishment triggered: Texted your friends about hobby horsing', type: 'punishment' },
+  { id: 'n4', date: '2026-03-14', title: 'Late night takeaway detected', message: 'Horse is disappointed', type: 'impulse' },
+  { id: 'n5', date: '2026-03-10', title: 'Weekly savings update', message: "You've saved £45 this week. The stallion approves!", type: 'savings' },
+  { id: 'n6', date: '2026-03-03', title: 'Budget exceeded again!', message: 'Punishment: Horse neigh on NFC tap activated', type: 'punishment' },
 ];
 
 export const impulseCategories = [
@@ -98,10 +98,10 @@ export const impulseCategories = [
 ];
 
 export const bankOptions = [
-  { name: 'Monzo', color: '#FF5A5F' },
-  { name: 'Barclays', color: '#00AEEF' },
-  { name: 'HSBC', color: '#DB0011' },
-  { name: 'Chase', color: '#117ACA' },
+  { name: 'Mane-zo', color: '#FF5A5F', icon: '/monzo.png' },
+  { name: 'Rev-o-trot', color: '#0075EB', icon: '/revolut.webp' },
+  { name: 'Buck-lays', color: '#00AEEF', icon: '/barclays.png' },
+  { name: 'Hay-ch SBC', color: '#DB0011', icon: '/hsbc.png' },
 ];
 
 export const goalPresets = [

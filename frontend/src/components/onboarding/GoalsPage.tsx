@@ -100,9 +100,10 @@ const GoalsPage = () => {
       <Button
         onClick={() => setOnboardingStep(4)}
         disabled={goals.length === 0}
-        className="w-full h-11 active:scale-[0.97]"
+        className="w-full h-11 active:scale-[0.97] flex items-center gap-2 justify-center"
       >
-        Continue 🐴
+        <span>Continue</span>
+        <img src="/horse-head.png" alt="Horse" className="w-5 h-5 object-contain" />
       </Button>
     </div>
   );

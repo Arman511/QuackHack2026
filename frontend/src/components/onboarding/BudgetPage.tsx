@@ -40,7 +40,10 @@ const BudgetPage = () => {
       </div>
 
       <div className="card-neigh space-y-4">
-        <span className="text-sm font-medium block">Neigh-Tax Rate 🐴</span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium">Neigh-Tax Rate</span>
+          <img src="/horse-head.png" alt="Horse" className="w-5 h-5 object-contain" />
+        </div>
         <p className="text-xs text-muted-foreground">
           When you make an impulse purchase, we match part of it and move that money into your
           savings vault.
@@ -62,8 +65,9 @@ const BudgetPage = () => {
         </div>
       </div>
 
-      <Button onClick={completeOnboarding} className="w-full h-11 active:scale-[0.97]">
-        Start Saving 🏇
+      <Button onClick={completeOnboarding} className="w-full h-11 active:scale-[0.97] flex items-center gap-2 justify-center">
+        <span>Start Saving</span>
+        <img src="/horse-gallop.png" alt="Horse" className="w-5 h-5 object-contain" />
       </Button>
     </div>
   );
