@@ -36,6 +36,12 @@ from backend.repositories.user_metadata_repository import UserMetadataRepository
 logger = logging.getLogger(__name__)
 
 
+def _id_for_log(entity: object) -> object:
+    if isinstance(entity, dict):
+        return entity.get("id")
+    return getattr(entity, "id", None)
+
+
 def list_my_accounts(db: Session, *, current_user: UserDB):
     accounts = BankAccountRepository(db).get_by_user_id(current_user.id)
     logger.debug("Fetched %s accounts for user_id=%s", len(accounts), current_user.id)
@@ -75,7 +81,7 @@ def create_user_transaction(
         impulse_zone_id=payload.impulse_zone_id,
         possible_impulse_zone_id=payload.possible_impulse_zone_id,
     )
-    logger.info("Transaction created transaction_id=%s", transaction.id)
+    logger.info("Transaction created transaction_id=%s", _id_for_log(transaction))
     return transaction
 
 
@@ -124,7 +130,10 @@ def create_webhook_transaction(
         impulse_zone_id=payload.impulse_zone_id,
         possible_impulse_zone_id=payload.possible_impulse_zone_id,
     )
-    logger.info("Webhook transaction created transaction_id=%s", transaction.id)
+    logger.info(
+        "Webhook transaction created transaction_id=%s",
+        _id_for_log(transaction),
+    )
     return transaction
 
 
@@ -232,8 +241,8 @@ def create_bank_accounts_for_user(
 
     logger.info(
         "Default accounts created current_id=%s saving_id=%s user_id=%s",
-        current_account.id,
-        saving_account.id,
+        _id_for_log(current_account),
+        _id_for_log(saving_account),
         current_user.id,
     )
     return CreateBankAccountsResponse(current=current_account, saving=saving_account)
@@ -277,8 +286,8 @@ def setup_bank_accounts_for_user(
 
     logger.info(
         "Explicit accounts setup complete current_id=%s saving_id=%s user_id=%s",
-        current_account.id,
-        saving_account.id,
+        _id_for_log(current_account),
+        _id_for_log(saving_account),
         current_user.id,
     )
     return CreateBankAccountsResponse(current=current_account, saving=saving_account)
@@ -354,7 +363,7 @@ def create_possible_impulse_zone(
         )
         logger.info(
             "Created user-scoped possible impulse zone_id=%s user_id=%s",
-            zone.id,
+            _id_for_log(zone),
             current_user.id,
         )
         return zone
@@ -377,7 +386,7 @@ def admin_create_impulse_zone(
 ) -> ImpulseZonePublic:
     try:
         zone = ImpulseZoneRepository(db).create_impulse_zone(payload.name)
-        logger.info("Admin created impulse zone_id=%s", zone.id)
+        logger.info("Admin created impulse zone_id=%s", _id_for_log(zone))
         return zone
     except IntegrityError as exc:
         logger.warning("Impulse zone create conflict name=%s", payload.name)
@@ -442,7 +451,7 @@ def admin_create_possible_impulse_zone(
 ) -> PossibleImpulseZonePublic:
     try:
         zone = ImpulseZoneRepository(db).create_possible_impulse_zone(payload.name)
-        logger.info("Admin created possible impulse zone_id=%s", zone.id)
+        logger.info("Admin created possible impulse zone_id=%s", _id_for_log(zone))
         return zone
     except IntegrityError as exc:
         logger.warning("Possible impulse create conflict name=%s", payload.name)
@@ -509,7 +518,9 @@ def admin_promote_possible_impulse_zone(
             payload.name,
         )
         logger.info(
-            "Admin promoted possible zone_id=%s into zone_id=%s", zone_id, zone.id
+            "Admin promoted possible zone_id=%s into zone_id=%s",
+            zone_id,
+            _id_for_log(zone),
         )
         return zone
     except ValueError as exc:
