@@ -55,3 +55,7 @@ class TokenPayload(BaseModel):
     refresh_token: str
     token_type: str = "bearer"
     expires_in: int 
+
+class RefreshTokensCompatRequest(BaseModel):
+    refresh_token: str
+    access_token: str | None = None
