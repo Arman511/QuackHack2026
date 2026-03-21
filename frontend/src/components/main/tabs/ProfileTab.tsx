@@ -2,7 +2,15 @@ import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 
 const ProfileTab = () => {
-  const { email, connectedBank, logout } = useApp();
+  const {
+    email,
+    connectedBank,
+    notificationsEnabled,
+    horseNeighAlertsEnabled,
+    toggleNotifications,
+    toggleHorseNeighAlerts,
+    logout,
+  } = useApp();
 
   return (
     <div className="p-4 space-y-5">
@@ -55,8 +63,13 @@ const ProfileTab = () => {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm">Notifications</span>
-            <div className="w-10 h-6 bg-primary rounded-full relative cursor-pointer">
-              <div className="absolute top-1 right-1 w-4 h-4 bg-primary-foreground rounded-full" />
+            <div
+              onClick={toggleNotifications}
+              className={`w-10 h-6 rounded-full relative cursor-pointer transition-colors ${notificationsEnabled ? "bg-primary" : "bg-muted"}`}
+            >
+              <div
+                className={`absolute top-1 w-4 h-4 bg-primary-foreground rounded-full transition-all ${notificationsEnabled ? "right-1" : "left-1"}`}
+              />
             </div>
           </div>
           <div className="flex items-center justify-between">
@@ -64,8 +77,13 @@ const ProfileTab = () => {
               <span className="text-sm">Horse Neigh Alerts</span>
               <img src="/horse-head.png" alt="Horse" className="w-4 h-4 object-contain inline" />
             </div>
-            <div className="w-10 h-6 bg-primary rounded-full relative cursor-pointer">
-              <div className="absolute top-1 right-1 w-4 h-4 bg-primary-foreground rounded-full" />
+            <div
+              onClick={toggleHorseNeighAlerts}
+              className={`w-10 h-6 rounded-full relative cursor-pointer transition-colors ${horseNeighAlertsEnabled ? "bg-primary" : "bg-muted"}`}
+            >
+              <div
+                className={`absolute top-1 w-4 h-4 bg-primary-foreground rounded-full transition-all ${horseNeighAlertsEnabled ? "right-1" : "left-1"}`}
+              />
             </div>
           </div>
         </div>
