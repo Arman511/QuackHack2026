@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from random import choice
 from typing import Annotated
 import logging
 
@@ -19,12 +20,13 @@ from backend.models import (
     TokenPayload,
     UserDB,
     UserLoginRequest,
-    UserMePublic,
     UserPublic,
     UserRegisterRequest,
     RefreshTokensCompatRequest,
+    BankProviderEnum,
 )
 from backend.repositories.token_denylist_repository import TokenDenylistRepository
+from backend.repositories.bank_account_repository import BankAccountRepository
 from backend.repositories.user_repository import UserRepository
 from backend.services.auth_service import (
     build_scopes_for_user,
@@ -33,7 +35,6 @@ from backend.services.auth_service import (
     get_password_hash,
     verify_password,
 )
-from backend.services.bank_service import get_user_me_payload
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 logger = logging.getLogger(__name__)
@@ -129,6 +130,7 @@ def _require_refresh_token_payload(
 def register(payload: UserRegisterRequest, db: db_dependency):
     """Register a new user account."""
     user_repo = UserRepository(db)
+    bank_repo = BankAccountRepository(db)
     existing_user = user_repo.get_by_username(payload.username)
     if existing_user is not None:
         logger.warning("Registration conflict for username=%s", payload.username)

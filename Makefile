@@ -17,7 +17,7 @@ HAS_FRONTEND_NODE_MODULES := $(if $(wildcard frontend/node_modules),yes,no)
 HAS_TESTS_DIR := $(if $(wildcard tests),yes,no)
 HAS_FRONTEND_TEST_SCRIPT := $(shell python -c "import json, pathlib; p = pathlib.Path('frontend/package.json'); print('yes' if p.exists() and 'test' in json.loads(p.read_text()).get('scripts', {}) else 'no')" 2>$(NULL_DEVICE))
 
-.PHONY: serve serve-local local build format lint test back-cover front-cover cover down down-local install-hooks
+.PHONY: serve serve-local local build format lint test down down-local install-hooks
 
 serve:
 	$(COMPOSE) -f $(COMPOSE_FILE) up --build
@@ -59,7 +59,7 @@ endif
 
 test:
 ifeq ($(HAS_TESTS_DIR),yes)
-	uv run --group dev pytest
+	uv run python -m pytest
 else
 	@echo "No Python tests found yet (expected tests/ directory)."
 endif
@@ -72,26 +72,6 @@ endif
 else
 	@echo "No frontend tests yet (frontend/package.json test script not found)."
 endif
-
-back-cover:
-ifeq ($(HAS_TESTS_DIR),yes)
-	uv run --group dev pytest --cov=backend --cov-report=term-missing
-else
-	@echo "No Python tests found yet (expected tests/ directory)."
-endif
-
-front-cover:
-ifeq ($(HAS_FRONTEND_PACKAGE),yes)
-ifeq ($(HAS_FRONTEND_TEST_SCRIPT),yes)
-	pnpm --dir frontend test -- --coverage
-else
-	@echo "No frontend tests yet (frontend/package.json test script not found)."
-endif
-else
-	@echo "No frontend tests yet (frontend/package.json test script not found)."
-endif
-
-cover: back-cover front-cover
 
 down:
 	$(COMPOSE) -f $(COMPOSE_FILE) down

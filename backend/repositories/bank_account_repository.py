@@ -31,14 +31,6 @@ class BankAccountRepository:
         ORDER BY created_at DESC
         """)
 
-    SQL_SELECT_FIRST_BY_USER_ID_AND_TYPE = text("""
-        SELECT id, user_id, bank_account_id, account_number, sort_code, name, provider, type, amount, created_at, updated_at
-        FROM bank_accounts
-        WHERE user_id = :user_id AND type = :type
-        ORDER BY created_at ASC
-        LIMIT 1
-        """)
-
     SQL_SELECT_BY_ID = text("""
         SELECT id, user_id, bank_account_id, account_number, sort_code, name, provider, type, amount, created_at, updated_at
         FROM bank_accounts

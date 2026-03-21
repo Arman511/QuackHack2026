@@ -15,7 +15,7 @@ const StepDisplay = () => {
 describe("LoginPage", () => {
   it("renders the welcome heading", () => {
     renderWithProvider(<LoginPage />);
-    expect(screen.getByText(/Neigh-ver Go Broke!!/i)).toBeInTheDocument();
+    expect(screen.getByText(/Welcome to Neigh-ver Go Broke/i)).toBeInTheDocument();
   });
 
   it("shows email and password fields", () => {
@@ -24,26 +24,27 @@ describe("LoginPage", () => {
     expect(screen.getAllByPlaceholderText("••••••••").length).toBeGreaterThanOrEqual(1);
   });
 
-  it("shows only one password field in login mode by default", () => {
+  it("shows confirm password field in signup mode by default", () => {
     renderWithProvider(<LoginPage />);
-    expect(screen.getAllByPlaceholderText("••••••••")).toHaveLength(1);
-  });
-
-  it("shows confirm password field after switching to signup mode", () => {
-    renderWithProvider(<LoginPage />);
-    fireEvent.click(screen.getByText(/Don't have an account\?/i));
+    // password + confirm password both present in signup mode
     expect(screen.getAllByPlaceholderText("••••••••")).toHaveLength(2);
   });
 
-  it("shows 'Login' button by default", () => {
+  it("toggles to login mode and hides confirm password", () => {
     renderWithProvider(<LoginPage />);
-    expect(screen.getByRole("button", { name: /^Login$/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByText(/Already have an account\? Login/i));
+    expect(screen.getAllByPlaceholderText("••••••••")).toHaveLength(1);
   });
 
-  it("shows 'Create Account' button after switching to signup mode", () => {
+  it("shows 'Create Account' button by default", () => {
     renderWithProvider(<LoginPage />);
-    fireEvent.click(screen.getByText(/Don't have an account\?/i));
     expect(screen.getByRole("button", { name: /Create Account/i })).toBeInTheDocument();
+  });
+
+  it("shows 'Login' button after toggling to login mode", () => {
+    renderWithProvider(<LoginPage />);
+    fireEvent.click(screen.getByText(/Already have an account\? Login/i));
+    expect(screen.getByRole("button", { name: /^Login$/i })).toBeInTheDocument();
   });
 
   it("advances to step 1 on form submit", () => {

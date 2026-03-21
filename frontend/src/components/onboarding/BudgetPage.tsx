@@ -13,7 +13,7 @@ const BudgetPage = () => {
   return (
     <div className="space-y-6 animate-fade-up">
       <div className="text-center">
-        <h2 className="text-xl font-bold">Set your impulse budget</h2>
+        <h2 className="text-xl font-bold font-display">Set your impulse budget</h2>
         <p className="text-muted-foreground text-sm mt-1">
           How much can you spend on impulse buys each month?
         </p>
@@ -58,8 +58,8 @@ const BudgetPage = () => {
               onClick={() => setNeighTaxPercent(pct)}
               className={`py-3 rounded-xl text-sm font-semibold transition-all duration-200 active:scale-[0.96] border focus:outline-none focus:ring-2 focus:ring-primary/50 ${
                 neighTaxPercent === pct
-                  ? "bg-primary/5 text-primary border-primary ring-2 ring-primary shadow-lg shadow-primary/20"
-                  : "bg-secondary text-secondary-foreground border-border hover:shadow-md"
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-secondary text-secondary-foreground border-border"
               }`}
             >
               {pct === 0 ? "None" : `${pct}%`}

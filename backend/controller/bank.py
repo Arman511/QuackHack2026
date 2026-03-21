@@ -15,12 +15,10 @@ from backend.models import (
     TransactionPublic,
 )
 from backend.services.bank_service import (
-    admin_search_transactions_by_date,
     admin_transaction_summary,
     create_bank_accounts_for_user,
     create_webhook_transaction,
     create_user_transaction,
-    list_user_transactions_hydrated,
     list_my_accounts,
     search_user_transactions_by_date,
     setup_bank_accounts_for_user,

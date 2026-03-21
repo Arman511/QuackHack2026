@@ -2,7 +2,8 @@ import os
 from pathlib import Path
 import logging
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 
 from backend.utils.config import (

@@ -34,28 +34,22 @@ describe("GoalsPage", () => {
   it("shows 'Added ✓' after selecting a preset", () => {
     renderWithProvider(<GoalsPage />);
     fireEvent.click(screen.getByText(goalPresets[0].name));
-    // Selected preset gets ring styling
-    const btn = screen.getByText(goalPresets[0].name).closest("button")!;
-    expect(btn).toHaveClass("ring-2");
+    expect(screen.getByText("Added ✓")).toBeInTheDocument();
   });
 
-  it("deselecting a preset removes selection", () => {
+  it("deselecting a preset removes 'Added ✓'", () => {
     renderWithProvider(<GoalsPage />);
     fireEvent.click(screen.getByText(goalPresets[0].name));
     fireEvent.click(screen.getByText(goalPresets[0].name));
-    const btn = screen.getByText(goalPresets[0].name).closest("button")!;
-    expect(btn).not.toHaveClass("ring-2");
+    expect(screen.queryByText("Added ✓")).not.toBeInTheDocument();
   });
 
   it("selecting a second preset replaces the first (single goal)", () => {
     renderWithProvider(<GoalsPage />);
     fireEvent.click(screen.getByText(goalPresets[0].name));
     fireEvent.click(screen.getByText(goalPresets[1].name));
-    // Only the second preset is highlighted
-    const btn0 = screen.getByText(goalPresets[0].name).closest("button")!;
-    const btn1 = screen.getByText(goalPresets[1].name).closest("button")!;
-    expect(btn0).not.toHaveClass("ring-2");
-    expect(btn1).toHaveClass("ring-2");
+    // Only one "Added ✓" at a time
+    expect(screen.getAllByText("Added ✓")).toHaveLength(1);
   });
 
   it("shows custom goal form when 'Custom Goal' is clicked", () => {

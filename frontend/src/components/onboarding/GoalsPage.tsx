@@ -62,7 +62,7 @@ const GoalsPage = () => {
         name: customName,
         target: Number(customTarget),
         saved: 0,
-        icon: "target",
+        icon: "💰",
       });
       setCustomName("");
       setCustomTarget("");
@@ -73,14 +73,13 @@ const GoalsPage = () => {
   return (
     <div className="space-y-6 animate-fade-up">
       <div className="text-center">
-        <h2 className="text-xl font-bold">What are you saving for?</h2>
+        <h2 className="text-xl font-bold font-display">What are you saving for?</h2>
         <p className="text-muted-foreground text-sm mt-1">Pick goals or create your own</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         {goalPresets.map((preset, i) => {
           const isAdded = goals.some((g) => g.name === preset.name);
-          const IconComponent = getIcon(preset.icon);
           return (
             <button
               key={preset.name}

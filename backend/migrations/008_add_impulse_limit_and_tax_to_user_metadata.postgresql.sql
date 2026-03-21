@@ -1,3 +1,0 @@
-ALTER TABLE IF EXISTS user_metadata
-ADD COLUMN IF NOT EXISTS impulse_limit BIGINT,
-ADD COLUMN IF NOT EXISTS tax_percentage BIGINT;

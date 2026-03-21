@@ -6,7 +6,7 @@ interface HorseProgressBarProps {
 
 const HorseProgressBar = ({ totalSteps }: HorseProgressBarProps) => {
   const { onboardingStep } = useApp();
-  const progress = (onboardingStep / totalSteps) * 100;
+  const progress = ((onboardingStep + 1) / totalSteps) * 100;
 
   return (
     <div className="w-full px-4 py-3">
@@ -21,7 +21,7 @@ const HorseProgressBar = ({ totalSteps }: HorseProgressBarProps) => {
           className="h-full rounded-full transition-all duration-700 ease-out relative overflow-hidden"
           style={{
             width: `${progress}%`,
-            background: "linear-gradient(to bottom, hsl(25, 50%, 45%) 0%, hsl(20, 45%, 35%) 100%)",
+            background: "linear-gradient(to bottom, #10b981 0%, #059669 100%)",
           }}
         >
           {/* Subtle track texture overlay */}
@@ -47,7 +47,7 @@ const HorseProgressBar = ({ totalSteps }: HorseProgressBarProps) => {
         </div>
       </div>
       <p className="text-xs text-muted-foreground mt-2 text-center">
-        Step {onboardingStep} of {totalSteps}
+        Step {onboardingStep + 1} of {totalSteps}
       </p>
     </div>
   );

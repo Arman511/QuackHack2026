@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useApp } from "@/context/AppContext";
-import { Target, Bell, User } from "lucide-react";
 import DashboardTab from "./tabs/DashboardTab";
 import GoalsTab from "./tabs/GoalsTab";
 import NotificationsTab from "./tabs/NotificationsTab";
@@ -8,9 +7,9 @@ import ProfileTab from "./tabs/ProfileTab";
 
 const tabs = [
   { key: "dashboard", label: "Dashboard", icon: "horse", isImage: true },
-  { key: "goals", label: "Goals", icon: Target, isImage: false },
-  { key: "notifications", label: "Alerts", icon: Bell, isImage: false },
-  { key: "profile", label: "Profile", icon: User, isImage: false },
+  { key: "goals", label: "Goals", icon: "💰", isImage: false },
+  { key: "notifications", label: "Alerts", icon: "🔔", isImage: false },
+  { key: "profile", label: "Profile", icon: "👤", isImage: false },
 ];
 
 const MainApp = () => {
@@ -39,7 +38,7 @@ const MainApp = () => {
               {tab.isImage ? (
                 <img src="/horse-head.png" alt="Horse" className="w-6 h-6 object-contain" />
               ) : (
-                <tab.icon size={24} />
+                tab.icon
               )}
               {tab.key === "notifications" && unread > 0 && (
                 <span className="absolute -top-1 -right-2 w-4 h-4 bg-impulse text-[10px] font-bold text-primary-foreground rounded-full flex items-center justify-center">

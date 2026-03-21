@@ -127,8 +127,6 @@ class UserMetadataORM(Base):
     bank_account_id: Mapped[int | None] = mapped_column(
         Integer, ForeignKey("bank_accounts.id"), nullable=True
     )
-    impulse_limit: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    tax_percentage: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=False), server_default=func.now(), nullable=False
     )

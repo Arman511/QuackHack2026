@@ -1,6 +1,5 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
-import viteCompression from "vite-plugin-compression";
 import path from "path";
 
 // https://vitejs.dev/config/
@@ -15,14 +14,9 @@ export default defineConfig(({ mode }) => ({
       "/api": {
         target: "http://localhost:8000",
       },
-      "/external": {
-        target: "https://revolite-hackathon.vercel.app",
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/external/, ""),
-      },
     },
   },
-  plugins: [react(), viteCompression({ algorithm: "brotliCompress" })],
+  plugins: [react()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

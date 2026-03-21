@@ -6,8 +6,6 @@ on:
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
-    env:
-      SECRET_KEY: ci-secret-key
 
     steps:
       - name: Check out repository
@@ -35,4 +33,4 @@ jobs:
         run: make lint
 
       - name: Run tests
-        run: make cover
+        run: make test

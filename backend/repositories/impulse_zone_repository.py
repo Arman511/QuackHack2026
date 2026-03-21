@@ -31,18 +31,6 @@ class ImpulseZoneRepository:
         ORDER BY created_at
         """)
 
-    SQL_UPDATE_IMPULSE_ZONE = text("""
-        UPDATE impulse_zones
-        SET name = :name
-        WHERE id = :zone_id
-        RETURNING id, name, created_at
-        """)
-
-    SQL_DELETE_IMPULSE_ZONE = text("""
-        DELETE FROM impulse_zones
-        WHERE id = :zone_id
-        """)
-
     SQL_CREATE_POSSIBLE_IMPULSE_ZONE = text("""
         INSERT INTO possible_impulse_zones (user_id, name)
         VALUES (:user_id, :name)
@@ -85,25 +73,6 @@ class ImpulseZoneRepository:
     SQL_DELETE_POSSIBLE_IMPULSE_ZONE = text("""
         DELETE FROM possible_impulse_zones
         WHERE id = :zone_id
-        """)
-
-    SQL_SELECT_USER_IMPULSES = text("""
-        SELECT z.id, z.name, z.created_at
-        FROM user_impulses ui
-        INNER JOIN impulse_zones z ON z.id = ui.impulse_id
-        WHERE ui.user_id = :user_id
-        ORDER BY z.created_at
-        """)
-
-    SQL_DELETE_USER_IMPULSES = text("""
-        DELETE FROM user_impulses
-        WHERE user_id = :user_id
-        """)
-
-    SQL_INSERT_USER_IMPULSE = text("""
-        INSERT INTO user_impulses (user_id, impulse_id)
-        VALUES (:user_id, :impulse_id)
-        ON CONFLICT (user_id, impulse_id) DO NOTHING
         """)
 
     def __init__(self, db: Session):

@@ -1,6 +1,5 @@
 import { useApp } from "@/context/AppContext";
 import { useMemo } from "react";
-import { Vault, AlertTriangle, Skull } from "lucide-react";
 
 const DashboardTab = () => {
   const { totalSaved, impulseBudget, impulseSpent, transactions, punishments } = useApp();
@@ -28,17 +27,14 @@ const DashboardTab = () => {
       {/* Header */}
       <div className="flex items-center gap-2 animate-fade-up">
         <img src="/horse-head.png" alt="Horse" className="w-10 h-10 object-contain" />
-        <h1 className="text-lg font-bold">Neigh-ver Go Broke!</h1>
+        <h1 className="text-lg font-bold font-display">Neigh-ver Go Broke</h1>
       </div>
 
       {/* Savings Vault */}
       <div className="card-neigh text-center animate-fade-up" style={{ animationDelay: "100ms" }}>
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
-            Savings Vault
-          </p>
-          <Vault size={16} className="text-muted-foreground" />
-        </div>
+        <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-2">
+          Savings Vault 🌾
+        </p>
         <div className="relative w-24 h-24 mx-auto mb-3">
           <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
             <circle
@@ -90,10 +86,7 @@ const DashboardTab = () => {
           />
         </div>
         {budgetPercent > 80 && (
-          <div className="flex items-center gap-1 text-xs text-impulse mt-2">
-            <AlertTriangle size={12} />
-            <span>Whoa there cowboy, budget nearly gone!</span>
-          </div>
+          <p className="text-xs text-impulse mt-2">⚠️ Whoa there cowboy, budget nearly gone!</p>
         )}
       </div>
 
@@ -111,7 +104,7 @@ const DashboardTab = () => {
                   backgroundColor:
                     day.total === 0
                       ? "hsl(var(--secondary))"
-                      : `hsl(var(--primary) / ${0.2 + intensity * 0.8})`,
+                      : `hsl(var(--impulse) / ${0.2 + intensity * 0.8})`,
                 }}
                 title={`${day.date}: £${day.total.toFixed(2)}`}
               />
@@ -125,7 +118,7 @@ const DashboardTab = () => {
               <div
                 key={opacity}
                 className="w-3 h-3 rounded-sm"
-                style={{ backgroundColor: `hsl(var(--primary) / ${opacity})` }}
+                style={{ backgroundColor: `hsl(var(--impulse) / ${opacity})` }}
               />
             ))}
           </div>
@@ -160,7 +153,7 @@ const DashboardTab = () => {
         <div className="flex items-center gap-2 mb-3">
           <p className="text-sm font-medium">Punishment History</p>
           <img src="/horse-head.png" alt="Horse" className="w-6 h-6 object-contain inline" />
-          <Skull size={16} className="text-muted-foreground" />
+          <span className="text-base">💀</span>
         </div>
         <div className="space-y-3">
           {punishments.map((p, i) => (

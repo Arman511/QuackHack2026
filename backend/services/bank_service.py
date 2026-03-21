@@ -3,7 +3,6 @@ import logging
 from datetime import datetime, timedelta
 
 from fastapi import HTTPException, status
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.models import (
@@ -29,7 +28,6 @@ from backend.models import (
     SetupBankAccountsRequest,
 )
 from backend.repositories.bank_account_repository import BankAccountRepository
-from backend.repositories.impulse_zone_repository import ImpulseZoneRepository
 from backend.repositories.transaction_repository import TransactionRepository
 from backend.repositories.user_metadata_repository import UserMetadataRepository
 
