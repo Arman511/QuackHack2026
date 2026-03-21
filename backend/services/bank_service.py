@@ -27,6 +27,8 @@ from backend.models import (
     UserMePublic,
     UserMetadataPublic,
     SetupBankAccountsRequest,
+    PaginatedTransactionSearchResponse,
+    TransactionSearchItemPublic,
 )
 from backend.repositories.bank_account_repository import BankAccountRepository
 from backend.repositories.impulse_zone_repository import ImpulseZoneRepository
@@ -156,7 +158,9 @@ def search_user_transactions_by_date(
     *,
     current_user: UserDB,
     payload: TransactionDateRangeQuery,
-) -> list[TransactionHydratedPublic]:
+    page: int,
+    page_size: int,
+) -> PaginatedTransactionSearchResponse:
     if payload.start > payload.end:
         logger.warning(
             "Invalid transaction search range user_id=%s start=%s end=%s",
@@ -168,17 +172,29 @@ def search_user_transactions_by_date(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="start must be before or equal to end",
         )
-    rows = TransactionRepository(db).get_by_user_id_and_date_range_hydrated(
+    items, total = TransactionRepository(db).get_by_user_id_and_date_range_search_paginated(
         user_id=current_user.id,
         start=payload.start,
         end=payload.end,
+        page=page,
+        page_size=page_size,
     )
+    total_pages = (total + page_size - 1) // page_size if total > 0 else 0
     logger.info(
-        "User transaction search returned count=%s user_id=%s",
-        len(rows),
+        "User transaction search returned count=%s total=%s user_id=%s page=%s page_size=%s",
+        len(items),
+        total,
         current_user.id,
+        page,
+        page_size,
     )
-    return rows
+    return PaginatedTransactionSearchResponse(
+        items=[TransactionSearchItemPublic.model_validate(item) for item in items],
+        page=page,
+        page_size=page_size,
+        total=total,
+        total_pages=total_pages,
+    )
 
 
 def admin_search_transactions_by_date(

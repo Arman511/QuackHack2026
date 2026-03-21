@@ -173,6 +173,29 @@ export interface TransactionHydratedPublic extends TransactionPublic {
   possible_impulse_zone_name?: string | null;
 }
 
+export interface TransactionSearchItemPublic {
+  id: number;
+  user_id: number;
+  source_account_number?: string | null;
+  source_sort_code?: string | null;
+  amount: number;
+  timestamp: string;
+  merchant: string;
+  impulse_zone_id?: number | null;
+  possible_impulse_zone_id?: number | null;
+  created_at: string;
+  impulse_zone_name?: string | null;
+  possible_impulse_zone_name?: string | null;
+}
+
+export interface PaginatedTransactionSearchResponse {
+  items: TransactionSearchItemPublic[];
+  page: number;
+  page_size: number;
+  total: number;
+  total_pages: number;
+}
+
 export interface ImpulseZoneCreate {
   name: string;
 }

@@ -21,6 +21,8 @@ def test_search_user_transactions_by_date_rejects_inverted_range() -> None:
             db=cast(Session, object()),
             current_user=cast(UserDB, SimpleNamespace(id=7)),
             payload=payload,
+            page=1,
+            page_size=50,
         )
 
     assert exc_info.value.status_code == 400
@@ -32,26 +34,40 @@ def test_search_user_transactions_by_date_delegates_to_repository(monkeypatch) -
         start=datetime(2026, 1, 1, 12, 0, 0),
         end=datetime(2026, 1, 31, 12, 0, 0),
     )
-    expected = [
+    expected_items = [
         {
             "id": 1,
+            "user_id": 11,
+            "source_account_number": "12345678",
+            "source_sort_code": "112233",
             "merchant": "bookstore",
             "amount": 42,
+            "timestamp": datetime(2026, 1, 3, 12, 0, 0),
+            "impulse_zone_id": None,
+            "possible_impulse_zone_id": None,
+            "created_at": datetime(2026, 1, 3, 12, 0, 0),
+            "impulse_zone_name": None,
+            "possible_impulse_zone_name": None,
         }
     ]
+    expected_total = 1
     calls = {}
 
     class FakeTransactionRepository:
         def __init__(self, db):
             calls["db"] = db
 
-        def get_by_user_id_and_date_range_hydrated(self, user_id, start, end):
+        def get_by_user_id_and_date_range_search_paginated(
+            self, *, user_id, start, end, page, page_size
+        ):
             calls["args"] = {
                 "user_id": user_id,
                 "start": start,
                 "end": end,
+                "page": page,
+                "page_size": page_size,
             }
-            return expected
+            return expected_items, expected_total
 
     marker_db = cast(Session, object())
     monkeypatch.setattr(
@@ -62,14 +78,22 @@ def test_search_user_transactions_by_date_delegates_to_repository(monkeypatch) -
         db=marker_db,
         current_user=cast(UserDB, SimpleNamespace(id=11)),
         payload=payload,
+        page=2,
+        page_size=10,
     )
 
-    assert result == expected
+    assert result.items[0].source_account_number == "12345678"
+    assert result.page == 2
+    assert result.page_size == 10
+    assert result.total == 1
+    assert result.total_pages == 1
     assert calls["db"] is marker_db
     assert calls["args"] == {
         "user_id": 11,
         "start": payload.start,
         "end": payload.end,
+        "page": 2,
+        "page_size": 10,
     }
 
 
