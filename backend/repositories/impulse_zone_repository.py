@@ -1,4 +1,7 @@
+from typing import Any, cast
+
 from sqlalchemy import text
+from sqlalchemy.engine import CursorResult
 from sqlalchemy.orm import Session
 
 from backend.models import ImpulseZonePublic, PossibleImpulseZonePublic
@@ -153,7 +156,10 @@ class ImpulseZoneRepository:
 
     def delete_impulse_zone(self, zone_id: int) -> bool:
         """Delete an impulse zone by ID."""
-        result = self.db.execute(self.SQL_DELETE_IMPULSE_ZONE, {"zone_id": zone_id})
+        result = cast(
+            CursorResult[Any],
+            self.db.execute(self.SQL_DELETE_IMPULSE_ZONE, {"zone_id": zone_id}),
+        )
         self.db.commit()
         return (result.rowcount or 0) > 0
 
@@ -232,9 +238,12 @@ class ImpulseZoneRepository:
 
     def delete_possible_impulse_zone(self, zone_id: int) -> bool:
         """Delete a possible impulse zone by ID."""
-        result = self.db.execute(
-            self.SQL_DELETE_POSSIBLE_IMPULSE_ZONE,
-            {"zone_id": zone_id},
+        result = cast(
+            CursorResult[Any],
+            self.db.execute(
+                self.SQL_DELETE_POSSIBLE_IMPULSE_ZONE,
+                {"zone_id": zone_id},
+            ),
         )
         self.db.commit()
         return (result.rowcount or 0) > 0
