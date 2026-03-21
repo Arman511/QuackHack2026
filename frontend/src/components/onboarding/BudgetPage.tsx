@@ -48,8 +48,8 @@ const BudgetPage = () => {
           When you make an impulse purchase, we match part of it and move that money into your
           savings vault.
         </p>
-        <div className="grid grid-cols-3 gap-2">
-          {[50, 100, 200].map((pct) => (
+        <div className="grid grid-cols-4 gap-2">
+          {[0, 50, 100, 200].map((pct) => (
             <button
               key={pct}
               onClick={() => setNeighTaxPercent(pct)}
@@ -59,7 +59,7 @@ const BudgetPage = () => {
                   : "bg-secondary text-secondary-foreground border-border"
               }`}
             >
-              {pct}%
+              {pct === 0 ? "None" : `${pct}%`}
             </button>
           ))}
         </div>
