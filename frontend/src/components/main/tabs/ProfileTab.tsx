@@ -2,7 +2,15 @@ import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 
 const ProfileTab = () => {
-  const { email, connectedBank, notificationsEnabled, horseNeighAlertsEnabled, toggleNotifications, toggleHorseNeighAlerts, logout } = useApp();
+  const {
+    email,
+    connectedBank,
+    notificationsEnabled,
+    horseNeighAlertsEnabled,
+    toggleNotifications,
+    toggleHorseNeighAlerts,
+    logout,
+  } = useApp();
 
   return (
     <div className="p-4 space-y-5">
@@ -55,7 +63,9 @@ const ProfileTab = () => {
               onClick={toggleNotifications}
               className={`w-10 h-6 rounded-full relative cursor-pointer transition-colors ${notificationsEnabled ? "bg-primary" : "bg-muted"}`}
             >
-              <div className={`absolute top-1 w-4 h-4 bg-primary-foreground rounded-full transition-all ${notificationsEnabled ? "right-1" : "left-1"}`} />
+              <div
+                className={`absolute top-1 w-4 h-4 bg-primary-foreground rounded-full transition-all ${notificationsEnabled ? "right-1" : "left-1"}`}
+              />
             </div>
           </div>
           <div className="flex items-center justify-between">
@@ -64,7 +74,9 @@ const ProfileTab = () => {
               onClick={toggleHorseNeighAlerts}
               className={`w-10 h-6 rounded-full relative cursor-pointer transition-colors ${horseNeighAlertsEnabled ? "bg-primary" : "bg-muted"}`}
             >
-              <div className={`absolute top-1 w-4 h-4 bg-primary-foreground rounded-full transition-all ${horseNeighAlertsEnabled ? "right-1" : "left-1"}`} />
+              <div
+                className={`absolute top-1 w-4 h-4 bg-primary-foreground rounded-full transition-all ${horseNeighAlertsEnabled ? "right-1" : "left-1"}`}
+              />
             </div>
           </div>
         </div>

@@ -106,7 +106,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setImpulseBudget: (b) => update({ impulseBudget: b }),
     setNeighTaxPercent: (p) => update({ neighTaxPercent: p }),
     toggleNotifications: () => update({ notificationsEnabled: !state.notificationsEnabled }),
-    toggleHorseNeighAlerts: () => update({ horseNeighAlertsEnabled: !state.horseNeighAlertsEnabled }),
+    toggleHorseNeighAlerts: () =>
+      update({ horseNeighAlertsEnabled: !state.horseNeighAlertsEnabled }),
     logout: () => update({ isOnboarded: false, onboardingStep: 0 }),
   };
 
