@@ -67,6 +67,7 @@ def admin_transaction_summary(db: Session, *, page: int = 1, page_size: int = 10
 def create_webhook_transaction(
     db: Session,
     *,
+    current_user: UserDB,
     payload: TransactionWebhookCreate,
 ) -> TransactionPublic:
     account_repo = BankAccountRepository(db)
@@ -74,6 +75,11 @@ def create_webhook_transaction(
         account_number=payload.account_number,
         sort_code=payload.sort_code,
     )
+    if source_account is not None and source_account.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Bank account does not belong to the authenticated user",
+        )
     if source_account is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

@@ -115,4 +115,49 @@
   .bottom-nav-item[data-active="true"] {
     color: hsl(var(--primary));
   }
+
+  /* Custom Range Slider Styling */
+  .slider::-webkit-slider-thumb {
+    appearance: none;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: hsl(25deg 45% 45%);
+    cursor: pointer;
+    box-shadow: 0 2px 6px hsl(25deg 40% 30% / 0.4);
+    border: 2px solid hsl(25deg 60% 65%);
+    transition: all 0.2s ease;
+  }
+
+  .slider::-webkit-slider-thumb:hover {
+    box-shadow: 0 4px 12px hsl(25deg 40% 30% / 0.5);
+    transform: scale(1.1);
+  }
+
+  .slider::-moz-range-thumb {
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: hsl(25deg 45% 45%);
+    cursor: pointer;
+    box-shadow: 0 2px 6px hsl(25deg 40% 30% / 0.4);
+    border: 2px solid hsl(25deg 60% 65%);
+    transition: all 0.2s ease;
+  }
+
+  .slider::-moz-range-thumb:hover {
+    box-shadow: 0 4px 12px hsl(25deg 40% 30% / 0.5);
+    transform: scale(1.1);
+  }
+
+  .slider::-webkit-slider-track {
+    height: 12px;
+    border-radius: 6px;
+  }
+
+  .slider::-moz-range-track {
+    height: 12px;
+    border-radius: 6px;
+    border: none;
+  }
 }

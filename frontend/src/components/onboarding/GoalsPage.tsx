@@ -2,13 +2,41 @@ import { useState } from "react";
 import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { goalPresets, type Goal } from "@/data/mockData";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Target } from "lucide-react";
 
 const GoalsPage = () => {
   const { goals, addGoal, removeGoal, clearGoals, setOnboardingStep } = useApp();
   const [showCustom, setShowCustom] = useState(false);
   const [customName, setCustomName] = useState("");
   const [customTarget, setCustomTarget] = useState("");
+
+  const getIcon = (iconName: string) => {
+    const iconMap: Record<string, string> = {
+      travel: "/travel.png",
+      shield: "/sheild.png", // Note: filename is "sheild" not "shield"
+      shopping: "/shopping.png",
+      house: "/house.png",
+      debt: "/debt.png",
+    };
+
+    const iconPath = iconMap[iconName];
+
+    if (!iconPath) {
+      // Fallback to Lucide Target icon for unknown icons
+      return ({ className, size }: { className?: string; size?: number }) => (
+        <Target size={size} className={className} />
+      );
+    }
+
+    return ({ className, size }: { className?: string; size?: number }) => (
+      <img
+        src={iconPath}
+        alt={iconName}
+        className={className}
+        style={{ width: size, height: size }}
+      />
+    );
+  };
 
   const handlePreset = (preset: { name: string; icon: string }) => {
     const existing = goals.find((g) => g.name === preset.name);
@@ -56,12 +84,15 @@ const GoalsPage = () => {
             <button
               key={preset.name}
               onClick={() => handlePreset(preset)}
-              className={`card-neigh text-center py-4 animate-fade-up ${isAdded ? "ring-2 ring-primary" : ""}`}
+              className={`card-neigh text-center py-2 animate-fade-up transition-all duration-200 ${
+                isAdded
+                  ? "ring-2 ring-primary bg-primary/5 shadow-lg shadow-primary/20"
+                  : "hover:shadow-md"
+              }`}
               style={{ animationDelay: `${i * 60}ms` }}
             >
-              <span className="text-2xl block mb-1">{preset.icon}</span>
+              <IconComponent className="mx-auto mb-2" size={64} />
               <span className="text-sm font-medium">{preset.name}</span>
-              {isAdded && <span className="text-xs text-primary block mt-1">Added ✓</span>}
             </button>
           );
         })}
@@ -71,18 +102,17 @@ const GoalsPage = () => {
             <button
               key={g.id}
               onClick={() => removeGoal(g.id)}
-              className="card-neigh text-center py-4 ring-2 ring-primary animate-fade-up"
+              className="card-neigh text-center py-2 ring-2 ring-primary bg-primary/5 shadow-lg shadow-primary/20 animate-fade-up transition-all duration-200"
             >
-              <span className="text-2xl block mb-1">💰</span>
+              <Target size={64} className="mx-auto mb-2 text-muted-foreground" />
               <span className="text-sm font-medium">{g.name}</span>
-              <span className="text-xs text-primary block mt-1">Added ✓</span>
             </button>
           ))}
         <button
           onClick={() => setShowCustom(true)}
-          className="card-neigh text-center py-4 border-dashed"
+          className="card-neigh text-center py-2 border-dashed transition-all duration-200 hover:shadow-md"
         >
-          <Plus size={24} className="mx-auto mb-1 text-muted-foreground" />
+          <Plus size={48} className="mx-auto mb-1 text-muted-foreground" />
           <span className="text-sm text-muted-foreground">Custom Goal</span>
         </button>
       </div>
@@ -121,7 +151,7 @@ const GoalsPage = () => {
         className="w-full h-11 active:scale-[0.97] flex items-center gap-2 justify-center"
       >
         <span>Continue</span>
-        <img src="/horse-head.png" alt="Horse" className="w-5 h-5 object-contain" />
+        <img src="/blonde-horse-head.png" alt="Horse" className="w-5 h-5 object-contain" />
       </Button>
     </div>
   );

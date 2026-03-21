@@ -58,9 +58,10 @@ def create_transaction(
 def create_transaction_from_webhook(
     payload: TransactionWebhookCreate,
     db: db_dependency,
+    current_user: current_user_dependency,
 ):
     """Create a transaction from an external webhook using account number and sort code."""
-    return create_webhook_transaction(db, payload=payload)
+    return create_webhook_transaction(db, payload=payload, current_user=current_user)
 
 
 @router.get("/transactions/me", response_model=list[TransactionHydratedPublic])
