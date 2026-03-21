@@ -6,7 +6,7 @@ interface HorseProgressBarProps {
 
 const HorseProgressBar = ({ totalSteps }: HorseProgressBarProps) => {
   const { onboardingStep } = useApp();
-  const progress = ((onboardingStep + 1) / totalSteps) * 100;
+  const progress = (onboardingStep / totalSteps) * 100;
 
   return (
     <div className="w-full px-4 py-3">
@@ -57,7 +57,7 @@ const HorseProgressBar = ({ totalSteps }: HorseProgressBarProps) => {
         </div>
       </div>
       <p className="text-xs text-muted-foreground mt-2 text-center">
-        Step {onboardingStep + 1} of {totalSteps}
+        Step {onboardingStep} of {totalSteps}
       </p>
     </div>
   );

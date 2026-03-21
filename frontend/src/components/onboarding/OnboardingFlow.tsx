@@ -22,7 +22,7 @@ const OnboardingFlow = () => {
           <img src="/horse-head.png" alt="Horse" className="w-6 h-6 object-contain" />
           <span className="font-bold text-sm">Neigh-ver Go Broke</span>
         </div>
-        <HorseProgressBar totalSteps={5} />
+        <HorseProgressBar totalSteps={4} />
       </div>
       <div className="flex-1 flex items-start justify-center px-4 py-6">
         <div className="w-full max-w-md">
