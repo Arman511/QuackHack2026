@@ -1,4 +1,4 @@
-import { useApp } from "@/context/AppContext";
+import { useApp } from "@/hooks/useApp";
 import HorseProgressBar from "@/components/HorseProgressBar";
 import LoginPage from "./LoginPage";
 import ConnectBankPage from "./ConnectBankPage";

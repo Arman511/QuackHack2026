@@ -1,4 +1,4 @@
-import { useApp } from "@/context/AppContext";
+import { useApp } from "@/hooks/useApp";
 import { useMemo } from "react";
 import { Vault, AlertTriangle, Skull } from "lucide-react";
 

@@ -1,10 +1,11 @@
-import { useApp } from "@/context/AppContext";
+import { useApp } from "@/hooks/useApp";
 import { Button } from "@/components/ui/button";
 import { User, Check } from "lucide-react";
 
 const ProfileTab = () => {
   const {
     email,
+    user,
     connectedBank,
     notificationsEnabled,
     horseNeighAlertsEnabled,
@@ -12,6 +13,12 @@ const ProfileTab = () => {
     toggleHorseNeighAlerts,
     logout,
   } = useApp();
+
+  // Parse full name into first and last name
+  const fullName = user?.full_name || "";
+  const nameParts = fullName.split(" ");
+  const firstName = nameParts[0] || "Impulse";
+  const lastName = nameParts.slice(1).join(" ") || "Cowboy";
 
   return (
     <div className="p-4 space-y-5">
@@ -28,15 +35,17 @@ const ProfileTab = () => {
         <div className="space-y-2">
           <div className="flex justify-between">
             <span className="text-sm text-muted-foreground">First Name</span>
-            <span className="text-sm font-medium">Impulse</span>
+            <span className="text-sm font-medium">{firstName}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-sm text-muted-foreground">Last Name</span>
-            <span className="text-sm font-medium">Cowboy</span>
+            <span className="text-sm font-medium">{lastName}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-sm text-muted-foreground">Email</span>
-            <span className="text-sm font-medium">{email || "cowboy@ranch.com"}</span>
+            <span className="text-sm font-medium">
+              {user?.email || email || "cowboy@ranch.com"}
+            </span>
           </div>
         </div>
       </div>

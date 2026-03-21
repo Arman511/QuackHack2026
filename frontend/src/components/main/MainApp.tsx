@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useApp } from "@/context/AppContext";
+import { useApp } from "@/hooks/useApp";
 import { Target, Bell, User } from "lucide-react";
 import DashboardTab from "./tabs/DashboardTab";
 import GoalsTab from "./tabs/GoalsTab";
