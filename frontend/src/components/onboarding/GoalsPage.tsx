@@ -12,11 +12,11 @@ const GoalsPage = () => {
 
   const getIcon = (iconName: string) => {
     const iconMap = {
-      'plane': Plane,
-      'shield': Shield,
-      'laptop': Laptop,
-      'home': Home,
-      'credit-card': CreditCard,
+      plane: Plane,
+      shield: Shield,
+      laptop: Laptop,
+      home: Home,
+      "credit-card": CreditCard,
     };
     return iconMap[iconName as keyof typeof iconMap] || Target;
   };

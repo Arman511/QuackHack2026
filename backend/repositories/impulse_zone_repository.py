@@ -25,6 +25,18 @@ class ImpulseZoneRepository:
         ORDER BY created_at
         """)
 
+    SQL_UPDATE_IMPULSE_ZONE = text("""
+        UPDATE impulse_zones
+        SET name = :name
+        WHERE id = :zone_id
+        RETURNING id, name, created_at
+        """)
+
+    SQL_DELETE_IMPULSE_ZONE = text("""
+        DELETE FROM impulse_zones
+        WHERE id = :zone_id
+        """)
+
     SQL_CREATE_POSSIBLE_IMPULSE_ZONE = text("""
         INSERT INTO possible_impulse_zones (name)
         VALUES (:name)
@@ -43,6 +55,13 @@ class ImpulseZoneRepository:
         ORDER BY created_at
         """)
 
+    SQL_UPDATE_POSSIBLE_IMPULSE_ZONE = text("""
+        UPDATE possible_impulse_zones
+        SET name = :name
+        WHERE id = :zone_id
+        RETURNING id, name, created_at
+        """)
+
     SQL_PROMOTE_POSSIBLE_TO_IMPULSE_ZONE = text("""
         -- Move transactions from possible_impulse_zone_id to impulse_zone_id
         UPDATE transactions
@@ -53,6 +72,25 @@ class ImpulseZoneRepository:
     SQL_DELETE_POSSIBLE_IMPULSE_ZONE = text("""
         DELETE FROM possible_impulse_zones
         WHERE id = :zone_id
+        """)
+
+    SQL_SELECT_USER_IMPULSES = text("""
+        SELECT z.id, z.name, z.created_at
+        FROM user_impulses ui
+        INNER JOIN impulse_zones z ON z.id = ui.impulse_id
+        WHERE ui.user_id = :user_id
+        ORDER BY z.created_at
+        """)
+
+    SQL_DELETE_USER_IMPULSES = text("""
+        DELETE FROM user_impulses
+        WHERE user_id = :user_id
+        """)
+
+    SQL_INSERT_USER_IMPULSE = text("""
+        INSERT INTO user_impulses (user_id, impulse_id)
+        VALUES (:user_id, :impulse_id)
+        ON CONFLICT (user_id, impulse_id) DO NOTHING
         """)
 
     def __init__(self, db: Session):
@@ -90,6 +128,28 @@ class ImpulseZoneRepository:
         rows = self.db.execute(self.SQL_SELECT_ALL_IMPULSE_ZONES).mappings().all()
         return [ImpulseZonePublic(**row) for row in rows]
 
+    def update_impulse_zone(self, zone_id: int, name: str) -> ImpulseZonePublic | None:
+        """Update an impulse zone's name."""
+        row = (
+            self.db.execute(
+                self.SQL_UPDATE_IMPULSE_ZONE,
+                {
+                    "zone_id": zone_id,
+                    "name": name,
+                },
+            )
+            .mappings()
+            .first()
+        )
+        self.db.commit()
+        return ImpulseZonePublic(**row) if row else None
+
+    def delete_impulse_zone(self, zone_id: int) -> bool:
+        """Delete an impulse zone by ID."""
+        result = self.db.execute(self.SQL_DELETE_IMPULSE_ZONE, {"zone_id": zone_id})
+        self.db.commit()
+        return (result.rowcount or 0) > 0
+
     def create_possible_impulse_zone(self, name: str) -> PossibleImpulseZonePublic:
         """Create a new possible impulse zone."""
         row = (
@@ -125,6 +185,55 @@ class ImpulseZoneRepository:
             self.db.execute(self.SQL_SELECT_ALL_POSSIBLE_IMPULSE_ZONES).mappings().all()
         )
         return [PossibleImpulseZonePublic(**row) for row in rows]
+
+    def update_possible_impulse_zone(
+        self, zone_id: int, name: str
+    ) -> PossibleImpulseZonePublic | None:
+        """Update a possible impulse zone's name."""
+        row = (
+            self.db.execute(
+                self.SQL_UPDATE_POSSIBLE_IMPULSE_ZONE,
+                {
+                    "zone_id": zone_id,
+                    "name": name,
+                },
+            )
+            .mappings()
+            .first()
+        )
+        self.db.commit()
+        return PossibleImpulseZonePublic(**row) if row else None
+
+    def delete_possible_impulse_zone(self, zone_id: int) -> bool:
+        """Delete a possible impulse zone by ID."""
+        result = self.db.execute(
+            self.SQL_DELETE_POSSIBLE_IMPULSE_ZONE,
+            {"zone_id": zone_id},
+        )
+        self.db.commit()
+        return (result.rowcount or 0) > 0
+
+    def get_user_impulses(self, user_id: int) -> list[ImpulseZonePublic]:
+        """List real impulses currently selected for a user."""
+        rows = (
+            self.db.execute(self.SQL_SELECT_USER_IMPULSES, {"user_id": user_id})
+            .mappings()
+            .all()
+        )
+        return [ImpulseZonePublic(**row) for row in rows]
+
+    def replace_user_impulses(self, *, user_id: int, impulse_ids: list[int]) -> None:
+        """Replace all user impulse mappings with the provided IDs."""
+        self.db.execute(self.SQL_DELETE_USER_IMPULSES, {"user_id": user_id})
+        for impulse_id in impulse_ids:
+            self.db.execute(
+                self.SQL_INSERT_USER_IMPULSE,
+                {
+                    "user_id": user_id,
+                    "impulse_id": impulse_id,
+                },
+            )
+        self.db.commit()
 
     def promote_possible_to_impulse_zone(
         self, possible_zone_id: int, new_zone_name: str | None = None
