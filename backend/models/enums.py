@@ -13,7 +13,6 @@ class BankProviderEnum(str, Enum):
     BUCK_LAYS = "BUCK-LAYS"
 
 
-
 class AccountTypeEnum(str, Enum):
     CURRENT = "CURRENT"
     SAVING = "SAVING"

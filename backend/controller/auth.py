@@ -138,9 +138,9 @@ def register(payload: UserRegisterRequest, db: db_dependency):
         hashed_password=get_password_hash(payload.password),
     )
     bank_repo.create_default_accounts_for_user(
-        user_id=user.id,
-        provider=choice(list(BankProviderEnum)))
-    
+        user_id=user.id, provider=choice(list(BankProviderEnum))
+    )
+
     return UserPublic.model_validate(user)
 
 
