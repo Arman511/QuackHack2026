@@ -1,6 +1,6 @@
 import { useApp } from "@/hooks/useApp";
 import { useMemo, useEffect } from "react";
-import { Vault, AlertTriangle, Skull, Loader2, AlertCircle } from "lucide-react";
+import { Vault, AlertTriangle, Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
@@ -110,7 +110,7 @@ const DashboardTab = () => {
               cy="50"
               r="42"
               fill="none"
-              stroke="hsl(var(--border))"
+              stroke="var(--color-border)"
               strokeWidth="8"
             />
             <circle
@@ -118,7 +118,7 @@ const DashboardTab = () => {
               cy="50"
               r="42"
               fill="none"
-              stroke="hsl(var(--savings))"
+              stroke="var(--color-savings)"
               strokeWidth="8"
               strokeDasharray={`${(totalSaved / 2000) * 264} 264`}
               strokeLinecap="round"
@@ -146,10 +146,10 @@ const DashboardTab = () => {
               width: `${budgetPercent}%`,
               backgroundColor:
                 budgetPercent > 80
-                  ? "hsl(var(--impulse))"
+                  ? "var(--color-impulse)"
                   : budgetPercent > 50
-                    ? "hsl(var(--warning))"
-                    : "hsl(var(--savings))",
+                    ? "var(--color-warning)"
+                    : "var(--color-savings)",
             }}
           />
         </div>
@@ -174,8 +174,8 @@ const DashboardTab = () => {
                 style={{
                   backgroundColor:
                     day.total === 0
-                      ? "hsl(var(--secondary))"
-                      : `hsl(var(--primary) / ${0.2 + intensity * 0.8})`,
+                      ? "var(--color-secondary)"
+                      : `color-mix(in srgb, var(--color-primary) ${(0.2 + intensity * 0.8) * 100}%, transparent)`,
                 }}
                 title={`${day.date}: £${day.total.toFixed(2)}`}
               />
@@ -189,7 +189,9 @@ const DashboardTab = () => {
               <div
                 key={opacity}
                 className="w-3 h-3 rounded-sm"
-                style={{ backgroundColor: `hsl(var(--primary) / ${opacity})` }}
+                style={{
+                  backgroundColor: `color-mix(in srgb, var(--color-primary) ${opacity * 100}%, transparent)`,
+                }}
               />
             ))}
           </div>
@@ -224,7 +226,6 @@ const DashboardTab = () => {
         <div className="flex items-center gap-2 mb-3">
           <p className="text-sm font-medium">Punishment History</p>
           <img src="/horse-head.png" alt="Horse" className="w-6 h-6 object-contain inline" />
-          <Skull size={16} className="text-muted-foreground" />
         </div>
         <div className="space-y-3">
           {punishments.map((p, i) => (
