@@ -1,5 +1,4 @@
 from datetime import UTC, datetime
-from random import choice
 from typing import Annotated
 
 from fastapi.params import Depends
@@ -19,13 +18,12 @@ from backend.models import (
     TokenPayload,
     UserDB,
     UserLoginRequest,
+    UserMePublic,
     UserPublic,
     UserRegisterRequest,
     RefreshTokensCompatRequest,
-    BankProviderEnum,
 )
 from backend.repositories.token_denylist_repository import TokenDenylistRepository
-from backend.repositories.bank_account_repository import BankAccountRepository
 from backend.repositories.user_repository import UserRepository
 from backend.services.auth_service import (
     build_scopes_for_user,
@@ -34,6 +32,7 @@ from backend.services.auth_service import (
     get_password_hash,
     verify_password,
 )
+from backend.services.bank_service import get_user_me_payload
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -123,8 +122,8 @@ def _require_refresh_token_payload(
     "/register", response_model=UserPublic, status_code=status.HTTP_201_CREATED
 )
 def register(payload: UserRegisterRequest, db: db_dependency):
+    """Register a new user account."""
     user_repo = UserRepository(db)
-    bank_repo = BankAccountRepository(db)
     existing_user = user_repo.get_by_username(payload.username)
     if existing_user is not None:
         raise HTTPException(
@@ -137,15 +136,12 @@ def register(payload: UserRegisterRequest, db: db_dependency):
         full_name=payload.full_name,
         hashed_password=get_password_hash(payload.password),
     )
-    bank_repo.create_default_accounts_for_user(
-        user_id=user.id, provider=choice(list(BankProviderEnum))
-    )
-
     return UserPublic.model_validate(user)
 
 
 @router.post("/login", response_model=TokenPayload)
 def login(payload: UserLoginRequest, response: Response, db: db_dependency):
+    """Authenticate a user and issue fresh access/refresh tokens."""
     user = authenticate_user(db, payload.username, payload.password)
     if user is None:
         raise HTTPException(
@@ -197,9 +193,13 @@ def login_oauth2_compat(
     return login(payload, response, db)
 
 
-@router.get("/me", response_model=UserPublic)
-def me(current_user: Annotated[UserDB, Depends(get_current_active_user)]):
-    return UserPublic.model_validate(current_user)
+@router.get("/me", response_model=UserMePublic)
+def me(
+    current_user: Annotated[UserDB, Depends(get_current_active_user)],
+    db: db_dependency,
+):
+    """Return the authenticated user's profile and spending summary."""
+    return get_user_me_payload(db, current_user=current_user)
 
 
 @router.get("/users", response_model=list[str])
@@ -208,6 +208,7 @@ def list_usernames(
     db: db_dependency,
     access_token: str | None = Cookie(default=None, alias=JWT_ACCESS_COOKIE_NAME),
 ):
+    """List usernames for authenticated sessions validated via access cookie."""
     _require_access_token_payload(response, access_token, db)
     return UserRepository(db).list_usernames()
 
@@ -219,6 +220,7 @@ def refresh_tokens(
     refresh_token: str | None = Cookie(default=None, alias=JWT_REFRESH_COOKIE_NAME),
     access_token: str | None = Cookie(default=None, alias=JWT_ACCESS_COOKIE_NAME),
 ):
+    """Rotate refresh tokens and return a new auth token pair."""
     payload = _require_refresh_token_payload(response, refresh_token, db)
     subject = payload.get("sub")
     if not isinstance(subject, str):
@@ -303,6 +305,7 @@ def logout(
     access_token: str | None = Cookie(default=None, alias=JWT_ACCESS_COOKIE_NAME),
     refresh_token: str | None = Cookie(default=None, alias=JWT_REFRESH_COOKIE_NAME),
 ):
+    """Revoke active tokens and clear auth cookies."""
     if access_token:
         try:
             payload = decode_token(access_token, "access")

@@ -2,7 +2,7 @@ from datetime import datetime
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from backend.models import TransactionPublic
+from backend.models import TransactionHydratedPublic, TransactionPublic
 
 
 class TransactionRepository:
@@ -25,6 +25,77 @@ class TransactionRepository:
         FROM transactions
         WHERE user_id = :user_id
         ORDER BY timestamp DESC
+        """)
+
+    SQL_SELECT_BY_USER_ID_HYDRATED = text("""
+        SELECT
+            t.id,
+            t.user_id,
+            t.source_account_id,
+            t.amount,
+            t.timestamp,
+            t.merchant,
+            t.impulse_zone_id,
+            t.possible_impulse_zone_id,
+            t.created_at,
+            iz.name AS impulse_zone_name,
+            piz.name AS possible_impulse_zone_name
+        FROM transactions t
+        LEFT JOIN impulse_zones iz ON iz.id = t.impulse_zone_id
+        LEFT JOIN possible_impulse_zones piz ON piz.id = t.possible_impulse_zone_id
+        WHERE t.user_id = :user_id
+        ORDER BY t.timestamp DESC
+        """)
+
+    SQL_SELECT_BY_USER_ID_AND_DATE_RANGE_HYDRATED = text("""
+        SELECT
+            t.id,
+            t.user_id,
+            t.source_account_id,
+            t.amount,
+            t.timestamp,
+            t.merchant,
+            t.impulse_zone_id,
+            t.possible_impulse_zone_id,
+            t.created_at,
+            iz.name AS impulse_zone_name,
+            piz.name AS possible_impulse_zone_name
+        FROM transactions t
+        LEFT JOIN impulse_zones iz ON iz.id = t.impulse_zone_id
+        LEFT JOIN possible_impulse_zones piz ON piz.id = t.possible_impulse_zone_id
+        WHERE t.user_id = :user_id
+            AND t.timestamp >= :start_ts
+            AND t.timestamp <= :end_ts
+        ORDER BY t.timestamp DESC
+        """)
+
+    SQL_SELECT_ALL_BY_DATE_RANGE_HYDRATED = text("""
+        SELECT
+            t.id,
+            t.user_id,
+            t.source_account_id,
+            t.amount,
+            t.timestamp,
+            t.merchant,
+            t.impulse_zone_id,
+            t.possible_impulse_zone_id,
+            t.created_at,
+            iz.name AS impulse_zone_name,
+            piz.name AS possible_impulse_zone_name
+        FROM transactions t
+        LEFT JOIN impulse_zones iz ON iz.id = t.impulse_zone_id
+        LEFT JOIN possible_impulse_zones piz ON piz.id = t.possible_impulse_zone_id
+        WHERE t.timestamp >= :start_ts
+            AND t.timestamp <= :end_ts
+        ORDER BY t.timestamp DESC
+        """)
+
+    SQL_SUM_USER_BY_DATE_RANGE = text("""
+        SELECT COALESCE(SUM(amount), 0) AS total
+        FROM transactions
+        WHERE user_id = :user_id
+            AND timestamp >= :start_ts
+            AND timestamp <= :end_ts
         """)
 
     SQL_SELECT_BY_USER_ID_PAGINATED = text("""
@@ -115,6 +186,84 @@ class TransactionRepository:
             .all()
         )
         return [TransactionPublic(**row) for row in rows]
+
+    def get_by_user_id_hydrated(self, user_id: int) -> list[TransactionHydratedPublic]:
+        """Get all transactions for a user with impulse names included."""
+        rows = (
+            self.db.execute(
+                self.SQL_SELECT_BY_USER_ID_HYDRATED,
+                {"user_id": user_id},
+            )
+            .mappings()
+            .all()
+        )
+        return [TransactionHydratedPublic(**row) for row in rows]
+
+    def get_by_user_id_and_date_range_hydrated(
+        self,
+        *,
+        user_id: int,
+        start: datetime,
+        end: datetime,
+    ) -> list[TransactionHydratedPublic]:
+        """Get user transactions in date range with impulse names."""
+        rows = (
+            self.db.execute(
+                self.SQL_SELECT_BY_USER_ID_AND_DATE_RANGE_HYDRATED,
+                {
+                    "user_id": user_id,
+                    "start_ts": start,
+                    "end_ts": end,
+                },
+            )
+            .mappings()
+            .all()
+        )
+        return [TransactionHydratedPublic(**row) for row in rows]
+
+    def get_all_by_date_range_hydrated(
+        self,
+        *,
+        start: datetime,
+        end: datetime,
+    ) -> list[TransactionHydratedPublic]:
+        """Get all transactions in date range with impulse names."""
+        rows = (
+            self.db.execute(
+                self.SQL_SELECT_ALL_BY_DATE_RANGE_HYDRATED,
+                {
+                    "start_ts": start,
+                    "end_ts": end,
+                },
+            )
+            .mappings()
+            .all()
+        )
+        return [TransactionHydratedPublic(**row) for row in rows]
+
+    def get_user_total_by_date_range(
+        self,
+        *,
+        user_id: int,
+        start: datetime,
+        end: datetime,
+    ) -> int:
+        """Get sum of user transaction amounts within date range."""
+        row = (
+            self.db.execute(
+                self.SQL_SUM_USER_BY_DATE_RANGE,
+                {
+                    "user_id": user_id,
+                    "start_ts": start,
+                    "end_ts": end,
+                },
+            )
+            .mappings()
+            .first()
+        )
+        if row is None:
+            return 0
+        return int(row["total"])
 
     def get_by_user_id_paginated(
         self, user_id: int, *, page: int = 1, page_size: int = 50

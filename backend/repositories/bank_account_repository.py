@@ -28,6 +28,14 @@ class BankAccountRepository:
         ORDER BY created_at DESC
         """)
 
+    SQL_SELECT_FIRST_BY_USER_ID_AND_TYPE = text("""
+        SELECT id, user_id, bank_account_id, account_number, sort_code, name, provider, type, amount, created_at, updated_at
+        FROM bank_accounts
+        WHERE user_id = :user_id AND type = :type
+        ORDER BY created_at ASC
+        LIMIT 1
+        """)
+
     SQL_SELECT_BY_ID = text("""
         SELECT id, user_id, bank_account_id, account_number, sort_code, name, provider, type, amount, created_at, updated_at
         FROM bank_accounts
@@ -155,6 +163,26 @@ class BankAccountRepository:
             .all()
         )
         return [BankAccountPublic(**row) for row in rows]
+
+    def get_first_by_user_id_and_type(
+        self,
+        *,
+        user_id: int,
+        account_type: AccountTypeEnum,
+    ) -> BankAccountPublic | None:
+        """Get the earliest created account for a user by account type."""
+        row = (
+            self.db.execute(
+                self.SQL_SELECT_FIRST_BY_USER_ID_AND_TYPE,
+                {
+                    "user_id": user_id,
+                    "type": account_type.value,
+                },
+            )
+            .mappings()
+            .first()
+        )
+        return BankAccountPublic(**row) if row else None
 
     def get_by_id_and_user_id(
         self, *, account_id: int, user_id: int

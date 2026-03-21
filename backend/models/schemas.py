@@ -29,6 +29,14 @@ class UserPublic(BaseModel):
         return value
 
 
+class UserMePublic(UserPublic):
+    goal: str | None = None
+    impulse_limit: int | None = None
+    tax_percentage: int | None = None
+    current_month_expenditure: int = 0
+    is_passed_limit: bool = False
+
+
 class UserDB(UserPublic):
     hashed_password: str
     created_at: datetime
@@ -66,6 +74,10 @@ class BankAccountCreate(BaseModel):
     type: AccountTypeEnum
 
 
+class CreateBankAccountsRequest(BaseModel):
+    provider: BankProviderEnum
+
+
 class BankAccountPublic(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -94,12 +106,49 @@ class PossibleImpulseZonePublic(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    user_id: int | None = None
     name: str
     created_at: datetime
 
 
+class ImpulseZoneCreate(BaseModel):
+    name: str
+
+
+class ImpulseZoneUpdate(BaseModel):
+    name: str
+
+
+class PromotePossibleImpulseRequest(BaseModel):
+    name: str | None = None
+
+
+class UserImpulseSetRequest(BaseModel):
+    impulse_ids: list[int] = Field(default_factory=list)
+
+
+class UserImpulsesBundlePublic(BaseModel):
+    impulses: list[ImpulseZonePublic]
+    possible: list[PossibleImpulseZonePublic]
+
+
+class CreateBankAccountsResponse(BaseModel):
+    current: BankAccountPublic
+    saving: BankAccountPublic
+
+
 class TransactionCreate(BaseModel):
     source_account_id: int
+    amount: int
+    timestamp: datetime
+    merchant: str
+    impulse_zone_id: int | None = None
+    possible_impulse_zone_id: int | None = None
+
+
+class TransactionWebhookCreate(BaseModel):
+    sort_code: str
+    account_number: str
     amount: int
     timestamp: datetime
     merchant: str
@@ -121,9 +170,34 @@ class TransactionPublic(BaseModel):
     created_at: datetime
 
 
+class TransactionHydratedPublic(TransactionPublic):
+    impulse_zone_name: str | None = None
+    possible_impulse_zone_name: str | None = None
+
+
+class TransactionDateRangeQuery(BaseModel):
+    start: datetime
+    end: datetime
+
+
 class UserMetadataCreate(BaseModel):
     goal: str | None = None
     bank_account_id: int | None = None
+    impulse_limit: int | None = None
+    tax_percentage: int | None = None
+
+
+class UserGoalSetRequest(BaseModel):
+    goal: str | None = None
+    bank_account_id: int | None = None
+    impulse_limit: int | None = None
+    tax_percentage: int | None = None
+
+
+class UserLimitStatusPublic(BaseModel):
+    current_month_expenditure: int
+    impulse_limit: int | None = None
+    is_passed_limit: bool
 
 
 class UserMetadataPublic(BaseModel):
@@ -133,6 +207,8 @@ class UserMetadataPublic(BaseModel):
     user_id: int
     goal: str | None = None
     bank_account_id: int | None = None
+    impulse_limit: int | None = None
+    tax_percentage: int | None = None
     created_at: datetime
     updated_at: datetime
 

@@ -23,7 +23,7 @@ const ImpulseZonesPage = () => {
   return (
     <div className="space-y-6 animate-fade-up">
       <div className="text-center">
-        <h2 className="text-xl font-bold font-display">So… what do you impulse buy?</h2>
+        <h2 className="text-xl font-bold">So… what do you impulse buy?</h2>
         <div className="flex items-center gap-1 justify-center mt-1">
           <p className="text-muted-foreground text-sm">Select your weak spots</p>
           <img src="/horse-head.png" alt="Horse" className="w-4 h-4 object-contain inline" />

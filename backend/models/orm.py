@@ -53,7 +53,7 @@ class ImpulseZoneORM(Base):
     __tablename__ = "impulse_zones"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=False), server_default=func.now(), nullable=False
     )
@@ -63,6 +63,12 @@ class PossibleImpulseZoneORM(Base):
     __tablename__ = "possible_impulse_zones"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int | None] = mapped_column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=True,
+        index=True,
+    )
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=False), server_default=func.now(), nullable=False
@@ -121,6 +127,8 @@ class UserMetadataORM(Base):
     bank_account_id: Mapped[int | None] = mapped_column(
         Integer, ForeignKey("bank_accounts.id"), nullable=True
     )
+    impulse_limit: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    tax_percentage: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=False), server_default=func.now(), nullable=False
     )
