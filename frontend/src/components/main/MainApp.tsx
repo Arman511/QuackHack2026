@@ -6,10 +6,10 @@ import NotificationsTab from "./tabs/NotificationsTab";
 import ProfileTab from "./tabs/ProfileTab";
 
 const tabs = [
-  { key: "dashboard", label: "Dashboard", icon: "🐴" },
-  { key: "goals", label: "Goals", icon: "💰" },
-  { key: "notifications", label: "Alerts", icon: "🔔" },
-  { key: "profile", label: "Profile", icon: "👤" },
+  { key: "dashboard", label: "Dashboard", icon: "horse", isImage: true },
+  { key: "goals", label: "Goals", icon: "💰", isImage: false },
+  { key: "notifications", label: "Alerts", icon: "🔔", isImage: false },
+  { key: "profile", label: "Profile", icon: "👤", isImage: false },
 ];
 
 const MainApp = () => {
@@ -35,7 +35,11 @@ const MainApp = () => {
             onClick={() => setActiveTab(tab.key)}
           >
             <span className="text-lg relative">
-              {tab.icon}
+              {tab.isImage ? (
+                <img src="/horse-head.png" alt="Horse" className="w-6 h-6 object-contain" />
+              ) : (
+                tab.icon
+              )}
               {tab.key === "notifications" && unread > 0 && (
                 <span className="absolute -top-1 -right-2 w-4 h-4 bg-impulse text-[10px] font-bold text-primary-foreground rounded-full flex items-center justify-center">
                   {unread > 9 ? "9+" : unread}

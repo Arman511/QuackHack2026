@@ -15,12 +15,16 @@ const ProfileTab = () => {
         </p>
         <div className="space-y-2">
           <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Email</span>
-            <span className="text-sm font-medium">{email || "cowboy@ranch.com"}</span>
+            <span className="text-sm text-muted-foreground">First Name</span>
+            <span className="text-sm font-medium">Impulse</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Username</span>
-            <span className="text-sm font-medium">ImpulseCowboy</span>
+            <span className="text-sm text-muted-foreground">Last Name</span>
+            <span className="text-sm font-medium">Cowboy</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-sm text-muted-foreground">Email</span>
+            <span className="text-sm font-medium">{email || "cowboy@ranch.com"}</span>
           </div>
         </div>
       </div>
@@ -56,7 +60,10 @@ const ProfileTab = () => {
             </div>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm">Horse Neigh Alerts 🐴</span>
+            <div className="flex items-center gap-1">
+              <span className="text-sm">Horse Neigh Alerts</span>
+              <img src="/horse-head.png" alt="Horse" className="w-4 h-4 object-contain inline" />
+            </div>
             <div className="w-10 h-6 bg-primary rounded-full relative cursor-pointer">
               <div className="absolute top-1 right-1 w-4 h-4 bg-primary-foreground rounded-full" />
             </div>
@@ -64,8 +71,13 @@ const ProfileTab = () => {
         </div>
       </div>
 
-      <Button variant="outline" onClick={logout} className="w-full active:scale-[0.97]">
-        Log Out 🐴
+      <Button
+        variant="outline"
+        onClick={logout}
+        className="w-full active:scale-[0.97] flex items-center gap-2 justify-center"
+      >
+        <span>Log Out</span>
+        <img src="/horse-head.png" alt="Horse" className="w-5 h-5 object-contain" />
       </Button>
     </div>
   );
