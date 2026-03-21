@@ -23,6 +23,18 @@
       "description": "Seed default admin user and impulse zones",
       "sqlite": "004_seed_admin_and_impulse_zones.sqlite.sql",
       "postgresql": "004_seed_admin_and_impulse_zones.postgresql.sql"
+    },
+    {
+      "id": "005_add_user_roles",
+      "description": "Add CSV roles column to users for RBAC scope mapping",
+      "sqlite": "005_add_user_roles.sqlite.sql",
+      "postgresql": "005_add_user_roles.postgresql.sql"
+    },
+    {
+      "id": "006_add_source_account_to_transactions",
+      "description": "Add source account ownership reference to transactions",
+      "sqlite": "006_add_source_account_to_transactions.sqlite.sql",
+      "postgresql": "006_add_source_account_to_transactions.postgresql.sql"
     }
   ]
 }

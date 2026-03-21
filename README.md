@@ -19,3 +19,11 @@ bun start
 ```
 
 This project was created using `bun init` in bun v1.3.10. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+
+## Git Hooks
+
+Install repository hooks so `make format` runs automatically before each commit:
+
+```bash
+make install-hooks
+```

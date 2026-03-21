@@ -1,31 +1,12 @@
 from datetime import datetime
-from enum import Enum
-from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
-from sqlalchemy import Boolean, DateTime, Integer, String, Text, func, ForeignKey
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from backend.database import Base
+from backend.models.enums import AccountTypeEnum, BankProviderEnum
+from backend.utils.database import Base
 
 
-# ===== ENUMS =====
-class UserTypeEnum(str, Enum):
-    ADMIN = "ADMIN"
-    USER = "USER"
-
-
-class BankProviderEnum(str, Enum):
-    REVOLITE = "REVOLITE"
-    HAYSBC = "HAYSBC"
-
-
-class AccountTypeEnum(str, Enum):
-    CURRENT = "CURRENT"
-    SAVING = "SAVING"
-
-
-# ===== ORM MODELS =====
 class UserORM(Base):
     __tablename__ = "users"
 
@@ -37,9 +18,7 @@ class UserORM(Base):
     full_name: Mapped[str | None] = mapped_column(String, nullable=True)
     hashed_password: Mapped[str] = mapped_column(String, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    type: Mapped[UserTypeEnum] = mapped_column(
-        String, default=UserTypeEnum.USER, nullable=False
-    )
+    roles: Mapped[str] = mapped_column(String, default="USER", nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=False), server_default=func.now(), nullable=False
     )
@@ -112,6 +91,9 @@ class TransactionORM(Base):
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("users.id"), nullable=False, index=True
     )
+    source_account_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("bank_accounts.id"), nullable=True, index=True
+    )
     amount: Mapped[int] = mapped_column(Integer, nullable=False)
     timestamp: Mapped[datetime] = mapped_column(
         DateTime(timezone=False), nullable=False, index=True
@@ -148,126 +130,3 @@ class UserMetadataORM(Base):
         nullable=False,
         onupdate=func.now(),
     )
-
-
-# ===== PYDANTIC REQUEST/RESPONSE SCHEMAS =====
-class UserPublic(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    username: str
-    email: str | None = None
-    full_name: str | None = None
-    is_active: bool
-    type: UserTypeEnum
-
-
-class UserDB(UserPublic):
-    hashed_password: str
-    created_at: datetime
-
-
-# Bank Account Models
-class BankAccountCreate(BaseModel):
-    account_number: str
-    sort_code: str
-    name: str
-    provider: BankProviderEnum
-    type: AccountTypeEnum
-
-
-class BankAccountPublic(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    user_id: int
-    bank_account_id: str
-    account_number: str
-    sort_code: str
-    name: str
-    provider: BankProviderEnum
-    type: AccountTypeEnum
-    amount: int
-    created_at: datetime
-    updated_at: datetime
-
-
-# Impulse Zone Models
-class ImpulseZonePublic(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    name: str
-    created_at: datetime
-
-
-class PossibleImpulseZonePublic(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    name: str
-    created_at: datetime
-
-
-# Transaction Models
-class TransactionCreate(BaseModel):
-    amount: int
-    timestamp: datetime
-    merchant: str
-    impulse_zone_id: int | None = None
-    possible_impulse_zone_id: int | None = None
-
-
-class TransactionPublic(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    user_id: int
-    amount: int
-    timestamp: datetime
-    merchant: str
-    impulse_zone_id: int | None = None
-    possible_impulse_zone_id: int | None = None
-    created_at: datetime
-
-
-# User Metadata Models
-class UserMetadataCreate(BaseModel):
-    goal: str | None = None
-    bank_account_id: int | None = None
-
-
-class UserMetadataPublic(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    user_id: int
-    goal: str | None = None
-    bank_account_id: int | None = None
-    created_at: datetime
-    updated_at: datetime
-
-
-# Auth Models
-class UserRegisterRequest(BaseModel):
-    username: str
-    password: str
-    email: str | None = None
-    full_name: str | None = None
-
-
-class UserLoginRequest(BaseModel):
-    username: str
-    password: str
-
-
-class TokenPayload(BaseModel):
-    access_token: str
-    refresh_token: str
-    token_type: str = "bearer"
-    expires_in: int
-
-
-class RefreshTokensCompatRequest(BaseModel):
-    refresh_token: str
-    access_token: str | None = None
