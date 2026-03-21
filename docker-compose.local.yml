@@ -3,7 +3,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: quackhack2026-api:local
     restart: unless-stopped
     env_file:
       - .env
