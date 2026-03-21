@@ -1,9 +1,12 @@
 from datetime import UTC, datetime, timedelta
+from typing import Annotated
 from uuid import uuid4
 
+from fastapi.params import Depends
+from fastapi.security import OAuth2PasswordRequestForm
 import jwt
 from jwt.exceptions import PyJWTError
-from fastapi import APIRouter, Cookie, HTTPException, Query, Response, status
+from fastapi import APIRouter, Cookie, HTTPException, Response, status
 from pwdlib import PasswordHash
 from sqlalchemy.orm import Session
 
@@ -30,7 +33,6 @@ from backend.repositories.user_repository import UserRepository
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 password_hash = PasswordHash.recommended()
-USERS_PAGE_SIZE = 100
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -177,8 +179,8 @@ def register(payload: UserRegisterRequest, db: db_dependency):
 
 
 @router.post("/login", response_model=TokenPayload)
-def login(payload: UserLoginRequest, response: Response, db: db_dependency):
-    user = authenticate_user(db, payload.username, payload.password)
+def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], response: Response, db: db_dependency):
+    user = authenticate_user(db, form_data.username, form_data.password)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Bad username or password"
@@ -198,7 +200,7 @@ def login(payload: UserLoginRequest, response: Response, db: db_dependency):
     )
     _set_auth_cookies(response, access_token, refresh_token)
 
-    return TokenPayload(access_token=access_token, refresh_token=refresh_token)
+    return TokenPayload(access_token=access_token, refresh_token=refresh_token, expires_in=int(ACCESS_EXPIRES.total_seconds()))
 
 
 @router.get("/me", response_model=UserPublic)
@@ -227,11 +229,10 @@ def me(
 def list_usernames(
     response: Response,
     db: db_dependency,
-    page: int = Query(default=1, ge=1),
     access_token: str | None = Cookie(default=None, alias=JWT_ACCESS_COOKIE_NAME),
 ):
     _require_access_token_payload(response, access_token, db)
-    return UserRepository(db).list_usernames(page=page, page_size=USERS_PAGE_SIZE)
+    return UserRepository(db).list_usernames()
 
 
 @router.post("/freshness")
