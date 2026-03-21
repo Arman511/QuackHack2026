@@ -4709,7 +4709,11 @@ packages:
       }
     engines: { node: ">=12" }
 
+<<<<<<< HEAD
   ws@8.19.0:
+=======
+  ws@8.20.0:
+>>>>>>> 9ea8a1b065a02fd741ff5ee339dcf06228c4445f
     resolution:
       {
         integrity: sha512-blAT2mjOEIi0ZzruJfIhb3nps74PRWTCz1IjglWEEpQl5XS/UNama6u2/rjFkDDouqr4L67ry+1aGIALViWjDg==,
@@ -7532,7 +7536,11 @@ snapshots:
       string-width: 5.1.2
       strip-ansi: 7.2.0
 
+<<<<<<< HEAD
   ws@8.19.0: {}
+=======
+  ws@8.20.0: {}
+>>>>>>> 9ea8a1b065a02fd741ff5ee339dcf06228c4445f
 
   xml-name-validator@4.0.0: {}
 

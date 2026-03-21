@@ -1,6 +1,23 @@
 from fastapi import APIRouter, Query
 
+<<<<<<< HEAD
 from backend.models import UserAdminPatch, UserRead, UserUpdate
+=======
+from backend.models import (
+    PossibleImpulseZonePublic,
+    UserAdminPatch,
+    UserGoalSetRequest,
+    UserLimitStatusPublic,
+    UserMetadataPublic,
+    UserRead,
+    UserUpdate,
+)
+from backend.services.bank_service import (
+    get_user_limit_status,
+    get_user_possible_impulses,
+    set_user_goal,
+)
+>>>>>>> 9ea8a1b065a02fd741ff5ee339dcf06228c4445f
 from backend.services.user_service import (
     admin_patch_user,
     update_current_user_profile,
@@ -21,15 +38,48 @@ def update_my_profile(
     db: db_dependency,
     current_user: current_user_dependency,
 ):
+    """Update the authenticated user's profile fields."""
     return update_current_user_profile(db, current_user=current_user, payload=payload)
 
 
+<<<<<<< HEAD
+=======
+@router.post("/me/goal", response_model=UserMetadataPublic)
+def set_my_goal(
+    payload: UserGoalSetRequest,
+    db: db_dependency,
+    current_user: current_user_dependency,
+):
+    """Set or update the authenticated user's goal and spending controls."""
+    return set_user_goal(db, current_user=current_user, payload=payload)
+
+
+@router.get("/me/is-passed-limit", response_model=UserLimitStatusPublic)
+def get_my_limit_status(
+    db: db_dependency,
+    current_user: current_user_dependency,
+):
+    """Return monthly spending and limit status for the authenticated user."""
+    return get_user_limit_status(db, current_user=current_user)
+
+
+@router.get("/me/possible-impulses", response_model=list[PossibleImpulseZonePublic])
+def get_my_possible_impulses(
+    db: db_dependency,
+    current_user: current_user_dependency,
+):
+    """List possible impulse zones available to the authenticated user."""
+    return get_user_possible_impulses(db, current_user=current_user)
+
+
+>>>>>>> 9ea8a1b065a02fd741ff5ee339dcf06228c4445f
 @router.get("/{user_id}", response_model=UserRead)
 def get_user(
     user_id: int,
     db: db_dependency,
     admin_user: admin_user_dependency,
 ):
+    """Get a user by ID (admin only)."""
     return admin_get_user_by_id(db, actor=admin_user, user_id=user_id)
 
 
@@ -40,4 +90,5 @@ def patch_user_as_admin(
     db: db_dependency,
     admin_user: admin_user_dependency,
 ):
+    """Patch user profile and access fields (admin only)."""
     return admin_patch_user(db, actor=admin_user, user_id=user_id, payload=payload)
