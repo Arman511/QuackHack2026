@@ -14,6 +14,11 @@ export default defineConfig(({ mode }) => ({
       "/api": {
         target: "http://localhost:8000",
       },
+      "/external": {
+        target: "https://revolite-hackathon.vercel.app",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/external/, ""),
+      },
     },
   },
   plugins: [react()],
