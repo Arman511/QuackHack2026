@@ -7,6 +7,8 @@ const LoginPage = () => {
   const [email, setLocalEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [isLogin, setIsLogin] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -19,7 +21,11 @@ const LoginPage = () => {
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="card-neigh w-full max-w-md animate-fade-up">
         <div className="text-center mb-8">
-          <span className="text-5xl mb-4 block">🐴</span>
+          <img
+            src="/horse-head.png"
+            alt="Horse"
+            className="w-16 h-16 mx-auto mb-4 object-contain"
+          />
           <h1 className="text-2xl font-bold font-display leading-tight">
             Welcome to Neigh-ver Go Broke
           </h1>
@@ -27,6 +33,34 @@ const LoginPage = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {!isLogin && (
+            <>
+              <div className="grid grid-cols-2 gap-3 animate-fade-up">
+                <div>
+                  <label className="text-sm font-medium mb-1.5 block">First Name</label>
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="w-full h-11 px-4 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    placeholder="Impulse"
+                    required={!isLogin}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-1.5 block">Last Name</label>
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="w-full h-11 px-4 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    placeholder="Cowboy"
+                    required={!isLogin}
+                  />
+                </div>
+              </div>
+            </>
+          )}
           <div>
             <label className="text-sm font-medium mb-1.5 block">Email</label>
             <input

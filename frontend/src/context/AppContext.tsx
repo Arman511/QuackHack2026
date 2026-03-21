@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState, ReactNode } from "react";
 import {
   mockTransactions,
   mockPunishments,
-  mockGoals,
   mockNotifications,
   Transaction,
   Punishment,
@@ -24,6 +23,8 @@ interface AppState {
   notifications: Notification[];
   totalSaved: number;
   impulseSpent: number;
+  notificationsEnabled: boolean;
+  horseNeighAlertsEnabled: boolean;
 }
 
 interface AppContextType extends AppState {
@@ -34,9 +35,13 @@ interface AppContextType extends AppState {
   toggleImpulseCategory: (c: string) => void;
   addCustomCategory: (c: string) => void;
   addGoal: (g: Goal) => void;
+  removeGoal: (id: string) => void;
+  clearGoals: () => void;
   updateGoal: (id: string, updates: Partial<Goal>) => void;
   setImpulseBudget: (b: number) => void;
   setNeighTaxPercent: (p: number) => void;
+  toggleNotifications: () => void;
+  toggleHorseNeighAlerts: () => void;
   logout: () => void;
 }
 
@@ -55,7 +60,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     email: "",
     connectedBank: null,
     impulseCategories: [],
-    goals: mockGoals,
+    goals: [],
     impulseBudget: 100,
     neighTaxPercent: 100,
     transactions: mockTransactions,
@@ -63,6 +68,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     notifications: mockNotifications,
     totalSaved: 240,
     impulseSpent: 45,
+    notificationsEnabled: true,
+    horseNeighAlertsEnabled: true,
   });
 
   const update = (partial: Partial<AppState>) => setState((prev) => ({ ...prev, ...partial }));
@@ -88,6 +95,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }));
     },
     addGoal: (g) => setState((prev) => ({ ...prev, goals: [...prev.goals, g] })),
+    removeGoal: (id) =>
+      setState((prev) => ({ ...prev, goals: prev.goals.filter((g) => g.id !== id) })),
+    clearGoals: () => setState((prev) => ({ ...prev, goals: [] })),
     updateGoal: (id, updates) =>
       setState((prev) => ({
         ...prev,
@@ -95,6 +105,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       })),
     setImpulseBudget: (b) => update({ impulseBudget: b }),
     setNeighTaxPercent: (p) => update({ neighTaxPercent: p }),
+    toggleNotifications: () => update({ notificationsEnabled: !state.notificationsEnabled }),
+    toggleHorseNeighAlerts: () =>
+      update({ horseNeighAlertsEnabled: !state.horseNeighAlertsEnabled }),
     logout: () => update({ isOnboarded: false, onboardingStep: 0 }),
   };
 

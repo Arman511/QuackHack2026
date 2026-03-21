@@ -24,7 +24,10 @@ const ImpulseZonesPage = () => {
     <div className="space-y-6 animate-fade-up">
       <div className="text-center">
         <h2 className="text-xl font-bold font-display">So… what do you impulse buy?</h2>
-        <p className="text-muted-foreground text-sm mt-1">Select your weak spots 🐴</p>
+        <div className="flex items-center gap-1 justify-center mt-1">
+          <p className="text-muted-foreground text-sm">Select your weak spots</p>
+          <img src="/horse-head.png" alt="Horse" className="w-4 h-4 object-contain inline" />
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -70,9 +73,10 @@ const ImpulseZonesPage = () => {
       <Button
         onClick={() => setOnboardingStep(3)}
         disabled={selected.length === 0}
-        className="w-full h-11 active:scale-[0.97]"
+        className="w-full h-11 active:scale-[0.97] flex items-center gap-2 justify-center"
       >
-        Continue 🐴
+        <span>Continue</span>
+        <img src="/horse-head.png" alt="Horse" className="w-5 h-5 object-contain" />
       </Button>
     </div>
   );

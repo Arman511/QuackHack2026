@@ -2,7 +2,15 @@ import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 
 const ProfileTab = () => {
-  const { email, connectedBank, logout } = useApp();
+  const {
+    email,
+    connectedBank,
+    notificationsEnabled,
+    horseNeighAlertsEnabled,
+    toggleNotifications,
+    toggleHorseNeighAlerts,
+    logout,
+  } = useApp();
 
   return (
     <div className="p-4 space-y-5">
@@ -15,12 +23,16 @@ const ProfileTab = () => {
         </p>
         <div className="space-y-2">
           <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Email</span>
-            <span className="text-sm font-medium">{email || "cowboy@ranch.com"}</span>
+            <span className="text-sm text-muted-foreground">First Name</span>
+            <span className="text-sm font-medium">Impulse</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Username</span>
-            <span className="text-sm font-medium">ImpulseCowboy</span>
+            <span className="text-sm text-muted-foreground">Last Name</span>
+            <span className="text-sm font-medium">Cowboy</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-sm text-muted-foreground">Email</span>
+            <span className="text-sm font-medium">{email || "cowboy@ranch.com"}</span>
           </div>
         </div>
       </div>
@@ -51,21 +63,39 @@ const ProfileTab = () => {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm">Notifications</span>
-            <div className="w-10 h-6 bg-primary rounded-full relative cursor-pointer">
-              <div className="absolute top-1 right-1 w-4 h-4 bg-primary-foreground rounded-full" />
+            <div
+              onClick={toggleNotifications}
+              className={`w-10 h-6 rounded-full relative cursor-pointer transition-colors ${notificationsEnabled ? "bg-primary" : "bg-muted"}`}
+            >
+              <div
+                className={`absolute top-1 w-4 h-4 bg-primary-foreground rounded-full transition-all ${notificationsEnabled ? "right-1" : "left-1"}`}
+              />
             </div>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm">Horse Neigh Alerts 🐴</span>
-            <div className="w-10 h-6 bg-primary rounded-full relative cursor-pointer">
-              <div className="absolute top-1 right-1 w-4 h-4 bg-primary-foreground rounded-full" />
+            <div className="flex items-center gap-1">
+              <span className="text-sm">Horse Neigh Alerts</span>
+              <img src="/horse-head.png" alt="Horse" className="w-4 h-4 object-contain inline" />
+            </div>
+            <div
+              onClick={toggleHorseNeighAlerts}
+              className={`w-10 h-6 rounded-full relative cursor-pointer transition-colors ${horseNeighAlertsEnabled ? "bg-primary" : "bg-muted"}`}
+            >
+              <div
+                className={`absolute top-1 w-4 h-4 bg-primary-foreground rounded-full transition-all ${horseNeighAlertsEnabled ? "right-1" : "left-1"}`}
+              />
             </div>
           </div>
         </div>
       </div>
 
-      <Button variant="outline" onClick={logout} className="w-full active:scale-[0.97]">
-        Log Out 🐴
+      <Button
+        variant="outline"
+        onClick={logout}
+        className="w-full active:scale-[0.97] flex items-center gap-2 justify-center"
+      >
+        <span>Log Out</span>
+        <img src="/horse-head.png" alt="Horse" className="w-5 h-5 object-contain" />
       </Button>
     </div>
   );
