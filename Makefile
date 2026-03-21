@@ -31,7 +31,7 @@ build:
 	$(COMPOSE) -f $(COMPOSE_FILE) build
 
 format:
-	uvx black .
+	uvx black --target-version py314 --fast .
 ifeq ($(HAS_PNPM),yes)
 	pnpm dlx prettier --write .
 else
@@ -39,7 +39,7 @@ else
 endif
 
 lint:
-	uvx black --check .
+	uvx --target-version py314 black --check .
 ifeq ($(HAS_PNPM),yes)
 ifeq ($(HAS_FRONTEND_PACKAGE),yes)
 ifeq ($(HAS_FRONTEND_NODE_MODULES),yes)
