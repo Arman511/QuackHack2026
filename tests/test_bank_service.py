@@ -4,10 +4,13 @@ from typing import cast
 
 import pytest
 from fastapi import HTTPException
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.models import (
+    AccountTypeEnum,
     BankProviderEnum,
+    CreateBankAccountsRequest,
     SetupBankAccountDetails,
     SetupBankAccountsRequest,
     TransactionDateRangeQuery,
@@ -234,3 +237,116 @@ def test_setup_bank_accounts_for_user_creates_current_and_saving(monkeypatch) ->
     }
     assert result.current.account_number == "12345678"
     assert result.saving.account_number == "87654321"
+
+
+def test_create_bank_accounts_for_user_creates_requested_type(monkeypatch) -> None:
+    payload = CreateBankAccountsRequest(
+        provider=BankProviderEnum.REV_O_TROT,
+        type=AccountTypeEnum.SAVING,
+        account_number="87654321",
+        sort_code="445566",
+        amount=1200,
+    )
+    calls = {}
+
+    class FakeBankAccountRepository:
+        def __init__(self, db):
+            calls["db"] = db
+
+        def create_account(
+            self,
+            *,
+            user_id,
+            account_number,
+            sort_code,
+            name,
+            provider,
+            account_type,
+            initial_amount,
+        ):
+            calls["create_args"] = {
+                "user_id": user_id,
+                "account_number": account_number,
+                "sort_code": sort_code,
+                "name": name,
+                "provider": provider,
+                "account_type": account_type,
+                "initial_amount": initial_amount,
+            }
+            return {
+                "id": 3,
+                "user_id": user_id,
+                "bank_account_id": "x",
+                "account_number": account_number,
+                "sort_code": sort_code,
+                "name": name,
+                "provider": provider,
+                "type": account_type,
+                "amount": initial_amount,
+                "created_at": datetime(2026, 1, 1, 12, 0, 0),
+                "updated_at": datetime(2026, 1, 1, 12, 0, 0),
+            }
+
+    marker_db = cast(Session, object())
+    monkeypatch.setattr(
+        bank_service,
+        "BankAccountRepository",
+        FakeBankAccountRepository,
+    )
+
+    result = bank_service.create_bank_accounts_for_user(
+        db=marker_db,
+        current_user=cast(UserDB, SimpleNamespace(id=42)),
+        payload=payload,
+    )
+
+    assert calls["db"] is marker_db
+    assert calls["create_args"] == {
+        "user_id": 42,
+        "account_number": "87654321",
+        "sort_code": "445566",
+        "name": "REV-O-TROT Saving Account",
+        "provider": BankProviderEnum.REV_O_TROT,
+        "account_type": AccountTypeEnum.SAVING,
+        "initial_amount": 1200,
+    }
+    assert result.type == AccountTypeEnum.SAVING
+    assert result.amount == 1200
+
+
+def test_create_bank_accounts_for_user_rejects_duplicate_account_identifiers(
+    monkeypatch,
+) -> None:
+    payload = CreateBankAccountsRequest(
+        provider=BankProviderEnum.REV_O_TROT,
+        type=AccountTypeEnum.CURRENT,
+        account_number="12345678",
+        sort_code="112233",
+        amount=999,
+    )
+
+    class FakeBankAccountRepository:
+        def __init__(self, db):
+            pass
+
+        def create_account(self, **kwargs):
+            raise IntegrityError("insert", kwargs, Exception("duplicate"))
+
+    monkeypatch.setattr(
+        bank_service,
+        "BankAccountRepository",
+        FakeBankAccountRepository,
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        bank_service.create_bank_accounts_for_user(
+            db=cast(Session, object()),
+            current_user=cast(UserDB, SimpleNamespace(id=42)),
+            payload=payload,
+        )
+
+    assert exc_info.value.status_code == 409
+    assert (
+        exc_info.value.detail
+        == "Bank account with this account number and sort code already exists"
+    )
