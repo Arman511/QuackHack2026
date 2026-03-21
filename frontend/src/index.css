@@ -1,0 +1,116 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Playfair+Display:wght@700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 39 33% 96%;
+    --foreground: 25 20% 16%;
+
+    --card: 36 30% 98%;
+    --card-foreground: 25 20% 16%;
+
+    --popover: 36 30% 98%;
+    --popover-foreground: 25 20% 16%;
+
+    --primary: 152 45% 38%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 30 30% 90%;
+    --secondary-foreground: 25 20% 16%;
+
+    --muted: 35 20% 92%;
+    --muted-foreground: 25 10% 50%;
+
+    --accent: 30 55% 52%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 30 20% 88%;
+    --input: 30 20% 88%;
+    --ring: 152 45% 38%;
+
+    --radius: 0.75rem;
+
+    --savings: 152 45% 38%;
+    --impulse: 0 72% 51%;
+    --warning: 38 92% 50%;
+    --horse-brown: 25 40% 35%;
+    --horse-cream: 39 33% 96%;
+    --horse-tan: 30 30% 80%;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    overflow-wrap: break-word;
+  }
+
+  h1, h2, h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+}
+
+@layer utilities {
+  .text-gradient-horse {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, hsl(var(--horse-brown)), hsl(var(--accent)));
+  }
+}
+
+@layer components {
+  .card-neigh {
+    @apply bg-card rounded-2xl border border-border shadow-sm p-5 transition-shadow duration-200;
+  }
+  .card-neigh:hover {
+    box-shadow: 0 4px 20px hsl(var(--border) / 0.5);
+  }
+
+  .bubble-tag {
+    @apply inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium cursor-pointer transition-all duration-200 select-none border;
+    background: hsl(var(--secondary));
+    border-color: hsl(var(--border));
+    color: hsl(var(--foreground));
+  }
+  .bubble-tag:active {
+    transform: scale(0.96);
+  }
+  .bubble-tag[data-selected="true"] {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border-color: hsl(var(--primary));
+  }
+
+  .bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 bg-card border-t border-border flex items-center justify-around py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] z-50;
+  }
+  .bottom-nav-item {
+    @apply flex flex-col items-center gap-0.5 px-3 py-1.5 text-xs font-medium transition-colors duration-150;
+    color: hsl(var(--muted-foreground));
+  }
+  .bottom-nav-item[data-active="true"] {
+    color: hsl(var(--primary));
+  }
+}
