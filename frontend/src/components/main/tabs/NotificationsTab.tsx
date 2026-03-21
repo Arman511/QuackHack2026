@@ -1,4 +1,4 @@
-import { useApp } from "@/context/AppContext";
+import { useApp } from "@/hooks/useApp";
 import { Bell, Skull, Vault, Megaphone } from "lucide-react";
 
 const typeColors: Record<string, string> = {

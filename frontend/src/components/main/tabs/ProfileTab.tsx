@@ -1,9 +1,24 @@
-import { useApp } from "@/context/AppContext";
+import { useApp } from "@/hooks/useApp";
 import { Button } from "@/components/ui/button";
 import { User, Check } from "lucide-react";
 
 const ProfileTab = () => {
-  const { email, connectedBank, logout } = useApp();
+  const {
+    email,
+    user,
+    connectedBank,
+    notificationsEnabled,
+    horseNeighAlertsEnabled,
+    toggleNotifications,
+    toggleHorseNeighAlerts,
+    logout,
+  } = useApp();
+
+  // Parse full name into first and last name
+  const fullName = user?.full_name || "";
+  const nameParts = fullName.split(" ");
+  const firstName = nameParts[0] || "Impulse";
+  const lastName = nameParts.slice(1).join(" ") || "Cowboy";
 
   return (
     <div className="p-4 space-y-5">
@@ -20,15 +35,17 @@ const ProfileTab = () => {
         <div className="space-y-2">
           <div className="flex justify-between">
             <span className="text-sm text-muted-foreground">First Name</span>
-            <span className="text-sm font-medium">Impulse</span>
+            <span className="text-sm font-medium">{firstName}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-sm text-muted-foreground">Last Name</span>
-            <span className="text-sm font-medium">Cowboy</span>
+            <span className="text-sm font-medium">{lastName}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-sm text-muted-foreground">Email</span>
-            <span className="text-sm font-medium">{email || "cowboy@ranch.com"}</span>
+            <span className="text-sm font-medium">
+              {user?.email || email || "cowboy@ranch.com"}
+            </span>
           </div>
         </div>
       </div>
@@ -62,8 +79,13 @@ const ProfileTab = () => {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm">Notifications</span>
-            <div className="w-10 h-6 bg-primary rounded-full relative cursor-pointer">
-              <div className="absolute top-1 right-1 w-4 h-4 bg-primary-foreground rounded-full" />
+            <div
+              onClick={toggleNotifications}
+              className={`w-10 h-6 rounded-full relative cursor-pointer transition-colors ${notificationsEnabled ? "bg-primary" : "bg-muted"}`}
+            >
+              <div
+                className={`absolute top-1 w-4 h-4 bg-primary-foreground rounded-full transition-all ${notificationsEnabled ? "right-1" : "left-1"}`}
+              />
             </div>
           </div>
           <div className="flex items-center justify-between">
@@ -71,8 +93,13 @@ const ProfileTab = () => {
               <span className="text-sm">Horse Neigh Alerts</span>
               <img src="/horse-head.png" alt="Horse" className="w-4 h-4 object-contain inline" />
             </div>
-            <div className="w-10 h-6 bg-primary rounded-full relative cursor-pointer">
-              <div className="absolute top-1 right-1 w-4 h-4 bg-primary-foreground rounded-full" />
+            <div
+              onClick={toggleHorseNeighAlerts}
+              className={`w-10 h-6 rounded-full relative cursor-pointer transition-colors ${horseNeighAlertsEnabled ? "bg-primary" : "bg-muted"}`}
+            >
+              <div
+                className={`absolute top-1 w-4 h-4 bg-primary-foreground rounded-full transition-all ${horseNeighAlertsEnabled ? "right-1" : "left-1"}`}
+              />
             </div>
           </div>
         </div>
@@ -83,7 +110,7 @@ const ProfileTab = () => {
         className="w-full active:scale-[0.97] flex items-center gap-2 justify-center"
       >
         <span>Log Out</span>
-        <img src="/horse-head.png" alt="Horse" className="w-5 h-5 object-contain" />
+        <img src="/blonde-horse-head.png" alt="Horse" className="w-5 h-5 object-contain" />
       </Button>
     </div>
   );

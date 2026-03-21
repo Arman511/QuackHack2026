@@ -1,3 +1,8 @@
+import random
+import string
+import uuid
+import logging
+
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -6,6 +11,8 @@ from backend.models import (
     BankProviderEnum,
     AccountTypeEnum,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class BankAccountRepository:
@@ -22,6 +29,14 @@ class BankAccountRepository:
         FROM bank_accounts
         WHERE user_id = :user_id
         ORDER BY created_at DESC
+        """)
+
+    SQL_SELECT_FIRST_BY_USER_ID_AND_TYPE = text("""
+        SELECT id, user_id, bank_account_id, account_number, sort_code, name, provider, type, amount, created_at, updated_at
+        FROM bank_accounts
+        WHERE user_id = :user_id AND type = :type
+        ORDER BY created_at ASC
+        LIMIT 1
         """)
 
     SQL_SELECT_BY_ID = text("""
@@ -64,12 +79,18 @@ class BankAccountRepository:
         initial_amount: int = 0,
     ) -> BankAccountPublic:
         """Create a new bank account for a user."""
+        logger.info(
+            "Creating bank account user_id=%s provider=%s type=%s",
+            user_id,
+            provider.value,
+            account_type.value,
+        )
         row = (
             self.db.execute(
                 self.SQL_CREATE_BANK_ACCOUNT,
                 {
                     "user_id": user_id,
-                    "bank_account_id": None,  # DB will generate UUID
+                    "bank_account_id": str(uuid.uuid4()),
                     "account_number": account_number,
                     "sort_code": sort_code,
                     "name": name,
@@ -83,39 +104,92 @@ class BankAccountRepository:
         )
         self.db.commit()
         if row is None:
+            logger.error("Bank account create failed user_id=%s", user_id)
             raise RuntimeError("Failed to create bank account")
-        return BankAccountPublic(**row)
+        account = BankAccountPublic(**row)
+        logger.info(
+            "Bank account created account_id=%s user_id=%s", account.id, user_id
+        )
+        return account
 
     def create_default_accounts_for_user(
         self,
         user_id: int,
-        provider: BankProviderEnum = BankProviderEnum.REVOLITE,
+        provider: BankProviderEnum,
     ) -> tuple[BankAccountPublic, BankAccountPublic]:
         """
         Automatically create CURRENT and SAVING accounts for a new user.
         Both accounts share the same bank provider.
         """
+        logger.info("Creating default accounts for user_id=%s", user_id)
+        sort_code = self._generate_sort_code()
         current_account = self.create_account(
             user_id=user_id,
-            account_number=f"CURR-{user_id}-{provider.value}",
-            sort_code="00-00-00",
+            account_number=self._generate_account_number(),
+            sort_code=sort_code,
             name=f"{provider.value} Current Account",
             provider=provider,
             account_type=AccountTypeEnum.CURRENT,
-            initial_amount=0,
+            initial_amount=500,
         )
 
         saving_account = self.create_account(
             user_id=user_id,
-            account_number=f"SAVE-{user_id}-{provider.value}",
-            sort_code="00-00-00",
+            account_number=self._generate_account_number(),
+            sort_code=sort_code,
             name=f"{provider.value} Saving Account",
             provider=provider,
             account_type=AccountTypeEnum.SAVING,
-            initial_amount=0,
+            initial_amount=100,
         )
 
         return current_account, saving_account
+
+    def create_accounts_for_user(
+        self,
+        *,
+        user_id: int,
+        provider: BankProviderEnum,
+        current_account_number: str,
+        current_sort_code: str,
+        saving_account_number: str,
+        saving_sort_code: str,
+    ) -> tuple[BankAccountPublic, BankAccountPublic]:
+        """Create CURRENT and SAVING accounts for a user using explicit details."""
+        logger.info("Creating explicit accounts for user_id=%s", user_id)
+        current_initial_amount = int(round(random.triangular(0, 3000, 200)))
+        saving_initial_amount = int(round(random.triangular(0, 6000, 500)))
+
+        current_account = self.create_account(
+            user_id=user_id,
+            account_number=current_account_number,
+            sort_code=current_sort_code,
+            name=f"{provider.value} Current Account",
+            provider=provider,
+            account_type=AccountTypeEnum.CURRENT,
+            initial_amount=current_initial_amount,
+        )
+        saving_account = self.create_account(
+            user_id=user_id,
+            account_number=saving_account_number,
+            sort_code=saving_sort_code,
+            name=f"{provider.value} Saving Account",
+            provider=provider,
+            account_type=AccountTypeEnum.SAVING,
+            initial_amount=saving_initial_amount,
+        )
+
+        return current_account, saving_account
+
+    @staticmethod
+    def _generate_account_number() -> str:
+        """Generate a random account number (digit string)."""
+        return "".join(random.choices(string.digits, k=8))
+
+    @staticmethod
+    def _generate_sort_code() -> str:
+        """Generate a random 6-digit sort code."""
+        return "".join(random.choices(string.digits, k=6))
 
     def get_by_id(self, account_id: int) -> BankAccountPublic | None:
         """Get a bank account by ID."""
@@ -127,7 +201,10 @@ class BankAccountRepository:
             .mappings()
             .first()
         )
-        return BankAccountPublic(**row) if row else None
+        if row is None:
+            logger.debug("Bank account not found account_id=%s", account_id)
+            return None
+        return BankAccountPublic(**row)
 
     def get_by_user_id(self, user_id: int) -> list[BankAccountPublic]:
         """Get all bank accounts for a user."""
@@ -139,7 +216,34 @@ class BankAccountRepository:
             .mappings()
             .all()
         )
-        return [BankAccountPublic(**row) for row in rows]
+        accounts = [BankAccountPublic(**row) for row in rows]
+        logger.debug("Fetched %s bank accounts for user_id=%s", len(accounts), user_id)
+        return accounts
+
+    def get_first_by_user_id_and_type(
+        self,
+        *,
+        user_id: int,
+        account_type: AccountTypeEnum,
+    ) -> BankAccountPublic | None:
+        """Get the earliest created account for a user by account type."""
+        row = (
+            self.db.execute(
+                self.SQL_SELECT_FIRST_BY_USER_ID_AND_TYPE,
+                {
+                    "user_id": user_id,
+                    "type": account_type.value,
+                },
+            )
+            .mappings()
+            .first()
+        )
+        if row is None:
+            logger.debug(
+                "No bank account found user_id=%s type=%s", user_id, account_type.value
+            )
+            return None
+        return BankAccountPublic(**row)
 
     def get_by_id_and_user_id(
         self, *, account_id: int, user_id: int
@@ -153,7 +257,14 @@ class BankAccountRepository:
             .mappings()
             .first()
         )
-        return BankAccountPublic(**row) if row else None
+        if row is None:
+            logger.debug(
+                "Bank account not found for ownership account_id=%s user_id=%s",
+                account_id,
+                user_id,
+            )
+            return None
+        return BankAccountPublic(**row)
 
     def get_by_account_number_and_sort_code(
         self, account_number: str, sort_code: str
@@ -167,10 +278,18 @@ class BankAccountRepository:
             .mappings()
             .first()
         )
-        return BankAccountPublic(**row) if row else None
+        if row is None:
+            logger.debug("Bank account lookup miss account_number=%s", account_number)
+            return None
+        return BankAccountPublic(**row)
 
     def update_amount(self, account_id: int, new_amount: int) -> BankAccountPublic:
         """Update the balance of a bank account."""
+        logger.info(
+            "Updating bank account amount account_id=%s amount=%s",
+            account_id,
+            new_amount,
+        )
         row = (
             self.db.execute(
                 self.SQL_UPDATE_AMOUNT,
@@ -181,5 +300,8 @@ class BankAccountRepository:
         )
         self.db.commit()
         if row is None:
+            logger.error("Bank account amount update failed account_id=%s", account_id)
             raise RuntimeError("Failed to update account amount")
-        return BankAccountPublic(**row)
+        account = BankAccountPublic(**row)
+        logger.debug("Updated bank account amount account_id=%s", account.id)
+        return account

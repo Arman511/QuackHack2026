@@ -1,4 +1,4 @@
-import { useApp } from "@/context/AppContext";
+import { useApp } from "@/hooks/useApp";
 
 interface HorseProgressBarProps {
   totalSteps: number;
@@ -32,16 +32,6 @@ const HorseProgressBar = ({ totalSteps }: HorseProgressBarProps) => {
                 "repeating-linear-gradient(90deg, transparent, transparent 10px, rgba(0,0,0,0.1) 10px, rgba(0,0,0,0.1) 20px)",
             }}
           />
-        </div>
-
-        {/* Checkered flag at the end */}
-        <div className="absolute right-0 top-1/2 -translate-y-1/2 -mr-1">
-          <div className="w-6 h-6 bg-white rounded-sm flex flex-wrap overflow-hidden border border-gray-300">
-            <div className="w-1/2 h-1/2 bg-black"></div>
-            <div className="w-1/2 h-1/2 bg-white"></div>
-            <div className="w-1/2 h-1/2 bg-white"></div>
-            <div className="w-1/2 h-1/2 bg-black"></div>
-          </div>
         </div>
 
         {/* Horse galloping */}

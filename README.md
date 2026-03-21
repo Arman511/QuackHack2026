@@ -1,28 +1,83 @@
-# bun-react-tailwind-template
+# QuackHack2026
 
-To install dependencies:
+Full-stack app with:
+
+- Python backend using uv
+- Frontend managed with pnpm
+- Optional Docker workflows via Makefile
+
+## Prerequisites
+
+- Python 3.14+
+- uv
+- Node.js 20+
+- pnpm
+
+## Backend Setup (uv)
+
+Install backend dependencies and create a virtual environment:
 
 ```bash
-bun install
+uv sync
 ```
 
-To start a development server:
+Run the backend locally:
 
 ```bash
-bun dev
+uv run main.py
 ```
 
-To run for production:
+Backend will run on http://localhost:8000.
+
+## Frontend Setup (pnpm)
+
+Install frontend dependencies:
 
 ```bash
-bun start
+pnpm --dir frontend install
 ```
 
-This project was created using `bun init` in bun v1.3.10. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+Run frontend locally:
+
+```bash
+pnpm --dir frontend dev
+```
+
+## Common Make Targets
+
+Run formatter:
+
+```bash
+make format
+```
+
+Run lint checks:
+
+```bash
+make lint
+```
+
+Run tests:
+
+```bash
+make test
+```
+
+Run Docker stack:
+
+```bash
+make serve
+```
+
+Run local Docker stack:
+
+```bash
+make local
+```
 
 ## Git Hooks
 
-Install repository hooks so `make format` runs automatically before each commit:
+Install repository hooks so format checks run before commit:
 
 ```bash
 make install-hooks

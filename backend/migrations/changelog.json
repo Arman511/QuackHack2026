@@ -35,6 +35,24 @@
       "description": "Add source account ownership reference to transactions",
       "sqlite": "006_add_source_account_to_transactions.sqlite.sql",
       "postgresql": "006_add_source_account_to_transactions.postgresql.sql"
+    },
+    {
+      "id": "007_drop_users_type_column",
+      "description": "Drop deprecated users.type column after roles migration",
+      "sqlite": "007_drop_users_type_column.sqlite.sql",
+      "postgresql": "007_drop_users_type_column.postgresql.sql"
+    },
+    {
+      "id": "008_add_impulse_limit_and_tax_to_user_metadata",
+      "description": "Add impulse_limit and tax_percentage to user metadata",
+      "sqlite": "008_add_impulse_limit_and_tax_to_user_metadata.sqlite.sql",
+      "postgresql": "008_add_impulse_limit_and_tax_to_user_metadata.postgresql.sql"
+    },
+    {
+      "id": "009_add_user_id_to_possible_impulse_zones",
+      "description": "Scope possible impulse zones to users",
+      "sqlite": "009_add_user_id_to_possible_impulse_zones.sqlite.sql",
+      "postgresql": "009_add_user_id_to_possible_impulse_zones.postgresql.sql"
     }
   ]
 }

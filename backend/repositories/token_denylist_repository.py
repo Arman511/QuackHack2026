@@ -1,7 +1,10 @@
 from datetime import UTC, datetime
+import logging
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
+
+logger = logging.getLogger(__name__)
 
 
 class TokenDenylistRepository:
@@ -31,6 +34,7 @@ class TokenDenylistRepository:
         self.db = db
 
     def revoke_token(self, *, jti: str, token_type: str, expires_at: datetime) -> None:
+        logger.info("Revoking token jti=%s type=%s", jti, token_type)
         self.db.execute(
             self.SQL_INSERT_REVOKED_TOKEN,
             {"jti": jti, "token_type": token_type, "expires_at": expires_at},
@@ -42,9 +46,13 @@ class TokenDenylistRepository:
         row = self.db.execute(
             self.SQL_SELECT_REVOKED_TOKEN, {"jti": jti, "now": now}
         ).first()
-        return row is not None
+        revoked = row is not None
+        if revoked:
+            logger.debug("Token is revoked jti=%s", jti)
+        return revoked
 
     def cleanup_expired(self) -> None:
         now = datetime.now(UTC)
         self.db.execute(self.SQL_DELETE_EXPIRED, {"now": now})
         self.db.commit()
+        logger.info("Expired revoked tokens cleanup complete")
