@@ -2,11 +2,16 @@ import { useApp } from "@/hooks/useApp";
 
 interface HorseProgressBarProps {
   totalSteps: number;
+  currentStep?: number; // Optional override for current step
 }
 
-const HorseProgressBar = ({ totalSteps }: HorseProgressBarProps) => {
+const HorseProgressBar = ({ totalSteps, currentStep }: HorseProgressBarProps) => {
   const { onboardingStep } = useApp();
-  const progress = (onboardingStep / totalSteps) * 100;
+
+  // Always use currentStep if provided, otherwise fall back to onboardingStep
+  const step = currentStep !== undefined ? currentStep : onboardingStep;
+
+  const progress = (step / totalSteps) * 100;
 
   return (
     <div className="w-full px-4 py-3">
@@ -47,7 +52,7 @@ const HorseProgressBar = ({ totalSteps }: HorseProgressBarProps) => {
         </div>
       </div>
       <p className="text-xs text-muted-foreground mt-2 text-center">
-        Step {onboardingStep} of {totalSteps}
+        Step {step} of {totalSteps}
       </p>
     </div>
   );

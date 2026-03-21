@@ -1,6 +1,7 @@
 import { useApp } from "@/hooks/useApp";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Form,
   FormControl,
@@ -12,7 +13,11 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useState } from "react";
 import { bankOptions } from "@/data/mockData";
+import { setupBankAccounts } from "@/api/bank";
+import { transformFormToApiPayload } from "@/utils/bankMapper";
+import { toast } from "@/utils/toast";
 
 const formSchema = z.object({
   // Shared sort code for both accounts
@@ -33,7 +38,16 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 const BankDetailsPage = () => {
-  const { connectedBank, setOnboardingStep, saveBankDetails } = useApp();
+  const {
+    connectedBank,
+    setOnboardingStep,
+    saveBankDetails,
+    isAddBankMode,
+    setAddBankStep,
+    completeAddBankFlow,
+  } = useApp();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Find the selected bank's details for styling
   const selectedBank = bankOptions.find((bank) => bank.name === connectedBank);
@@ -49,27 +63,71 @@ const BankDetailsPage = () => {
     },
   });
 
-  const onSubmit = (data: FormData) => {
-    // Save the bank details to context
-    const bankDetails = {
-      bank: connectedBank,
-      sortCode: data.sortCode,
-      checkingAccount: {
-        number: data.checkingAccountNumber,
-        name: data.checkingAccountName,
-      },
-      savingsAccount: {
-        number: data.savingsAccountNumber,
-        name: data.savingsAccountName,
-      },
-    };
+  const onSubmit = async (data: FormData) => {
+    if (!connectedBank) {
+      setError("Please select a bank first");
+      return;
+    }
 
-    saveBankDetails(bankDetails);
-    setOnboardingStep(3); // Continue to impulse zones page (now step 3)
+    try {
+      setIsSubmitting(true);
+      setError(null);
+
+      // Transform form data to API payload
+      const apiPayload = transformFormToApiPayload(connectedBank, data);
+
+      // Call the setupBankAccounts API
+      const response = await setupBankAccounts(apiPayload);
+
+      // Save the bank details to context (for backward compatibility)
+      const bankDetails = {
+        bank: connectedBank,
+        sortCode: data.sortCode,
+        checkingAccount: {
+          number: data.checkingAccountNumber,
+          name: data.checkingAccountName,
+        },
+        savingsAccount: {
+          number: data.savingsAccountNumber,
+          name: data.savingsAccountName,
+        },
+      };
+
+      saveBankDetails(bankDetails);
+
+      // Show success message
+      toast("Bank accounts connected successfully! 🐎");
+
+      if (isAddBankMode) {
+        // Complete add bank flow and return to main app
+        await completeAddBankFlow();
+      } else {
+        // Continue to next step in regular onboarding
+        setOnboardingStep(3);
+      }
+    } catch (error) {
+      console.error("Bank setup failed:", error);
+
+      // Show user-friendly error message
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to connect bank accounts. Please try again.";
+
+      setError(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const goBack = () => {
-    setOnboardingStep(1); // Go back to bank selection
+    if (isSubmitting) return; // Prevent navigation during submission
+
+    if (isAddBankMode) {
+      setAddBankStep(1); // Go back to bank selection in add bank flow
+    } else {
+      setOnboardingStep(1); // Go back to bank selection in regular onboarding
+    }
   };
 
   return (
@@ -78,7 +136,8 @@ const BankDetailsPage = () => {
         <div className="flex items-center justify-center gap-3 mb-3">
           <button
             onClick={goBack}
-            className="text-muted-foreground hover:text-foreground transition-colors"
+            disabled={isSubmitting}
+            className="text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             ← Back
           </button>
@@ -106,6 +165,22 @@ const BankDetailsPage = () => {
             />
           </div>
         </div>
+      )}
+
+      {/* Error Display */}
+      {error && (
+        <Alert variant="destructive" className="animate-fade-up">
+          <AlertDescription>
+            {error}
+            <Button
+              variant="link"
+              className="p-0 h-auto ml-2 text-destructive underline"
+              onClick={() => setError(null)}
+            >
+              Dismiss
+            </Button>
+          </AlertDescription>
+        </Alert>
       )}
 
       <Form {...form}>
@@ -223,11 +298,21 @@ const BankDetailsPage = () => {
 
           <Button
             type="submit"
-            className="w-full h-11 active:scale-[0.97] flex items-center gap-2 justify-center animate-fade-up"
+            disabled={isSubmitting}
+            className="w-full h-11 active:scale-[0.97] flex items-center gap-2 justify-center animate-fade-up disabled:opacity-50"
             style={{ animationDelay: "400ms" }}
           >
-            <span>Connect Accounts</span>
-            <img src="/horse-gallop.png" alt="Horse" className="w-5 h-5 object-contain" />
+            {isSubmitting ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <span>Connecting accounts...</span>
+              </>
+            ) : (
+              <>
+                <span>Connect Accounts</span>
+                <img src="/horse-gallop.png" alt="Horse" className="w-5 h-5 object-contain" />
+              </>
+            )}
           </Button>
         </form>
       </Form>

@@ -9,8 +9,15 @@ import {
   Notification,
 } from "@/data/mockData";
 import { login, register, me, logout as apiLogout } from "@/api/auth";
+import { listAccounts, listMyTransactions } from "@/api/bank";
 import { tokenStore } from "@/api/http";
-import type { UserLoginRequest, UserRegisterRequest, UserMePublic } from "@/api/types";
+import type {
+  UserLoginRequest,
+  UserRegisterRequest,
+  UserMePublic,
+  BankAccountPublic,
+  TransactionHydratedPublic,
+} from "@/api/types";
 
 interface BankDetails {
   bank: string;
@@ -31,6 +38,20 @@ interface AppState {
   user: UserMePublic | null;
   authLoading: boolean;
   authError: string | null;
+
+  // Bank Account API state
+  bankAccounts: BankAccountPublic[];
+  bankAccountsLoading: boolean;
+  bankAccountsError: string | null;
+
+  // Transaction API state
+  realTransactions: Transaction[];
+  realTransactionsLoading: boolean;
+  realTransactionsError: string | null;
+
+  // Add Bank Mode state
+  isAddBankMode: boolean;
+  addBankStep: number; // 1 = ConnectBank, 2 = BankDetails
 
   // Existing state
   isOnboarded: boolean;
@@ -59,6 +80,22 @@ interface AppContextType extends AppState {
   checkAuth: () => Promise<void>;
   clearAuthError: () => void;
 
+  // Bank Account functions
+  fetchBankAccounts: () => Promise<void>;
+  refreshBankData: () => Promise<void>;
+  clearBankAccountsError: () => void;
+
+  // Transaction functions
+  fetchTransactions: () => Promise<void>;
+  refreshTransactionData: () => Promise<void>;
+  clearTransactionsError: () => void;
+
+  // Add Bank Mode functions
+  startAddBankFlow: () => void;
+  cancelAddBankFlow: () => void;
+  setAddBankStep: (step: number) => void;
+  completeAddBankFlow: () => void;
+
   // Existing functions
   setOnboardingStep: (s: number) => void;
   completeOnboarding: () => void;
@@ -86,6 +123,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     user: null,
     authLoading: false,
     authError: null,
+
+    // Bank Account API state
+    bankAccounts: [],
+    bankAccountsLoading: false,
+    bankAccountsError: null,
+
+    // Transaction API state
+    realTransactions: [],
+    realTransactionsLoading: false,
+    realTransactionsError: null,
+
+    // Add Bank Mode state
+    isAddBankMode: false,
+    addBankStep: 1,
 
     // Existing state
     isOnboarded: false,
@@ -152,6 +203,32 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         authLoading: false,
         onboardingStep: userData.total_impulse_spent !== undefined ? 0 : 1, // Skip onboarding if user has data
       });
+
+      // Fetch user's bank accounts and transactions after successful login
+      try {
+        // Fetch bank accounts first to determine onboarding flow
+        const accounts = await listAccounts();
+
+        // Determine appropriate onboarding step based on user data and bank accounts
+        let appropriateOnboardingStep = 1; // Default to first step
+
+        if (userData.total_impulse_spent !== undefined) {
+          appropriateOnboardingStep = 0; // Skip onboarding completely if user has data
+        } else if (accounts.length > 0) {
+          appropriateOnboardingStep = 3; // Skip bank steps if accounts exist
+        }
+
+        // Update with bank accounts and correct onboarding step
+        update({
+          bankAccounts: accounts,
+          onboardingStep: appropriateOnboardingStep,
+        });
+
+        await fetchTransactions();
+      } catch (error) {
+        console.error("Failed to fetch user data after login:", error);
+        // If bank fetch fails, still proceed with default onboarding
+      }
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "Login failed. Please try again.";
@@ -221,6 +298,130 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Bank Account functions
+  const fetchBankAccounts = async () => {
+    try {
+      update({ bankAccountsLoading: true, bankAccountsError: null });
+      const accounts = await listAccounts();
+
+      update({
+        bankAccounts: accounts,
+        bankAccountsLoading: false,
+      });
+    } catch (error) {
+      console.error("Failed to fetch bank accounts:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to load bank accounts";
+      update({
+        bankAccountsLoading: false,
+        bankAccountsError: errorMessage,
+      });
+    }
+  };
+
+  const refreshBankData = async () => {
+    await fetchBankAccounts();
+  };
+
+  const clearBankAccountsError = () => {
+    update({ bankAccountsError: null });
+  };
+
+  // Transaction functions
+  const transformApiTransaction = (apiTx: TransactionHydratedPublic): Transaction => ({
+    id: apiTx.id.toString(),
+    date: apiTx.timestamp.split("T")[0],
+    description: apiTx.merchant,
+    amount: apiTx.amount / 100, // Convert from cents to pounds
+    category: apiTx.impulse_zone_name || "Other",
+    isImpulse: !!apiTx.impulse_zone_id,
+    horseMessage: apiTx.impulse_zone_id
+      ? generateHorseMessage(apiTx.merchant, apiTx.amount / 100)
+      : "",
+  });
+
+  const generateHorseMessage = (merchant: string, amount: number): string => {
+    const messages = [
+      `Neighhh! That ${merchant} purchase made your wallet lighter!`,
+      `Whoa there cowboy! ${merchant} just galloped away with £${amount}!`,
+      `*Horse snort* Another ${merchant} splurge? Really?`,
+      `Giddy up to the savings coral instead of ${merchant}!`,
+      `That ${merchant} purchase wasn't very stable financial behavior!`,
+    ];
+    return messages[Math.floor(Math.random() * messages.length)];
+  };
+
+  const fetchTransactions = async () => {
+    try {
+      update({ realTransactionsLoading: true, realTransactionsError: null });
+      const apiTransactions = await listMyTransactions();
+      const transformedTransactions = apiTransactions.map(transformApiTransaction);
+
+      // Calculate totals from real data
+      const impulseTotal = transformedTransactions
+        .filter((tx) => tx.isImpulse)
+        .reduce((sum, tx) => sum + tx.amount, 0);
+
+      update({
+        realTransactions: transformedTransactions,
+        realTransactionsLoading: false,
+        impulseSpent: impulseTotal,
+        // Update transactions array for backward compatibility
+        transactions: transformedTransactions,
+      });
+    } catch (error) {
+      console.error("Failed to fetch transactions:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to load transactions";
+      update({
+        realTransactionsLoading: false,
+        realTransactionsError: errorMessage,
+      });
+    }
+  };
+
+  const refreshTransactionData = async () => {
+    await fetchTransactions();
+  };
+
+  const clearTransactionsError = () => {
+    update({ realTransactionsError: null });
+  };
+
+  // Add Bank Mode functions
+  const startAddBankFlow = () => {
+    update({
+      isAddBankMode: true,
+      addBankStep: 1,
+      connectedBank: null, // Reset bank selection
+      bankDetails: null, // Reset bank details
+    });
+  };
+
+  const cancelAddBankFlow = () => {
+    update({
+      isAddBankMode: false,
+      addBankStep: 1,
+      connectedBank: null,
+      bankDetails: null,
+    });
+  };
+
+  const setAddBankStep = (step: number) => {
+    update({ addBankStep: step });
+  };
+
+  const completeAddBankFlow = async () => {
+    // Refresh bank accounts to show the new account
+    await fetchBankAccounts();
+
+    // Exit add bank mode
+    update({
+      isAddBankMode: false,
+      addBankStep: 1,
+      connectedBank: null,
+      bankDetails: null,
+    });
+  };
+
   const ctx: AppContextType = {
     ...state,
     // Authentication functions
@@ -229,6 +430,22 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     logout: handleLogout,
     checkAuth,
     clearAuthError: () => update({ authError: null }),
+
+    // Bank Account functions
+    fetchBankAccounts,
+    refreshBankData,
+    clearBankAccountsError,
+
+    // Transaction functions
+    fetchTransactions,
+    refreshTransactionData,
+    clearTransactionsError,
+
+    // Add Bank Mode functions
+    startAddBankFlow,
+    cancelAddBankFlow,
+    setAddBankStep,
+    completeAddBankFlow,
 
     // Existing functions
     setOnboardingStep: (s) => update({ onboardingStep: s }),

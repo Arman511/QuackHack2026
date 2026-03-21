@@ -1,15 +1,40 @@
 import { useApp } from "@/hooks/useApp";
-import { useMemo } from "react";
-import { Vault, AlertTriangle, Skull } from "lucide-react";
+import { useMemo, useEffect } from "react";
+import { Vault, AlertTriangle, Skull, Loader2, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 
 const DashboardTab = () => {
-  const { totalSaved, impulseBudget, impulseSpent, transactions, punishments } = useApp();
+  const {
+    totalSaved,
+    impulseBudget,
+    impulseSpent,
+    transactions,
+    realTransactions,
+    realTransactionsLoading,
+    realTransactionsError,
+    fetchTransactions,
+    clearTransactionsError,
+    punishments,
+    user,
+  } = useApp();
+
+  // Fetch transactions when component mounts
+  useEffect(() => {
+    if (user) {
+      fetchTransactions();
+    }
+  }, [user]);
+
+  // Use real transactions if available, otherwise fallback to mock data
+  const displayTransactions = realTransactions.length > 0 ? realTransactions : transactions;
+
   const budgetPercent = Math.min((impulseSpent / impulseBudget) * 100, 100);
-  const impulseTransactions = transactions.filter((t) => t.isImpulse);
+  const impulseTransactions = displayTransactions.filter((t) => t.isImpulse);
 
   // Build heatmap for the last 28 days
   const heatmapDays = useMemo(() => {
-    const days: { date: string; total: number; txs: typeof transactions }[] = [];
+    const days: { date: string; total: number; txs: typeof displayTransactions }[] = [];
     for (let i = 27; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
@@ -19,7 +44,7 @@ const DashboardTab = () => {
       days.push({ date: dateStr, total, txs: dayTxs });
     }
     return days;
-  }, [impulseTransactions]);
+  }, [impulseTransactions, displayTransactions]);
 
   const maxSpend = Math.max(...heatmapDays.map((d) => d.total), 1);
 
@@ -30,6 +55,45 @@ const DashboardTab = () => {
         <img src="/horse-head.png" alt="Horse" className="w-10 h-10 object-contain" />
         <h1 className="text-lg font-bold">Neigh-ver Go Broke!</h1>
       </div>
+
+      {/* Transaction Loading State */}
+      {realTransactionsLoading && (
+        <div
+          className="card-neigh animate-fade-up flex items-center gap-2 justify-center py-4"
+          style={{ animationDelay: "50ms" }}
+        >
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span className="text-sm text-muted-foreground">Loading your transactions...</span>
+        </div>
+      )}
+
+      {/* Transaction Error State */}
+      {realTransactionsError && (
+        <Alert variant="destructive" className="animate-fade-up" style={{ animationDelay: "50ms" }}>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="flex items-center justify-between">
+            <span>{realTransactionsError}</span>
+            <div className="flex gap-2">
+              <Button
+                variant="link"
+                size="sm"
+                className="h-auto p-0 text-destructive underline"
+                onClick={fetchTransactions}
+              >
+                Retry
+              </Button>
+              <Button
+                variant="link"
+                size="sm"
+                className="h-auto p-0 text-destructive underline"
+                onClick={clearTransactionsError}
+              >
+                Dismiss
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Savings Vault */}
       <div className="card-neigh text-center animate-fade-up" style={{ animationDelay: "100ms" }}>
