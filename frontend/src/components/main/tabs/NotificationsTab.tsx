@@ -38,7 +38,7 @@ const NotificationsTab = () => {
               >
                 {(() => {
                   const IconComponent = typeIcons[n.type];
-                  if (n.type === 'impulse') {
+                  if (n.type === "impulse") {
                     return <IconComponent />;
                   }
                   const LucideIcon = IconComponent as React.ComponentType<{ size?: number }>;
