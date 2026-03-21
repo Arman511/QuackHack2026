@@ -47,6 +47,7 @@ def create_transaction(
     """Create a transaction for the authenticated user."""
     return create_user_transaction(db, current_user=current_user, payload=payload)
 
+
 @router.post("/accounts/setup", response_model=CreateBankAccountsResponse)
 def setup_bank_accounts(
     payload: SetupBankAccountsRequest,
@@ -59,6 +60,7 @@ def setup_bank_accounts(
         current_user=current_user,
         payload=payload,
     )
+
 
 @router.get("/admin/summary", response_model=list[TransactionPublic])
 def admin_summary(
