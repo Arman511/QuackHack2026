@@ -259,3 +259,4 @@ data/*
 
 .sources.*
 .source.swp
+.githooks/pre-commit
