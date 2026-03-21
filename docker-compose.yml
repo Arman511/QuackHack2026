@@ -3,12 +3,17 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: quackhack2026:latest
     restart: unless-stopped
     env_file:
       - .env
     environment:
       DB_DIALECT: sqlite
-    depends_on:
-      db:
-        condition: service_healthy
+    networks:
+      default:
+        aliases:
+          - neigh-ver-go-broke
+  
+networks:
+  default:
+    name: zoraxy_proxy
+    external: true

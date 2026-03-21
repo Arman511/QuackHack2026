@@ -3,7 +3,11 @@ import logging
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from backend.models import TransactionHydratedPublic, TransactionPublic
+from backend.models import (
+    TransactionHydratedPublic,
+    TransactionPublic,
+    TransactionSearchItemPublic,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +74,39 @@ class TransactionRepository:
             AND t.timestamp >= :start_ts
             AND t.timestamp <= :end_ts
         ORDER BY t.timestamp DESC
+        """)
+
+    SQL_SELECT_BY_USER_ID_AND_DATE_RANGE_SEARCH_PAGED = text("""
+        SELECT
+            t.id,
+            t.user_id,
+            ba.account_number AS source_account_number,
+            ba.sort_code AS source_sort_code,
+            t.amount,
+            t.timestamp,
+            t.merchant,
+            t.impulse_zone_id,
+            t.possible_impulse_zone_id,
+            t.created_at,
+            iz.name AS impulse_zone_name,
+            piz.name AS possible_impulse_zone_name
+        FROM transactions t
+        LEFT JOIN bank_accounts ba ON ba.id = t.source_account_id
+        LEFT JOIN impulse_zones iz ON iz.id = t.impulse_zone_id
+        LEFT JOIN possible_impulse_zones piz ON piz.id = t.possible_impulse_zone_id
+        WHERE t.user_id = :user_id
+            AND t.timestamp >= :start_ts
+            AND t.timestamp <= :end_ts
+        ORDER BY t.timestamp DESC
+        LIMIT :limit OFFSET :offset
+        """)
+
+    SQL_COUNT_BY_USER_ID_AND_DATE_RANGE = text("""
+        SELECT COUNT(*) AS total
+        FROM transactions t
+        WHERE t.user_id = :user_id
+            AND t.timestamp >= :start_ts
+            AND t.timestamp <= :end_ts
         """)
 
     SQL_SELECT_ALL_BY_DATE_RANGE_HYDRATED = text("""
@@ -272,6 +309,56 @@ class TransactionRepository:
         txns = [TransactionHydratedPublic(**row) for row in rows]
         logger.debug("Fetched %s hydrated transactions globally in range", len(txns))
         return txns
+
+    def get_by_user_id_and_date_range_search_paginated(
+        self,
+        *,
+        user_id: int,
+        start: datetime,
+        end: datetime,
+        page: int,
+        page_size: int,
+    ) -> tuple[list[TransactionSearchItemPublic], int]:
+        """Get paginated user transaction search results with account details."""
+        offset = (page - 1) * page_size
+        rows = (
+            self.db.execute(
+                self.SQL_SELECT_BY_USER_ID_AND_DATE_RANGE_SEARCH_PAGED,
+                {
+                    "user_id": user_id,
+                    "start_ts": start,
+                    "end_ts": end,
+                    "limit": page_size,
+                    "offset": offset,
+                },
+            )
+            .mappings()
+            .all()
+        )
+        count_row = (
+            self.db.execute(
+                self.SQL_COUNT_BY_USER_ID_AND_DATE_RANGE,
+                {
+                    "user_id": user_id,
+                    "start_ts": start,
+                    "end_ts": end,
+                },
+            )
+            .mappings()
+            .first()
+        )
+
+        items = [TransactionSearchItemPublic(**row) for row in rows]
+        total = int(count_row["total"]) if count_row is not None else 0
+        logger.debug(
+            "Fetched paged search transactions user_id=%s page=%s page_size=%s count=%s total=%s",
+            user_id,
+            page,
+            page_size,
+            len(items),
+            total,
+        )
+        return items, total
 
     def get_user_total_by_date_range(
         self,
