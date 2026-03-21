@@ -23,6 +23,8 @@ interface AppState {
   notifications: Notification[];
   totalSaved: number;
   impulseSpent: number;
+  notificationsEnabled: boolean;
+  horseNeighAlertsEnabled: boolean;
 }
 
 interface AppContextType extends AppState {
@@ -38,6 +40,8 @@ interface AppContextType extends AppState {
   updateGoal: (id: string, updates: Partial<Goal>) => void;
   setImpulseBudget: (b: number) => void;
   setNeighTaxPercent: (p: number) => void;
+  toggleNotifications: () => void;
+  toggleHorseNeighAlerts: () => void;
   logout: () => void;
 }
 
@@ -64,6 +68,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     notifications: mockNotifications,
     totalSaved: 240,
     impulseSpent: 45,
+    notificationsEnabled: true,
+    horseNeighAlertsEnabled: true,
   });
 
   const update = (partial: Partial<AppState>) => setState((prev) => ({ ...prev, ...partial }));
@@ -99,6 +105,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       })),
     setImpulseBudget: (b) => update({ impulseBudget: b }),
     setNeighTaxPercent: (p) => update({ neighTaxPercent: p }),
+    toggleNotifications: () =>
+      setState((prev) => ({ ...prev, notificationsEnabled: !prev.notificationsEnabled })),
+    toggleHorseNeighAlerts: () =>
+      setState((prev) => ({ ...prev, horseNeighAlertsEnabled: !prev.horseNeighAlertsEnabled })),
     logout: () => update({ isOnboarded: false, onboardingStep: 0 }),
   };
 
