@@ -1,8 +1,14 @@
-import { useApp } from '@/context/AppContext';
-import { Button } from '@/components/ui/button';
+import { useApp } from "@/context/AppContext";
+import { Button } from "@/components/ui/button";
 
 const BudgetPage = () => {
-  const { impulseBudget, neighTaxPercent, setImpulseBudget, setNeighTaxPercent, completeOnboarding } = useApp();
+  const {
+    impulseBudget,
+    neighTaxPercent,
+    setImpulseBudget,
+    setNeighTaxPercent,
+    completeOnboarding,
+  } = useApp();
 
   return (
     <div className="space-y-6 animate-fade-up">
@@ -24,7 +30,7 @@ const BudgetPage = () => {
           max={500}
           step={10}
           value={impulseBudget}
-          onChange={e => setImpulseBudget(Number(e.target.value))}
+          onChange={(e) => setImpulseBudget(Number(e.target.value))}
           className="w-full accent-primary h-2"
         />
         <div className="flex justify-between text-xs text-muted-foreground">
@@ -36,17 +42,18 @@ const BudgetPage = () => {
       <div className="card-neigh space-y-4">
         <span className="text-sm font-medium block">Neigh-Tax Rate 🐴</span>
         <p className="text-xs text-muted-foreground">
-          When you make an impulse purchase, we match part of it and move that money into your savings vault.
+          When you make an impulse purchase, we match part of it and move that money into your
+          savings vault.
         </p>
         <div className="grid grid-cols-3 gap-2">
-          {[50, 100, 200].map(pct => (
+          {[50, 100, 200].map((pct) => (
             <button
               key={pct}
               onClick={() => setNeighTaxPercent(pct)}
               className={`py-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.96] border ${
                 neighTaxPercent === pct
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-secondary text-secondary-foreground border-border'
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-secondary text-secondary-foreground border-border"
               }`}
             >
               {pct}%
@@ -55,10 +62,7 @@ const BudgetPage = () => {
         </div>
       </div>
 
-      <Button
-        onClick={completeOnboarding}
-        className="w-full h-11 active:scale-[0.97]"
-      >
+      <Button onClick={completeOnboarding} className="w-full h-11 active:scale-[0.97]">
         Start Saving 🏇
       </Button>
     </div>

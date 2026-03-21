@@ -1,12 +1,12 @@
-import { useState } from 'react';
-import { useApp } from '@/context/AppContext';
-import { Button } from '@/components/ui/button';
+import { useState } from "react";
+import { useApp } from "@/context/AppContext";
+import { Button } from "@/components/ui/button";
 
 const LoginPage = () => {
   const { setEmail, setOnboardingStep } = useApp();
-  const [email, setLocalEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [email, setLocalEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isLogin, setIsLogin] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -23,9 +23,7 @@ const LoginPage = () => {
           <h1 className="text-2xl font-bold font-display leading-tight">
             Welcome to Neigh-ver Go Broke
           </h1>
-          <p className="text-muted-foreground mt-2 text-sm">
-            Stop horsing around with your money.
-          </p>
+          <p className="text-muted-foreground mt-2 text-sm">Stop horsing around with your money.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -34,7 +32,7 @@ const LoginPage = () => {
             <input
               type="email"
               value={email}
-              onChange={e => setLocalEmail(e.target.value)}
+              onChange={(e) => setLocalEmail(e.target.value)}
               className="w-full h-11 px-4 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="cowboy@ranch.com"
               required
@@ -45,7 +43,7 @@ const LoginPage = () => {
             <input
               type="password"
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
               className="w-full h-11 px-4 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               placeholder="••••••••"
               required
@@ -57,7 +55,7 @@ const LoginPage = () => {
               <input
                 type="password"
                 value={confirmPassword}
-                onChange={e => setConfirmPassword(e.target.value)}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 className="w-full h-11 px-4 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 placeholder="••••••••"
                 required
@@ -65,7 +63,7 @@ const LoginPage = () => {
             </div>
           )}
           <Button type="submit" className="w-full h-11 text-sm font-semibold active:scale-[0.97]">
-            {isLogin ? 'Login' : 'Create Account'}
+            {isLogin ? "Login" : "Create Account"}
           </Button>
         </form>
 
@@ -73,7 +71,7 @@ const LoginPage = () => {
           onClick={() => setIsLogin(!isLogin)}
           className="w-full text-center text-sm text-muted-foreground mt-4 hover:text-foreground transition-colors"
         >
-          {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Login'}
+          {isLogin ? "Don't have an account? Sign up" : "Already have an account? Login"}
         </button>
       </div>
     </div>

@@ -1,17 +1,17 @@
-import { useApp } from '@/context/AppContext';
+import { useApp } from "@/context/AppContext";
 
 const typeColors: Record<string, string> = {
-  impulse: 'bg-impulse/10 text-impulse',
-  punishment: 'bg-warning/10 text-warning',
-  savings: 'bg-savings/10 text-savings',
-  info: 'bg-secondary text-muted-foreground',
+  impulse: "bg-impulse/10 text-impulse",
+  punishment: "bg-warning/10 text-warning",
+  savings: "bg-savings/10 text-savings",
+  info: "bg-secondary text-muted-foreground",
 };
 
 const typeIcons: Record<string, string> = {
-  impulse: '🐴',
-  punishment: '💀',
-  savings: '🌾',
-  info: '📢',
+  impulse: "🐴",
+  punishment: "💀",
+  savings: "🌾",
+  info: "📢",
 };
 
 const NotificationsTab = () => {
@@ -23,9 +23,15 @@ const NotificationsTab = () => {
 
       <div className="space-y-3">
         {notifications.map((n, i) => (
-          <div key={n.id} className="card-neigh animate-fade-up" style={{ animationDelay: `${i * 70}ms` }}>
+          <div
+            key={n.id}
+            className="card-neigh animate-fade-up"
+            style={{ animationDelay: `${i * 70}ms` }}
+          >
             <div className="flex items-start gap-3">
-              <span className={`w-9 h-9 rounded-xl flex items-center justify-center text-base shrink-0 ${typeColors[n.type]}`}>
+              <span
+                className={`w-9 h-9 rounded-xl flex items-center justify-center text-base shrink-0 ${typeColors[n.type]}`}
+              >
                 {typeIcons[n.type]}
               </span>
               <div className="flex-1 min-w-0">

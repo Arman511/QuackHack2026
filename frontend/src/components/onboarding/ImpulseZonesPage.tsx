@@ -1,17 +1,22 @@
-import { useState } from 'react';
-import { useApp } from '@/context/AppContext';
-import { Button } from '@/components/ui/button';
-import { impulseCategories } from '@/data/mockData';
-import { Plus } from 'lucide-react';
+import { useState } from "react";
+import { useApp } from "@/context/AppContext";
+import { Button } from "@/components/ui/button";
+import { impulseCategories } from "@/data/mockData";
+import { Plus } from "lucide-react";
 
 const ImpulseZonesPage = () => {
-  const { impulseCategories: selected, toggleImpulseCategory, addCustomCategory, setOnboardingStep } = useApp();
-  const [customInput, setCustomInput] = useState('');
+  const {
+    impulseCategories: selected,
+    toggleImpulseCategory,
+    addCustomCategory,
+    setOnboardingStep,
+  } = useApp();
+  const [customInput, setCustomInput] = useState("");
 
   const addCustom = () => {
     if (customInput.trim() && !selected.includes(customInput.trim())) {
       addCustomCategory(customInput.trim());
-      setCustomInput('');
+      setCustomInput("");
     }
   };
 
@@ -34,24 +39,26 @@ const ImpulseZonesPage = () => {
             {cat}
           </button>
         ))}
-        {selected.filter(c => !impulseCategories.includes(c)).map(cat => (
-          <button
-            key={cat}
-            className="bubble-tag"
-            data-selected="true"
-            onClick={() => toggleImpulseCategory(cat)}
-          >
-            {cat}
-          </button>
-        ))}
+        {selected
+          .filter((c) => !impulseCategories.includes(c))
+          .map((cat) => (
+            <button
+              key={cat}
+              className="bubble-tag"
+              data-selected="true"
+              onClick={() => toggleImpulseCategory(cat)}
+            >
+              {cat}
+            </button>
+          ))}
       </div>
 
       <div className="flex gap-2">
         <input
           type="text"
           value={customInput}
-          onChange={e => setCustomInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && addCustom()}
+          onChange={(e) => setCustomInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && addCustom()}
           placeholder="Add custom category…"
           className="flex-1 h-10 px-4 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         />

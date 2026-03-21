@@ -1,7 +1,7 @@
-import { useApp } from '@/context/AppContext';
-import { Button } from '@/components/ui/button';
-import { bankOptions } from '@/data/mockData';
-import { Check } from 'lucide-react';
+import { useApp } from "@/context/AppContext";
+import { Button } from "@/components/ui/button";
+import { bankOptions } from "@/data/mockData";
+import { Check } from "lucide-react";
 
 const ConnectBankPage = () => {
   const { connectedBank, connectBank, setOnboardingStep } = useApp();
@@ -26,7 +26,7 @@ const ConnectBankPage = () => {
             <div className="flex items-center gap-3">
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold"
-                style={{ backgroundColor: bank.color + '18', color: bank.color }}
+                style={{ backgroundColor: bank.color + "18", color: bank.color }}
               >
                 {bank.name[0]}
               </div>

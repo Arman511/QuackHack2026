@@ -1,5 +1,5 @@
-import { useApp } from '@/context/AppContext';
-import { Button } from '@/components/ui/button';
+import { useApp } from "@/context/AppContext";
+import { Button } from "@/components/ui/button";
 
 const ProfileTab = () => {
   const { email, connectedBank, logout } = useApp();
@@ -9,12 +9,14 @@ const ProfileTab = () => {
       <h1 className="text-lg font-bold font-display animate-fade-up">Profile 👤</h1>
 
       {/* Profile Info */}
-      <div className="card-neigh animate-fade-up" style={{ animationDelay: '100ms' }}>
-        <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-3">Account</p>
+      <div className="card-neigh animate-fade-up" style={{ animationDelay: "100ms" }}>
+        <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-3">
+          Account
+        </p>
         <div className="space-y-2">
           <div className="flex justify-between">
             <span className="text-sm text-muted-foreground">Email</span>
-            <span className="text-sm font-medium">{email || 'cowboy@ranch.com'}</span>
+            <span className="text-sm font-medium">{email || "cowboy@ranch.com"}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-sm text-muted-foreground">Username</span>
@@ -24,8 +26,10 @@ const ProfileTab = () => {
       </div>
 
       {/* Connected Banks */}
-      <div className="card-neigh animate-fade-up" style={{ animationDelay: '200ms' }}>
-        <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-3">Connected Banks</p>
+      <div className="card-neigh animate-fade-up" style={{ animationDelay: "200ms" }}>
+        <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-3">
+          Connected Banks
+        </p>
         {connectedBank ? (
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">{connectedBank}</span>
@@ -40,8 +44,10 @@ const ProfileTab = () => {
       </div>
 
       {/* Settings */}
-      <div className="card-neigh animate-fade-up" style={{ animationDelay: '300ms' }}>
-        <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-3">Settings</p>
+      <div className="card-neigh animate-fade-up" style={{ animationDelay: "300ms" }}>
+        <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-3">
+          Settings
+        </p>
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm">Notifications</span>

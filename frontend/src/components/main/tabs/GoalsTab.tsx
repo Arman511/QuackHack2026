@@ -1,17 +1,17 @@
-import { useState } from 'react';
-import { useApp } from '@/context/AppContext';
-import { Button } from '@/components/ui/button';
+import { useState } from "react";
+import { useApp } from "@/context/AppContext";
+import { Button } from "@/components/ui/button";
 
 const GoalsTab = () => {
   const { goals, updateGoal, neighTaxPercent, setNeighTaxPercent } = useApp();
   const [justifyModal, setJustifyModal] = useState<string | null>(null);
-  const [justification, setJustification] = useState('');
+  const [justification, setJustification] = useState("");
   const [pendingTax, setPendingTax] = useState<number | null>(null);
 
   const handleTaxChange = (newTax: number) => {
     if (newTax < neighTaxPercent) {
       setPendingTax(newTax);
-      setJustifyModal('tax');
+      setJustifyModal("tax");
     } else {
       setNeighTaxPercent(newTax);
     }
@@ -21,7 +21,7 @@ const GoalsTab = () => {
     if (justification.trim() && pendingTax !== null) {
       setNeighTaxPercent(pendingTax);
       setJustifyModal(null);
-      setJustification('');
+      setJustification("");
       setPendingTax(null);
     }
   };
@@ -34,17 +34,28 @@ const GoalsTab = () => {
         {goals.map((goal, i) => {
           const percent = Math.min((goal.saved / goal.target) * 100, 100);
           return (
-            <div key={goal.id} className="card-neigh animate-fade-up" style={{ animationDelay: `${i * 80}ms` }}>
+            <div
+              key={goal.id}
+              className="card-neigh animate-fade-up"
+              style={{ animationDelay: `${i * 80}ms` }}
+            >
               <div className="flex items-center gap-3 mb-3">
                 <span className="text-2xl">{goal.icon}</span>
                 <div className="flex-1">
                   <p className="text-sm font-medium">{goal.name}</p>
-                  <p className="text-xs text-muted-foreground tabular-nums">£{goal.saved} of £{goal.target}</p>
+                  <p className="text-xs text-muted-foreground tabular-nums">
+                    £{goal.saved} of £{goal.target}
+                  </p>
                 </div>
-                <span className="text-sm font-bold text-primary tabular-nums">{percent.toFixed(0)}%</span>
+                <span className="text-sm font-bold text-primary tabular-nums">
+                  {percent.toFixed(0)}%
+                </span>
               </div>
               <div className="w-full h-2.5 bg-secondary rounded-full overflow-hidden">
-                <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${percent}%` }} />
+                <div
+                  className="h-full bg-primary rounded-full transition-all duration-500"
+                  style={{ width: `${percent}%` }}
+                />
               </div>
             </div>
           );
@@ -52,18 +63,20 @@ const GoalsTab = () => {
       </div>
 
       {/* Neigh-Tax Rate */}
-      <div className="card-neigh animate-fade-up" style={{ animationDelay: '300ms' }}>
+      <div className="card-neigh animate-fade-up" style={{ animationDelay: "300ms" }}>
         <p className="text-sm font-medium mb-1">Current Neigh-Tax Rate</p>
-        <p className="text-xs text-muted-foreground mb-3">Lowering this requires justification 🐴</p>
+        <p className="text-xs text-muted-foreground mb-3">
+          Lowering this requires justification 🐴
+        </p>
         <div className="grid grid-cols-3 gap-2">
-          {[50, 100, 200].map(pct => (
+          {[50, 100, 200].map((pct) => (
             <button
               key={pct}
               onClick={() => handleTaxChange(pct)}
               className={`py-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.96] border ${
                 neighTaxPercent === pct
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-secondary text-secondary-foreground border-border'
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-secondary text-secondary-foreground border-border"
               }`}
             >
               {pct}%
@@ -82,15 +95,26 @@ const GoalsTab = () => {
             </p>
             <textarea
               value={justification}
-              onChange={e => setJustification(e.target.value)}
+              onChange={(e) => setJustification(e.target.value)}
               placeholder="I swear it's for a good reason..."
               className="w-full h-24 px-4 py-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
             />
             <div className="flex gap-2 mt-3">
-              <Button variant="outline" onClick={() => { setJustifyModal(null); setPendingTax(null); }} className="flex-1 active:scale-[0.97]">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setJustifyModal(null);
+                  setPendingTax(null);
+                }}
+                className="flex-1 active:scale-[0.97]"
+              >
                 Cancel
               </Button>
-              <Button onClick={submitJustification} disabled={!justification.trim()} className="flex-1 active:scale-[0.97]">
+              <Button
+                onClick={submitJustification}
+                disabled={!justification.trim()}
+                className="flex-1 active:scale-[0.97]"
+              >
                 Submit
               </Button>
             </div>

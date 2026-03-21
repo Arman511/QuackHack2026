@@ -1,26 +1,38 @@
-import { useState } from 'react';
-import { useApp } from '@/context/AppContext';
-import { Button } from '@/components/ui/button';
-import { goalPresets, type Goal } from '@/data/mockData';
-import { Plus, X } from 'lucide-react';
+import { useState } from "react";
+import { useApp } from "@/context/AppContext";
+import { Button } from "@/components/ui/button";
+import { goalPresets, type Goal } from "@/data/mockData";
+import { Plus, X } from "lucide-react";
 
 const GoalsPage = () => {
   const { goals, addGoal, setOnboardingStep } = useApp();
   const [showCustom, setShowCustom] = useState(false);
-  const [customName, setCustomName] = useState('');
-  const [customTarget, setCustomTarget] = useState('');
+  const [customName, setCustomName] = useState("");
+  const [customTarget, setCustomTarget] = useState("");
 
   const handlePreset = (preset: { name: string; icon: string }) => {
-    if (!goals.find(g => g.name === preset.name)) {
-      addGoal({ id: `g-${Date.now()}`, name: preset.name, target: 1000, saved: 0, icon: preset.icon });
+    if (!goals.find((g) => g.name === preset.name)) {
+      addGoal({
+        id: `g-${Date.now()}`,
+        name: preset.name,
+        target: 1000,
+        saved: 0,
+        icon: preset.icon,
+      });
     }
   };
 
   const handleCustom = () => {
     if (customName.trim() && customTarget) {
-      addGoal({ id: `g-${Date.now()}`, name: customName, target: Number(customTarget), saved: 0, icon: '🎯' });
-      setCustomName('');
-      setCustomTarget('');
+      addGoal({
+        id: `g-${Date.now()}`,
+        name: customName,
+        target: Number(customTarget),
+        saved: 0,
+        icon: "🎯",
+      });
+      setCustomName("");
+      setCustomTarget("");
       setShowCustom(false);
     }
   };
@@ -34,12 +46,12 @@ const GoalsPage = () => {
 
       <div className="grid grid-cols-2 gap-3">
         {goalPresets.map((preset, i) => {
-          const isAdded = goals.some(g => g.name === preset.name);
+          const isAdded = goals.some((g) => g.name === preset.name);
           return (
             <button
               key={preset.name}
               onClick={() => handlePreset(preset)}
-              className={`card-neigh text-center py-4 animate-fade-up ${isAdded ? 'ring-2 ring-primary' : ''}`}
+              className={`card-neigh text-center py-4 animate-fade-up ${isAdded ? "ring-2 ring-primary" : ""}`}
               style={{ animationDelay: `${i * 60}ms` }}
             >
               <span className="text-2xl block mb-1">{preset.icon}</span>
@@ -61,23 +73,27 @@ const GoalsPage = () => {
         <div className="card-neigh space-y-3 animate-fade-up">
           <div className="flex justify-between items-center">
             <span className="text-sm font-medium">New Goal</span>
-            <button onClick={() => setShowCustom(false)}><X size={16} className="text-muted-foreground" /></button>
+            <button onClick={() => setShowCustom(false)}>
+              <X size={16} className="text-muted-foreground" />
+            </button>
           </div>
           <input
             type="text"
             value={customName}
-            onChange={e => setCustomName(e.target.value)}
+            onChange={(e) => setCustomName(e.target.value)}
             placeholder="Goal name"
             className="w-full h-10 px-4 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
           <input
             type="number"
             value={customTarget}
-            onChange={e => setCustomTarget(e.target.value)}
+            onChange={(e) => setCustomTarget(e.target.value)}
             placeholder="Target amount (£)"
             className="w-full h-10 px-4 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
-          <Button onClick={handleCustom} className="w-full active:scale-[0.97]">Add Goal</Button>
+          <Button onClick={handleCustom} className="w-full active:scale-[0.97]">
+            Add Goal
+          </Button>
         </div>
       )}
 
