@@ -5,13 +5,16 @@ import { goalPresets, type Goal } from "@/data/mockData";
 import { Plus, X } from "lucide-react";
 
 const GoalsPage = () => {
-  const { goals, addGoal, setOnboardingStep } = useApp();
+  const { goals, addGoal, removeGoal, setOnboardingStep } = useApp();
   const [showCustom, setShowCustom] = useState(false);
   const [customName, setCustomName] = useState("");
   const [customTarget, setCustomTarget] = useState("");
 
   const handlePreset = (preset: { name: string; icon: string }) => {
-    if (!goals.find((g) => g.name === preset.name)) {
+    const existing = goals.find((g) => g.name === preset.name);
+    if (existing) {
+      removeGoal(existing.id);
+    } else {
       addGoal({
         id: `g-${Date.now()}`,
         name: preset.name,
