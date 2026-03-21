@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState, ReactNode } from "react";
 import {
   mockTransactions,
   mockPunishments,
-  mockGoals,
   mockNotifications,
   Transaction,
   Punishment,
@@ -34,6 +33,8 @@ interface AppContextType extends AppState {
   toggleImpulseCategory: (c: string) => void;
   addCustomCategory: (c: string) => void;
   addGoal: (g: Goal) => void;
+  removeGoal: (id: string) => void;
+  clearGoals: () => void;
   updateGoal: (id: string, updates: Partial<Goal>) => void;
   setImpulseBudget: (b: number) => void;
   setNeighTaxPercent: (p: number) => void;
@@ -55,7 +56,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     email: "",
     connectedBank: null,
     impulseCategories: [],
-    goals: mockGoals,
+    goals: [],
     impulseBudget: 100,
     neighTaxPercent: 100,
     transactions: mockTransactions,
@@ -88,6 +89,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }));
     },
     addGoal: (g) => setState((prev) => ({ ...prev, goals: [...prev.goals, g] })),
+    removeGoal: (id) =>
+      setState((prev) => ({ ...prev, goals: prev.goals.filter((g) => g.id !== id) })),
+    clearGoals: () => setState((prev) => ({ ...prev, goals: [] })),
     updateGoal: (id, updates) =>
       setState((prev) => ({
         ...prev,

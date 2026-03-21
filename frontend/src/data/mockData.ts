@@ -77,12 +77,6 @@ export const mockPunishments: Punishment[] = [
   },
 ];
 
-export const mockGoals: Goal[] = [
-  { id: 'g1', name: 'Travel Fund', target: 2000, saved: 240, icon: '✈️' },
-  { id: 'g2', name: 'Emergency Fund', target: 1000, saved: 380, icon: '🛡️' },
-  { id: 'g3', name: 'New Laptop', target: 1200, saved: 95, icon: '💻' },
-];
-
 export const mockNotifications: Notification[] = [
   { id: 'n1', date: '2026-03-21', title: '£35 Steam purchase detected', message: 'Neigh-Tax applied: £35 saved 🐴', type: 'impulse' },
   { id: 'n2', date: '2026-03-20', title: 'Impulse budget warning', message: "You've spent 45% of your impulse budget. The horse is watching 👀", type: 'info' },
