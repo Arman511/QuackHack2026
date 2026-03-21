@@ -1,9 +1,6 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-<<<<<<< HEAD
-from backend.models import TransactionCreate, TransactionPublic, UserDB
-=======
 from backend.models import (
     AccountTypeEnum,
     BankProviderEnum,
@@ -26,7 +23,6 @@ from backend.models import (
     UserMetadataPublic,
     SetupBankAccountsRequest,
 )
->>>>>>> 9ea8a1b065a02fd741ff5ee339dcf06228c4445f
 from backend.repositories.bank_account_repository import BankAccountRepository
 from backend.repositories.transaction_repository import TransactionRepository
 
@@ -61,10 +57,6 @@ def create_user_transaction(
     return transaction
 
 
-<<<<<<< HEAD
-def admin_transaction_summary(db: Session, *, page: int = 1, page_size: int = 100):
-    return TransactionRepository(db).get_all_paginated(page=page, page_size=page_size)
-=======
 def create_webhook_transaction(
     db: Session,
     *,
@@ -487,4 +479,3 @@ def get_user_me_payload(db: Session, *, current_user: UserDB) -> UserMePublic:
         current_month_expenditure=limit_status.current_month_expenditure,
         is_passed_limit=limit_status.is_passed_limit,
     )
->>>>>>> 9ea8a1b065a02fd741ff5ee339dcf06228c4445f
