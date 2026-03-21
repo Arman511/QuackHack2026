@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+import logging
 
 from backend.models import (
     ImpulseZoneCreate,
@@ -31,6 +32,7 @@ from backend.utils.dependencies import (
 )
 
 router = APIRouter(prefix="/impulses", tags=["impulses"])
+logger = logging.getLogger(__name__)
 
 
 @router.get("", response_model=list[ImpulseZonePublic])
@@ -39,6 +41,7 @@ def get_all_impulses(
     _: current_user_dependency,
 ):
     """List all real impulse zones available to signed-in users."""
+    logger.debug("Listing all impulse zones")
     return list_all_impulse_zones(db)
 
 
@@ -48,6 +51,7 @@ def get_my_impulses(
     current_user: current_user_dependency,
 ):
     """Get the authenticated user's real and possible impulse bundle."""
+    logger.debug("Fetching impulse bundle for user_id=%s", current_user.id)
     return get_user_impulses_bundle(db, current_user=current_user)
 
 
@@ -58,6 +62,11 @@ def replace_my_impulses(
     current_user: current_user_dependency,
 ):
     """Replace the authenticated user's selected real impulses."""
+    logger.info(
+        "Replacing user impulses user_id=%s impulse_count=%s",
+        current_user.id,
+        len(payload.impulse_ids),
+    )
     return set_user_impulses(
         db,
         current_user=current_user,
@@ -72,6 +81,7 @@ def create_possible_impulse(
     current_user: current_user_dependency,
 ):
     """Create a user-owned possible impulse suggestion."""
+    logger.info("Creating possible impulse for user_id=%s", current_user.id)
     return create_possible_impulse_zone(
         db,
         current_user=current_user,
@@ -85,6 +95,7 @@ def admin_get_impulses(
     _: admin_user_dependency,
 ):
     """List all real impulse zones (admin only)."""
+    logger.debug("Admin listing real impulse zones")
     return admin_list_impulse_zones(db)
 
 
@@ -95,6 +106,7 @@ def admin_create_impulse(
     _: admin_user_dependency,
 ):
     """Create a real impulse zone (admin only)."""
+    logger.info("Admin creating real impulse zone name=%s", payload.name)
     return admin_create_impulse_zone(db, payload=payload)
 
 
@@ -106,6 +118,7 @@ def admin_patch_impulse(
     _: admin_user_dependency,
 ):
     """Update a real impulse zone by ID (admin only)."""
+    logger.info("Admin updating real impulse zone zone_id=%s", zone_id)
     return admin_update_impulse_zone(db, zone_id=zone_id, payload=payload)
 
 
@@ -116,6 +129,7 @@ def admin_remove_impulse(
     _: admin_user_dependency,
 ):
     """Delete a real impulse zone by ID (admin only)."""
+    logger.info("Admin deleting real impulse zone zone_id=%s", zone_id)
     return admin_delete_impulse_zone(db, zone_id=zone_id)
 
 
@@ -125,6 +139,7 @@ def admin_get_possible_impulses(
     _: admin_user_dependency,
 ):
     """List all possible impulse zones (admin only)."""
+    logger.debug("Admin listing possible impulse zones")
     return admin_list_possible_impulse_zones(db)
 
 
@@ -135,6 +150,7 @@ def admin_create_possible_impulse(
     _: admin_user_dependency,
 ):
     """Create a possible impulse zone without user scope (admin only)."""
+    logger.info("Admin creating possible impulse zone name=%s", payload.name)
     return admin_create_possible_impulse_zone(db, payload=payload)
 
 
@@ -146,6 +162,7 @@ def admin_patch_possible_impulse(
     _: admin_user_dependency,
 ):
     """Update a possible impulse zone by ID (admin only)."""
+    logger.info("Admin updating possible impulse zone zone_id=%s", zone_id)
     return admin_update_possible_impulse_zone(db, zone_id=zone_id, payload=payload)
 
 
@@ -156,6 +173,7 @@ def admin_remove_possible_impulse(
     _: admin_user_dependency,
 ):
     """Delete a possible impulse zone by ID (admin only)."""
+    logger.info("Admin deleting possible impulse zone zone_id=%s", zone_id)
     return admin_delete_possible_impulse_zone(db, zone_id=zone_id)
 
 
@@ -167,4 +185,5 @@ def admin_promote_possible_impulse(
     _: admin_user_dependency,
 ):
     """Promote a possible impulse zone into a real impulse zone (admin only)."""
+    logger.info("Admin promoting possible impulse zone zone_id=%s", zone_id)
     return admin_promote_possible_impulse_zone(db, zone_id=zone_id, payload=payload)

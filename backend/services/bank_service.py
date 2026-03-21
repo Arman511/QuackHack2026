@@ -1,4 +1,5 @@
 import random
+import logging
 from datetime import datetime, timedelta
 
 from fastapi import HTTPException, status
@@ -32,20 +33,34 @@ from backend.repositories.impulse_zone_repository import ImpulseZoneRepository
 from backend.repositories.transaction_repository import TransactionRepository
 from backend.repositories.user_metadata_repository import UserMetadataRepository
 
+logger = logging.getLogger(__name__)
+
 
 def list_my_accounts(db: Session, *, current_user: UserDB):
-    return BankAccountRepository(db).get_by_user_id(current_user.id)
+    accounts = BankAccountRepository(db).get_by_user_id(current_user.id)
+    logger.debug("Fetched %s accounts for user_id=%s", len(accounts), current_user.id)
+    return accounts
 
 
 def create_user_transaction(
     db: Session, *, current_user: UserDB, payload: TransactionCreate
 ) -> TransactionPublic:
+    logger.info(
+        "Creating transaction for user_id=%s source_account_id=%s",
+        current_user.id,
+        payload.source_account_id,
+    )
     account_repo = BankAccountRepository(db)
     source_account = account_repo.get_by_id_and_user_id(
         account_id=payload.source_account_id,
         user_id=current_user.id,
     )
     if source_account is None:
+        logger.warning(
+            "Transaction denied: source account not owned user_id=%s source_account_id=%s",
+            current_user.id,
+            payload.source_account_id,
+        )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Source account does not belong to the authenticated user",
@@ -60,6 +75,7 @@ def create_user_transaction(
         impulse_zone_id=payload.impulse_zone_id,
         possible_impulse_zone_id=payload.possible_impulse_zone_id,
     )
+    logger.info("Transaction created transaction_id=%s", transaction.id)
     return transaction
 
 
@@ -69,17 +85,31 @@ def create_webhook_transaction(
     current_user: UserDB,
     payload: TransactionWebhookCreate,
 ) -> TransactionPublic:
+    logger.info(
+        "Processing webhook transaction for user_id=%s account_number=%s",
+        current_user.id,
+        payload.account_number,
+    )
     account_repo = BankAccountRepository(db)
     source_account = account_repo.get_by_account_number_and_sort_code(
         account_number=payload.account_number,
         sort_code=payload.sort_code,
     )
     if source_account is not None and source_account.user_id != current_user.id:
+        logger.warning(
+            "Webhook transaction denied due to ownership mismatch actor_user_id=%s owner_user_id=%s",
+            current_user.id,
+            source_account.user_id,
+        )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Bank account does not belong to the authenticated user",
         )
     if source_account is None:
+        logger.warning(
+            "Webhook transaction account not found account_number=%s",
+            payload.account_number,
+        )
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Bank account not found for provided account number and sort code",
@@ -94,6 +124,7 @@ def create_webhook_transaction(
         impulse_zone_id=payload.impulse_zone_id,
         possible_impulse_zone_id=payload.possible_impulse_zone_id,
     )
+    logger.info("Webhook transaction created transaction_id=%s", transaction.id)
     return transaction
 
 
@@ -102,7 +133,13 @@ def list_user_transactions_hydrated(
     *,
     current_user: UserDB,
 ) -> list[TransactionHydratedPublic]:
-    return TransactionRepository(db).get_by_user_id_hydrated(current_user.id)
+    rows = TransactionRepository(db).get_by_user_id_hydrated(current_user.id)
+    logger.debug(
+        "Fetched %s hydrated transactions for user_id=%s",
+        len(rows),
+        current_user.id,
+    )
+    return rows
 
 
 def search_user_transactions_by_date(
@@ -112,15 +149,27 @@ def search_user_transactions_by_date(
     payload: TransactionDateRangeQuery,
 ) -> list[TransactionHydratedPublic]:
     if payload.start > payload.end:
+        logger.warning(
+            "Invalid transaction search range user_id=%s start=%s end=%s",
+            current_user.id,
+            payload.start,
+            payload.end,
+        )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="start must be before or equal to end",
         )
-    return TransactionRepository(db).get_by_user_id_and_date_range_hydrated(
+    rows = TransactionRepository(db).get_by_user_id_and_date_range_hydrated(
         user_id=current_user.id,
         start=payload.start,
         end=payload.end,
     )
+    logger.info(
+        "User transaction search returned count=%s user_id=%s",
+        len(rows),
+        current_user.id,
+    )
+    return rows
 
 
 def admin_search_transactions_by_date(
@@ -129,18 +178,32 @@ def admin_search_transactions_by_date(
     payload: TransactionDateRangeQuery,
 ) -> list[TransactionHydratedPublic]:
     if payload.start > payload.end:
+        logger.warning(
+            "Invalid admin transaction search range start=%s end=%s",
+            payload.start,
+            payload.end,
+        )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="start must be before or equal to end",
         )
-    return TransactionRepository(db).get_all_by_date_range_hydrated(
+    rows = TransactionRepository(db).get_all_by_date_range_hydrated(
         start=payload.start,
         end=payload.end,
     )
+    logger.info("Admin transaction search returned count=%s", len(rows))
+    return rows
 
 
 def admin_transaction_summary(db: Session, *, page: int = 1, page_size: int = 100):
-    return TransactionRepository(db).get_all_paginated(page=page, page_size=page_size)
+    rows = TransactionRepository(db).get_all_paginated(page=page, page_size=page_size)
+    logger.info(
+        "Admin summary returned count=%s page=%s page_size=%s",
+        len(rows),
+        page,
+        page_size,
+    )
+    return rows
 
 
 def create_bank_accounts_for_user(
@@ -149,6 +212,11 @@ def create_bank_accounts_for_user(
     current_user: UserDB,
     provider: BankProviderEnum,
 ) -> CreateBankAccountsResponse:
+    logger.info(
+        "Creating default bank accounts for user_id=%s provider=%s",
+        current_user.id,
+        provider.value,
+    )
     account_repo = BankAccountRepository(db)
     current_account, saving_account = account_repo.create_default_accounts_for_user(
         user_id=current_user.id,
@@ -162,6 +230,12 @@ def create_bank_accounts_for_user(
     current_account = account_repo.update_amount(current_account.id, current_amount)
     saving_account = account_repo.update_amount(saving_account.id, saving_amount)
 
+    logger.info(
+        "Default accounts created current_id=%s saving_id=%s user_id=%s",
+        current_account.id,
+        saving_account.id,
+        current_user.id,
+    )
     return CreateBankAccountsResponse(current=current_account, saving=saving_account)
 
 
@@ -171,6 +245,11 @@ def setup_bank_accounts_for_user(
     current_user: UserDB,
     payload: SetupBankAccountsRequest,
 ) -> CreateBankAccountsResponse:
+    logger.info(
+        "Setting up explicit bank accounts for user_id=%s provider=%s",
+        current_user.id,
+        payload.provider.value,
+    )
     account_repo = BankAccountRepository(db)
     existing_current = account_repo.get_first_by_user_id_and_type(
         user_id=current_user.id,
@@ -181,6 +260,7 @@ def setup_bank_accounts_for_user(
         account_type=AccountTypeEnum.SAVING,
     )
     if existing_current is not None or existing_saving is not None:
+        logger.warning("Setup accounts conflict for user_id=%s", current_user.id)
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Bank accounts are already set up for this user",
@@ -195,6 +275,12 @@ def setup_bank_accounts_for_user(
         saving_sort_code=payload.saving.sort_code,
     )
 
+    logger.info(
+        "Explicit accounts setup complete current_id=%s saving_id=%s user_id=%s",
+        current_account.id,
+        saving_account.id,
+        current_user.id,
+    )
     return CreateBankAccountsResponse(current=current_account, saving=saving_account)
 
 
@@ -204,6 +290,7 @@ def get_user_impulses_bundle(
     current_user: UserDB,
 ) -> UserImpulsesBundlePublic:
     repo = ImpulseZoneRepository(db)
+    logger.debug("Fetching impulses bundle for user_id=%s", current_user.id)
     return UserImpulsesBundlePublic(
         impulses=repo.get_user_impulses(current_user.id),
         possible=repo.get_possible_impulse_zones_for_user(current_user.id),
@@ -215,9 +302,15 @@ def get_user_possible_impulses(
     *,
     current_user: UserDB,
 ) -> list[PossibleImpulseZonePublic]:
-    return ImpulseZoneRepository(db).get_possible_impulse_zones_for_user(
+    rows = ImpulseZoneRepository(db).get_possible_impulse_zones_for_user(
         current_user.id
     )
+    logger.debug(
+        "Fetched %s possible impulses for user_id=%s",
+        len(rows),
+        current_user.id,
+    )
+    return rows
 
 
 def set_user_impulses(
@@ -231,12 +324,20 @@ def set_user_impulses(
     known_ids = {zone.id for zone in all_impulses}
     unknown_ids = sorted(set(impulse_ids) - known_ids)
     if unknown_ids:
+        logger.warning(
+            "Unknown impulse IDs user_id=%s ids=%s", current_user.id, unknown_ids
+        )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Unknown impulse IDs: {unknown_ids}",
         )
 
     repo.replace_user_impulses(user_id=current_user.id, impulse_ids=impulse_ids)
+    logger.info(
+        "Replaced user impulses user_id=%s impulse_count=%s",
+        current_user.id,
+        len(impulse_ids),
+    )
     return get_user_impulses_bundle(db, current_user=current_user)
 
 
@@ -247,11 +348,22 @@ def create_possible_impulse_zone(
     payload: ImpulseZoneCreate,
 ) -> PossibleImpulseZonePublic:
     try:
-        return ImpulseZoneRepository(db).create_possible_impulse_zone(
+        zone = ImpulseZoneRepository(db).create_possible_impulse_zone(
             payload.name,
             current_user.id,
         )
+        logger.info(
+            "Created user-scoped possible impulse zone_id=%s user_id=%s",
+            zone.id,
+            current_user.id,
+        )
+        return zone
     except IntegrityError as exc:
+        logger.warning(
+            "Possible impulse conflict for user_id=%s name=%s",
+            current_user.id,
+            payload.name,
+        )
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Possible impulse zone already exists",
@@ -264,8 +376,11 @@ def admin_create_impulse_zone(
     payload: ImpulseZoneCreate,
 ) -> ImpulseZonePublic:
     try:
-        return ImpulseZoneRepository(db).create_impulse_zone(payload.name)
+        zone = ImpulseZoneRepository(db).create_impulse_zone(payload.name)
+        logger.info("Admin created impulse zone_id=%s", zone.id)
+        return zone
     except IntegrityError as exc:
+        logger.warning("Impulse zone create conflict name=%s", payload.name)
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Impulse zone already exists",
@@ -273,11 +388,15 @@ def admin_create_impulse_zone(
 
 
 def admin_list_impulse_zones(db: Session) -> list[ImpulseZonePublic]:
-    return ImpulseZoneRepository(db).get_all_impulse_zones()
+    rows = ImpulseZoneRepository(db).get_all_impulse_zones()
+    logger.debug("Admin listed impulse zones count=%s", len(rows))
+    return rows
 
 
 def list_all_impulse_zones(db: Session) -> list[ImpulseZonePublic]:
-    return ImpulseZoneRepository(db).get_all_impulse_zones()
+    rows = ImpulseZoneRepository(db).get_all_impulse_zones()
+    logger.debug("Listed all impulse zones count=%s", len(rows))
+    return rows
 
 
 def admin_update_impulse_zone(
@@ -289,25 +408,30 @@ def admin_update_impulse_zone(
     try:
         updated = ImpulseZoneRepository(db).update_impulse_zone(zone_id, payload.name)
     except IntegrityError as exc:
+        logger.warning("Impulse zone update conflict zone_id=%s", zone_id)
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Impulse zone already exists",
         ) from exc
     if updated is None:
+        logger.warning("Impulse zone not found zone_id=%s", zone_id)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Impulse zone not found",
         )
+    logger.info("Admin updated impulse zone zone_id=%s", zone_id)
     return updated
 
 
 def admin_delete_impulse_zone(db: Session, *, zone_id: int) -> dict[str, bool]:
     deleted = ImpulseZoneRepository(db).delete_impulse_zone(zone_id)
     if not deleted:
+        logger.warning("Impulse zone delete not found zone_id=%s", zone_id)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Impulse zone not found",
         )
+    logger.info("Admin deleted impulse zone zone_id=%s", zone_id)
     return {"deleted": True}
 
 
@@ -317,8 +441,11 @@ def admin_create_possible_impulse_zone(
     payload: ImpulseZoneCreate,
 ) -> PossibleImpulseZonePublic:
     try:
-        return ImpulseZoneRepository(db).create_possible_impulse_zone(payload.name)
+        zone = ImpulseZoneRepository(db).create_possible_impulse_zone(payload.name)
+        logger.info("Admin created possible impulse zone_id=%s", zone.id)
+        return zone
     except IntegrityError as exc:
+        logger.warning("Possible impulse create conflict name=%s", payload.name)
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Possible impulse zone already exists",
@@ -326,7 +453,9 @@ def admin_create_possible_impulse_zone(
 
 
 def admin_list_possible_impulse_zones(db: Session) -> list[PossibleImpulseZonePublic]:
-    return ImpulseZoneRepository(db).get_all_possible_impulse_zones()
+    rows = ImpulseZoneRepository(db).get_all_possible_impulse_zones()
+    logger.debug("Admin listed possible impulse zones count=%s", len(rows))
+    return rows
 
 
 def admin_update_possible_impulse_zone(
@@ -341,25 +470,30 @@ def admin_update_possible_impulse_zone(
             payload.name,
         )
     except IntegrityError as exc:
+        logger.warning("Possible impulse update conflict zone_id=%s", zone_id)
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Possible impulse zone already exists",
         ) from exc
     if updated is None:
+        logger.warning("Possible impulse zone not found zone_id=%s", zone_id)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Possible impulse zone not found",
         )
+    logger.info("Admin updated possible impulse zone zone_id=%s", zone_id)
     return updated
 
 
 def admin_delete_possible_impulse_zone(db: Session, *, zone_id: int) -> dict[str, bool]:
     deleted = ImpulseZoneRepository(db).delete_possible_impulse_zone(zone_id)
     if not deleted:
+        logger.warning("Possible impulse delete not found zone_id=%s", zone_id)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Possible impulse zone not found",
         )
+    logger.info("Admin deleted possible impulse zone zone_id=%s", zone_id)
     return {"deleted": True}
 
 
@@ -370,16 +504,22 @@ def admin_promote_possible_impulse_zone(
     payload: PromotePossibleImpulseRequest,
 ) -> ImpulseZonePublic:
     try:
-        return ImpulseZoneRepository(db).promote_possible_to_impulse_zone(
+        zone = ImpulseZoneRepository(db).promote_possible_to_impulse_zone(
             zone_id,
             payload.name,
         )
+        logger.info(
+            "Admin promoted possible zone_id=%s into zone_id=%s", zone_id, zone.id
+        )
+        return zone
     except ValueError as exc:
+        logger.warning("Promote possible impulse not found zone_id=%s", zone_id)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(exc),
         ) from exc
     except IntegrityError as exc:
+        logger.warning("Promote possible impulse conflict zone_id=%s", zone_id)
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Impulse zone already exists",
@@ -403,6 +543,11 @@ def set_user_goal(
             user_id=current_user.id,
         )
         if account is None:
+            logger.warning(
+                "Goal update denied: account ownership mismatch user_id=%s account_id=%s",
+                current_user.id,
+                target_account_id,
+            )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Bank account does not belong to the authenticated user",
@@ -413,13 +558,16 @@ def set_user_goal(
             account_type=AccountTypeEnum.SAVING,
         )
         if default_saving is None:
+            logger.warning(
+                "Goal update failed: no saving account user_id=%s", current_user.id
+            )
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="No saving account found for authenticated user",
             )
         target_account_id = default_saving.id
 
-    return metadata_repo.set_goal(
+    metadata = metadata_repo.set_goal(
         user_id=current_user.id,
         goal=payload.goal,
         bank_account_id=target_account_id,
@@ -434,6 +582,8 @@ def set_user_goal(
             else (existing_metadata.tax_percentage if existing_metadata else None)
         ),
     )
+    logger.info("Updated goal metadata for user_id=%s", current_user.id)
+    return metadata
 
 
 def _month_window(now: datetime) -> tuple[datetime, datetime]:
@@ -462,17 +612,25 @@ def get_user_limit_status(
 
     limit_value = metadata.impulse_limit if metadata else None
     passed = bool(limit_value is not None and total > limit_value)
-    return UserLimitStatusPublic(
+    result = UserLimitStatusPublic(
         current_month_expenditure=total,
         impulse_limit=limit_value,
         is_passed_limit=passed,
     )
+    logger.debug(
+        "Computed limit status user_id=%s total=%s limit=%s passed=%s",
+        current_user.id,
+        total,
+        limit_value,
+        passed,
+    )
+    return result
 
 
 def get_user_me_payload(db: Session, *, current_user: UserDB) -> UserMePublic:
     metadata = UserMetadataRepository(db).get_by_user_id(current_user.id)
     limit_status = get_user_limit_status(db, current_user=current_user)
-    return UserMePublic(
+    payload = UserMePublic(
         id=current_user.id,
         username=current_user.username,
         email=current_user.email,
@@ -485,3 +643,5 @@ def get_user_me_payload(db: Session, *, current_user: UserDB) -> UserMePublic:
         current_month_expenditure=limit_status.current_month_expenditure,
         is_passed_limit=limit_status.is_passed_limit,
     )
+    logger.debug("Built /auth/me payload for user_id=%s", current_user.id)
+    return payload
