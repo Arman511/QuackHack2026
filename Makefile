@@ -59,7 +59,7 @@ endif
 
 test:
 ifeq ($(HAS_TESTS_DIR),yes)
-	uv run python -m pytest
+	uv run --group dev pytest
 else
 	@echo "No Python tests found yet (expected tests/ directory)."
 endif
@@ -75,7 +75,7 @@ endif
 
 back-cover:
 ifeq ($(HAS_TESTS_DIR),yes)
-	uv run python -m pytest --cov=backend --cov-report=term-missing
+	uv run --group dev pytest --cov=backend --cov-report=term-missing
 else
 	@echo "No Python tests found yet (expected tests/ directory)."
 endif
