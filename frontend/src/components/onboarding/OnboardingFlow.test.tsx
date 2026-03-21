@@ -5,7 +5,12 @@ import OnboardingFlow from "./OnboardingFlow";
 import { AppProvider } from "@/context/AppContext";
 import { bankOptions } from "@/data/mockData";
 
-const renderFlow = () => render(<AppProvider><OnboardingFlow /></AppProvider>);
+const renderFlow = () =>
+  render(
+    <AppProvider>
+      <OnboardingFlow />
+    </AppProvider>,
+  );
 
 describe("OnboardingFlow", () => {
   it("shows LoginPage at step 0", () => {

@@ -5,8 +5,7 @@ import GoalsPage from "./GoalsPage";
 import { AppProvider } from "@/context/AppContext";
 import { goalPresets } from "@/data/mockData";
 
-const renderWithProvider = (ui: React.ReactElement) =>
-  render(<AppProvider>{ui}</AppProvider>);
+const renderWithProvider = (ui: React.ReactElement) => render(<AppProvider>{ui}</AppProvider>);
 
 describe("GoalsPage", () => {
   it("renders the heading", () => {

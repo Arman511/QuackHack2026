@@ -5,8 +5,7 @@ import NotificationsTab from "./NotificationsTab";
 import { AppProvider } from "@/context/AppContext";
 import { mockNotifications } from "@/data/mockData";
 
-const renderWithProvider = (ui: React.ReactElement) =>
-  render(<AppProvider>{ui}</AppProvider>);
+const renderWithProvider = (ui: React.ReactElement) => render(<AppProvider>{ui}</AppProvider>);
 
 describe("NotificationsTab", () => {
   it("renders the heading", () => {

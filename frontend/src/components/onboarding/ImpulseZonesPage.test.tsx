@@ -5,8 +5,7 @@ import ImpulseZonesPage from "./ImpulseZonesPage";
 import { AppProvider } from "@/context/AppContext";
 import { impulseCategories } from "@/data/mockData";
 
-const renderWithProvider = (ui: React.ReactElement) =>
-  render(<AppProvider>{ui}</AppProvider>);
+const renderWithProvider = (ui: React.ReactElement) => render(<AppProvider>{ui}</AppProvider>);
 
 describe("ImpulseZonesPage", () => {
   it("renders the heading", () => {

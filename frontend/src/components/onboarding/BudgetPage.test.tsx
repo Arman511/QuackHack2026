@@ -1,4 +1,3 @@
-
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import React from "react";
@@ -10,8 +9,7 @@ const OnboardedDisplay = () => {
   return <div data-testid="onboarded">{isOnboarded ? "yes" : "no"}</div>;
 };
 
-const renderWithProvider = (ui: React.ReactElement) =>
-  render(<AppProvider>{ui}</AppProvider>);
+const renderWithProvider = (ui: React.ReactElement) => render(<AppProvider>{ui}</AppProvider>);
 
 describe("BudgetPage", () => {
   it("renders the heading", () => {
@@ -62,7 +60,7 @@ describe("BudgetPage", () => {
       <AppProvider>
         <OnboardedDisplay />
         <BudgetPage />
-      </AppProvider>
+      </AppProvider>,
     );
     expect(screen.getByTestId("onboarded")).toHaveTextContent("no");
     fireEvent.click(screen.getByRole("button", { name: /Start Saving/i }));

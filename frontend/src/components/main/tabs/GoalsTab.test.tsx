@@ -4,7 +4,7 @@ import React from "react";
 import GoalsTab from "./GoalsTab";
 import { AppProvider, useApp } from "@/context/AppContext";
 
-const renderWithGoals= () => {
+const renderWithGoals = () => {
   const Wrapper = () => {
     const { addGoal } = useApp();
     React.useEffect(() => {
@@ -12,17 +12,29 @@ const renderWithGoals= () => {
     }, []);
     return <GoalsTab />;
   };
-  return render(<AppProvider><Wrapper /></AppProvider>);
+  return render(
+    <AppProvider>
+      <Wrapper />
+    </AppProvider>,
+  );
 };
 
 describe("GoalsTab", () => {
   it("renders the heading", () => {
-    render(<AppProvider><GoalsTab /></AppProvider>);
+    render(
+      <AppProvider>
+        <GoalsTab />
+      </AppProvider>,
+    );
     expect(screen.getByText(/Savings Goals/i)).toBeInTheDocument();
   });
 
   it("shows empty state when no goals", () => {
-    render(<AppProvider><GoalsTab /></AppProvider>);
+    render(
+      <AppProvider>
+        <GoalsTab />
+      </AppProvider>,
+    );
     // No goal cards — just the Neigh-Tax section
     expect(screen.getByText(/Current Neigh-Tax Rate/i)).toBeInTheDocument();
     expect(screen.queryByText("Travel")).not.toBeInTheDocument();
@@ -40,14 +52,22 @@ describe("GoalsTab", () => {
   });
 
   it("renders the Neigh-Tax rate buttons", () => {
-    render(<AppProvider><GoalsTab /></AppProvider>);
+    render(
+      <AppProvider>
+        <GoalsTab />
+      </AppProvider>,
+    );
     expect(screen.getByRole("button", { name: "50%" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "100%" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "200%" })).toBeInTheDocument();
   });
 
   it("increasing the tax applies immediately without a modal", () => {
-    render(<AppProvider><GoalsTab /></AppProvider>);
+    render(
+      <AppProvider>
+        <GoalsTab />
+      </AppProvider>,
+    );
     // Default is 100% — clicking 200% is an increase
     fireEvent.click(screen.getByRole("button", { name: "200%" }));
     expect(screen.queryByText(/Explain yourself/i)).not.toBeInTheDocument();
@@ -55,20 +75,32 @@ describe("GoalsTab", () => {
   });
 
   it("decreasing the tax opens the justification modal", () => {
-    render(<AppProvider><GoalsTab /></AppProvider>);
+    render(
+      <AppProvider>
+        <GoalsTab />
+      </AppProvider>,
+    );
     // Default is 100% — clicking 50% is a decrease
     fireEvent.click(screen.getByRole("button", { name: "50%" }));
     expect(screen.getByText(/Explain yourself/i)).toBeInTheDocument();
   });
 
   it("Submit button in modal is disabled when justification is empty", () => {
-    render(<AppProvider><GoalsTab /></AppProvider>);
+    render(
+      <AppProvider>
+        <GoalsTab />
+      </AppProvider>,
+    );
     fireEvent.click(screen.getByRole("button", { name: "50%" }));
     expect(screen.getByRole("button", { name: "Submit" })).toBeDisabled();
   });
 
   it("submitting a justification applies the lower tax and closes modal", () => {
-    render(<AppProvider><GoalsTab /></AppProvider>);
+    render(
+      <AppProvider>
+        <GoalsTab />
+      </AppProvider>,
+    );
     fireEvent.click(screen.getByRole("button", { name: "50%" }));
     fireEvent.change(screen.getByPlaceholderText(/I swear it's for a good reason/i), {
       target: { value: "I genuinely need to lower it" },
@@ -79,7 +111,11 @@ describe("GoalsTab", () => {
   });
 
   it("Cancel button closes the modal without changing the tax", () => {
-    render(<AppProvider><GoalsTab /></AppProvider>);
+    render(
+      <AppProvider>
+        <GoalsTab />
+      </AppProvider>,
+    );
     fireEvent.click(screen.getByRole("button", { name: "50%" }));
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(screen.queryByText(/Explain yourself/i)).not.toBeInTheDocument();

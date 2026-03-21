@@ -4,8 +4,7 @@ import React from "react";
 import LoginPage from "./LoginPage";
 import { AppProvider, useApp } from "@/context/AppContext";
 
-const renderWithProvider = (ui: React.ReactElement) =>
-  render(<AppProvider>{ui}</AppProvider>);
+const renderWithProvider = (ui: React.ReactElement) => render(<AppProvider>{ui}</AppProvider>);
 
 // Helper that exposes context state alongside the component under test
 const StepDisplay = () => {
@@ -53,7 +52,7 @@ describe("LoginPage", () => {
       <AppProvider>
         <StepDisplay />
         <LoginPage />
-      </AppProvider>
+      </AppProvider>,
     );
     expect(screen.getByTestId("step")).toHaveTextContent("0");
     fireEvent.change(screen.getByPlaceholderText("cowboy@ranch.com"), {
