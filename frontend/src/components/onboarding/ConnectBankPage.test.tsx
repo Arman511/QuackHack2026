@@ -5,8 +5,7 @@ import ConnectBankPage from "./ConnectBankPage";
 import { AppProvider } from "@/context/AppContext";
 import { bankOptions } from "@/data/mockData";
 
-const renderWithProvider = (ui: React.ReactElement) =>
-  render(<AppProvider>{ui}</AppProvider>);
+const renderWithProvider = (ui: React.ReactElement) => render(<AppProvider>{ui}</AppProvider>);
 
 describe("ConnectBankPage", () => {
   it("renders the heading", () => {
