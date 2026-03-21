@@ -16,11 +16,6 @@ from backend.models.schemas import (
     RefreshTokensCompatRequest,
     TokenPayload,
     TransactionCreate,
-<<<<<<< HEAD
-=======
-    TransactionWebhookCreate,
-    TransactionHydratedPublic,
->>>>>>> 9ea8a1b065a02fd741ff5ee339dcf06228c4445f
     TransactionPublic,
     UserAdminPatch,
     UserCreate,
@@ -56,11 +51,6 @@ __all__ = [
     "ImpulseZonePublic",
     "PossibleImpulseZonePublic",
     "TransactionCreate",
-<<<<<<< HEAD
-=======
-    "TransactionWebhookCreate",
-    "TransactionHydratedPublic",
->>>>>>> 9ea8a1b065a02fd741ff5ee339dcf06228c4445f
     "TransactionPublic",
     "UserMetadataCreate",
     "UserMetadataPublic",

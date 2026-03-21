@@ -1,28 +1,24 @@
 from fastapi import APIRouter, Query
 
-<<<<<<< HEAD
-from backend.models import BankAccountPublic, TransactionCreate, TransactionPublic
-=======
 from backend.models import (
     BankAccountPublic,
     CreateBankAccountsRequest,
     CreateBankAccountsResponse,
+    SetupBankAccountsRequest,
     TransactionDateRangeQuery,
     TransactionCreate,
     TransactionWebhookCreate,
     TransactionHydratedPublic,
     TransactionPublic,
 )
->>>>>>> 9ea8a1b065a02fd741ff5ee339dcf06228c4445f
 from backend.services.bank_service import (
     admin_transaction_summary,
-<<<<<<< HEAD
-=======
     create_bank_accounts_for_user,
     create_webhook_transaction,
->>>>>>> 9ea8a1b065a02fd741ff5ee339dcf06228c4445f
     create_user_transaction,
     list_my_accounts,
+    search_user_transactions_by_date,
+    setup_bank_accounts_for_user,
 )
 from backend.utils.dependencies import (
     admin_user_dependency,
@@ -51,58 +47,19 @@ def create_transaction(
     """Create a transaction for the authenticated user."""
     return create_user_transaction(db, current_user=current_user, payload=payload)
 
-
-<<<<<<< HEAD
-=======
-@router.post("/transactions/webhook", response_model=TransactionPublic)
-def create_transaction_from_webhook(
-    payload: TransactionWebhookCreate,
+@router.post("/accounts/setup", response_model=CreateBankAccountsResponse)
+def setup_bank_accounts(
+    payload: SetupBankAccountsRequest,
     db: db_dependency,
     current_user: current_user_dependency,
 ):
-    """Create a transaction from an external webhook using account number and sort code."""
-    return create_webhook_transaction(db, payload=payload, current_user=current_user)
-
-
-@router.get("/transactions/me", response_model=list[TransactionHydratedPublic])
-def list_my_transactions(
-    db: db_dependency,
-    current_user: current_user_dependency,
-):
-    """List the authenticated user's transactions with impulse labels."""
-    return list_user_transactions_hydrated(db, current_user=current_user)
-
-
-@router.get("/transactions/search", response_model=list[TransactionHydratedPublic])
-def search_my_transactions(
-    start: datetime,
-    end: datetime,
-    db: db_dependency,
-    current_user: current_user_dependency,
-):
-    """Search the authenticated user's transactions by date range."""
-    return search_user_transactions_by_date(
+    """Set up one current and one saving account for the authenticated user."""
+    return setup_bank_accounts_for_user(
         db,
         current_user=current_user,
-        payload=TransactionDateRangeQuery(start=start, end=end),
+        payload=payload,
     )
 
-
-@router.post("/accounts/create", response_model=CreateBankAccountsResponse)
-def create_bank_accounts(
-    payload: CreateBankAccountsRequest,
-    db: db_dependency,
-    current_user: current_user_dependency,
-):
-    """Create default current and saving accounts for the authenticated user."""
-    return create_bank_accounts_for_user(
-        db,
-        current_user=current_user,
-        provider=payload.provider,
-    )
-
-
->>>>>>> 9ea8a1b065a02fd741ff5ee339dcf06228c4445f
 @router.get("/admin/summary", response_model=list[TransactionPublic])
 def admin_summary(
     db: db_dependency,
@@ -112,23 +69,3 @@ def admin_summary(
 ):
     """List paginated transaction summaries across all users for admins."""
     return admin_transaction_summary(db, page=page, page_size=page_size)
-<<<<<<< HEAD
-=======
-
-
-@router.get(
-    "/admin/transactions/search",
-    response_model=list[TransactionHydratedPublic],
-)
-def admin_search_transactions(
-    start: datetime,
-    end: datetime,
-    db: db_dependency,
-    _: admin_user_dependency,
-):
-    """Search all transactions by date range for admins."""
-    return admin_search_transactions_by_date(
-        db,
-        payload=TransactionDateRangeQuery(start=start, end=end),
-    )
->>>>>>> 9ea8a1b065a02fd741ff5ee339dcf06228c4445f
