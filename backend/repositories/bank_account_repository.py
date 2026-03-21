@@ -1,3 +1,7 @@
+import random
+import string
+import uuid
+
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -69,7 +73,7 @@ class BankAccountRepository:
                 self.SQL_CREATE_BANK_ACCOUNT,
                 {
                     "user_id": user_id,
-                    "bank_account_id": None,  # DB will generate UUID
+                    "bank_account_id": str(uuid.uuid4()),
                     "account_number": account_number,
                     "sort_code": sort_code,
                     "name": name,
@@ -97,25 +101,35 @@ class BankAccountRepository:
         """
         current_account = self.create_account(
             user_id=user_id,
-            account_number=f"CURR-{user_id}-{provider.value}",
-            sort_code="00-00-00",
+            account_number=self._generate_account_number(),
+            sort_code=self._generate_sort_code(),
             name=f"{provider.value} Current Account",
             provider=provider,
             account_type=AccountTypeEnum.CURRENT,
-            initial_amount=0,
+            initial_amount=500,
         )
 
         saving_account = self.create_account(
             user_id=user_id,
-            account_number=f"SAVE-{user_id}-{provider.value}",
-            sort_code="00-00-00",
+            account_number=self._generate_account_number(),
+            sort_code=self._generate_sort_code(),
             name=f"{provider.value} Saving Account",
             provider=provider,
             account_type=AccountTypeEnum.SAVING,
-            initial_amount=0,
+            initial_amount=100,
         )
 
         return current_account, saving_account
+
+    @staticmethod
+    def _generate_account_number() -> str:
+        """Generate a random account number (digit string)."""
+        return "".join(random.choices(string.digits, k=8))
+
+    @staticmethod
+    def _generate_sort_code() -> str:
+        """Generate a random 6-digit sort code."""
+        return "".join(random.choices(string.digits, k=6))
 
     def get_by_id(self, account_id: int) -> BankAccountPublic | None:
         """Get a bank account by ID."""
