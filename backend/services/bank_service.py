@@ -1,4 +1,3 @@
-import random
 import logging
 from datetime import datetime, timedelta
 
@@ -8,7 +7,8 @@ from sqlalchemy.orm import Session
 
 from backend.models import (
     AccountTypeEnum,
-    BankProviderEnum,
+    BankAccountPublic,
+    CreateBankAccountsRequest,
     CreateBankAccountsResponse,
     ImpulseZoneCreate,
     ImpulseZonePublic,
@@ -237,33 +237,46 @@ def create_bank_accounts_for_user(
     db: Session,
     *,
     current_user: UserDB,
-    provider: BankProviderEnum,
-) -> CreateBankAccountsResponse:
+    payload: CreateBankAccountsRequest,
+) -> BankAccountPublic:
     logger.info(
-        "Creating default bank accounts for user_id=%s provider=%s",
+        "Creating single bank account for user_id=%s provider=%s type=%s",
         current_user.id,
-        provider.value,
+        payload.provider.value,
+        payload.type.value,
     )
     account_repo = BankAccountRepository(db)
-    current_account, saving_account = account_repo.create_default_accounts_for_user(
-        user_id=current_user.id,
-        provider=provider,
-    )
 
-    # Bias around 1000 while respecting the requested [500, 10000] bounds.
-    current_amount = int(round(random.triangular(500, 10000, 1000)))
-    saving_amount = random.randint(100, 5000)
-
-    current_account = account_repo.update_amount(current_account.id, current_amount)
-    saving_account = account_repo.update_amount(saving_account.id, saving_amount)
+    account_name_suffix = "Current Account" if payload.type == AccountTypeEnum.CURRENT else "Saving Account"
+    try:
+        created_account = account_repo.create_account(
+            user_id=current_user.id,
+            account_number=payload.account_number,
+            sort_code=payload.sort_code,
+            name=f"{payload.provider.value} {account_name_suffix}",
+            provider=payload.provider,
+            account_type=payload.type,
+            initial_amount=payload.amount,
+        )
+    except IntegrityError as exc:
+        logger.warning(
+            "Create account duplicate conflict user_id=%s account_number=%s sort_code=%s",
+            current_user.id,
+            payload.account_number,
+            payload.sort_code,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Bank account with this account number and sort code already exists",
+        ) from exc
 
     logger.info(
-        "Default accounts created current_id=%s saving_id=%s user_id=%s",
-        _id_for_log(current_account),
-        _id_for_log(saving_account),
+        "Bank account created account_id=%s user_id=%s type=%s",
+        _id_for_log(created_account),
         current_user.id,
+        payload.type.value,
     )
-    return CreateBankAccountsResponse(current=current_account, saving=saving_account)
+    return BankAccountPublic.model_validate(created_account)
 
 
 def setup_bank_accounts_for_user(

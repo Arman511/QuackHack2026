@@ -49,7 +49,7 @@ export const searchMyTransactions = (
 };
 
 export const createBankAccounts = (body: CreateBankAccountsRequest) =>
-  apiRequest<CreateBankAccountsResponse>("/api/bank/accounts/create", {
+  apiRequest<BankAccountPublic>("/api/bank/accounts/create", {
     method: "POST",
     body,
   });

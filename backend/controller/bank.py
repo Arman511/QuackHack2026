@@ -111,22 +111,23 @@ def search_my_transactions(
     )
 
 
-@router.post("/accounts/create", response_model=CreateBankAccountsResponse)
+@router.post("/accounts/create", response_model=BankAccountPublic)
 def create_bank_accounts(
     payload: CreateBankAccountsRequest,
     db: db_dependency,
     current_user: current_user_dependency,
 ):
-    """Create default current and saving accounts for the authenticated user."""
+    """Create one bank account for the authenticated user."""
     logger.info(
-        "Creating default bank accounts user_id=%s provider=%s",
+        "Creating bank account user_id=%s provider=%s type=%s",
         current_user.id,
         payload.provider.value,
+        payload.type.value,
     )
     return create_bank_accounts_for_user(
         db,
         current_user=current_user,
-        provider=payload.provider,
+        payload=payload,
     )
 
 

@@ -76,6 +76,10 @@ class BankAccountCreate(BaseModel):
 
 class CreateBankAccountsRequest(BaseModel):
     provider: BankProviderEnum
+    type: AccountTypeEnum
+    account_number: str
+    sort_code: str
+    amount: int = Field(ge=0)
 
 
 class SetupBankAccountDetails(BaseModel):

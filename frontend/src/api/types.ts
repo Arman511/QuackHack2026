@@ -119,6 +119,10 @@ export interface BankAccountPublic {
 
 export interface CreateBankAccountsRequest {
   provider: BankProviderEnum;
+  type: AccountTypeEnum;
+  account_number: string;
+  sort_code: string;
+  amount: number;
 }
 
 export interface SetupBankAccountDetails {
