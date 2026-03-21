@@ -28,6 +28,7 @@ format:
 lint:
 	uvx black --check .
 	@if command -v pnpm >/dev/null 2>&1; then \
+		if [ -f frontend/package.json ]; then pnpm --dir frontend lint; else echo "frontend/package.json not found; skipping frontend lint"; fi; \
 		pnpm dlx prettier --check .; \
 	else \
 		echo "pnpm not found; skipping Prettier lint"; \
@@ -39,10 +40,10 @@ test:
 	else \
 		echo "No Python tests found yet (expected tests/ directory)."; \
 	fi
-	@if [ -f package.json ]; then \
-		npm test; \
+	@if [ -f frontend/package.json ] && grep -q '"test"[[:space:]]*:' frontend/package.json; then \
+		pnpm --dir frontend test; \
 	else \
-		echo "No frontend tests yet (package.json not found)."; \
+		echo "No frontend tests yet (frontend/package.json test script not found)."; \
 	fi
 
 down:

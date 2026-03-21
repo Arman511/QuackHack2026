@@ -7,38 +7,30 @@ from backend.models import UserDB
 class UserRepository:
     """Repository for user-related SQL operations."""
 
-    SQL_INSERT_USER = text(
-        """
+    SQL_INSERT_USER = text("""
         INSERT INTO users (username, email, full_name, hashed_password, is_active)
         VALUES (:username, :email, :full_name, :hashed_password, :is_active)
         RETURNING id, username, email, full_name, hashed_password, is_active, created_at
-        """
-    )
+        """)
 
-    SQL_SELECT_BY_USERNAME = text(
-        """
+    SQL_SELECT_BY_USERNAME = text("""
         SELECT id, username, email, full_name, hashed_password, is_active, created_at
         FROM users
         WHERE username = :username
-        """
-    )
+        """)
 
-    SQL_SELECT_BY_ID = text(
-        """
+    SQL_SELECT_BY_ID = text("""
         SELECT id, username, email, full_name, hashed_password, is_active, created_at
         FROM users
         WHERE id = :user_id
-        """
-    )
+        """)
 
-    SQL_SELECT_ALL_USERNAMES = text(
-        """
+    SQL_SELECT_ALL_USERNAMES = text("""
         SELECT username
         FROM users
         ORDER BY created_at DESC, id DESC
         LIMIT :limit OFFSET :offset
-        """
-    )
+        """)
 
     def __init__(self, db: Session):
         self.db = db

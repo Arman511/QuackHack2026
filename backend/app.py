@@ -8,7 +8,6 @@ from backend.auth import router as auth_router
 from backend.database import URL_DATABASE, engine
 from backend.sql_migration import run_sql_migrations
 
-
 app = FastAPI()
 
 

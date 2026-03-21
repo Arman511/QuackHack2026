@@ -16,7 +16,6 @@ from backend.config import (
     SQLITE_DB_PATH,
 )
 
-
 load_dotenv()
 
 
