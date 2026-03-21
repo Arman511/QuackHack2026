@@ -21,7 +21,11 @@ const LoginPage = () => {
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="card-neigh w-full max-w-md animate-fade-up">
         <div className="text-center mb-8">
-          <img src="/horse-head.png" alt="Horse" className="w-16 h-16 mx-auto mb-4 object-contain" />
+          <img
+            src="/horse-head.png"
+            alt="Horse"
+            className="w-16 h-16 mx-auto mb-4 object-contain"
+          />
           <h1 className="text-2xl font-bold font-display leading-tight">
             Welcome to Neigh-ver Go Broke
           </h1>

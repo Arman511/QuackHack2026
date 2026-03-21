@@ -31,13 +31,15 @@ const ConnectBankPage = () => {
             >
               <div className="flex items-center gap-3">
                 <div
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center ${bank.name === 'Mane-zo' ? 'overflow-hidden' : 'p-1.5'}`}
-                  style={{ backgroundColor: bank.name === 'Rev-o-trot' ? '#ffffff' : bank.color + "18" }}
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center ${bank.name === "Mane-zo" ? "overflow-hidden" : "p-1.5"}`}
+                  style={{
+                    backgroundColor: bank.name === "Rev-o-trot" ? "#ffffff" : bank.color + "18",
+                  }}
                 >
                   <img
                     src={bank.icon}
                     alt={bank.name}
-                    className={`w-full h-full ${bank.name === 'Mane-zo' ? 'object-cover' : 'object-contain'}`}
+                    className={`w-full h-full ${bank.name === "Mane-zo" ? "object-cover" : "object-contain"}`}
                   />
                 </div>
                 <span className="font-medium">{bank.name}</span>

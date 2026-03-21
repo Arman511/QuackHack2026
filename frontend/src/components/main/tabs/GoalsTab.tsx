@@ -66,9 +66,7 @@ const GoalsTab = () => {
       <div className="card-neigh animate-fade-up" style={{ animationDelay: "300ms" }}>
         <p className="text-sm font-medium mb-1">Current Neigh-Tax Rate</p>
         <div className="flex items-center gap-1 mb-3">
-          <p className="text-xs text-muted-foreground">
-            Lowering this requires justification
-          </p>
+          <p className="text-xs text-muted-foreground">Lowering this requires justification</p>
           <img src="/horse-head.png" alt="Horse" className="w-5 h-5 object-contain inline" />
         </div>
         <div className="grid grid-cols-3 gap-2">

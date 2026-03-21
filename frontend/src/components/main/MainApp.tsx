@@ -36,11 +36,7 @@ const MainApp = () => {
           >
             <span className="text-lg relative">
               {tab.isImage ? (
-                <img
-                  src="/horse-head.png"
-                  alt="Horse"
-                  className="w-6 h-6 object-contain"
-                />
+                <img src="/horse-head.png" alt="Horse" className="w-6 h-6 object-contain" />
               ) : (
                 tab.icon
               )}

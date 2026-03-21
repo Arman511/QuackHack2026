@@ -65,7 +65,10 @@ const BudgetPage = () => {
         </div>
       </div>
 
-      <Button onClick={completeOnboarding} className="w-full h-11 active:scale-[0.97] flex items-center gap-2 justify-center">
+      <Button
+        onClick={completeOnboarding}
+        className="w-full h-11 active:scale-[0.97] flex items-center gap-2 justify-center"
+      >
         <span>Start Saving</span>
         <img src="/horse-gallop.png" alt="Horse" className="w-5 h-5 object-contain" />
       </Button>

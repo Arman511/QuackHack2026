@@ -71,7 +71,11 @@ const ProfileTab = () => {
         </div>
       </div>
 
-      <Button variant="outline" onClick={logout} className="w-full active:scale-[0.97] flex items-center gap-2 justify-center">
+      <Button
+        variant="outline"
+        onClick={logout}
+        className="w-full active:scale-[0.97] flex items-center gap-2 justify-center"
+      >
         <span>Log Out</span>
         <img src="/horse-head.png" alt="Horse" className="w-5 h-5 object-contain" />
       </Button>
