@@ -9,7 +9,7 @@ const LoginPage = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [isLogin, setIsLogin] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +27,7 @@ const LoginPage = () => {
             className="w-16 h-16 mx-auto mb-4 object-contain"
           />
           <h1 className="text-2xl font-bold font-display leading-tight">
-            Welcome to Neigh-ver Go Broke
+            Neigh-ver Go Broke
           </h1>
           <p className="text-muted-foreground mt-2 text-sm">Stop horsing around with your money.</p>
         </div>
