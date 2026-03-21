@@ -99,10 +99,11 @@ class BankAccountRepository:
         Automatically create CURRENT and SAVING accounts for a new user.
         Both accounts share the same bank provider.
         """
+        sort_code = self._generate_sort_code()
         current_account = self.create_account(
             user_id=user_id,
             account_number=self._generate_account_number(),
-            sort_code=self._generate_sort_code(),
+            sort_code=sort_code,
             name=f"{provider.value} Current Account",
             provider=provider,
             account_type=AccountTypeEnum.CURRENT,
@@ -112,7 +113,7 @@ class BankAccountRepository:
         saving_account = self.create_account(
             user_id=user_id,
             account_number=self._generate_account_number(),
-            sort_code=self._generate_sort_code(),
+            sort_code=sort_code,
             name=f"{provider.value} Saving Account",
             provider=provider,
             account_type=AccountTypeEnum.SAVING,
