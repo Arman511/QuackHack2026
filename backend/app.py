@@ -4,9 +4,6 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi import FastAPI, HTTPException, status
 
-from backend.auth import router as auth_router
-from backend.webhook import router as webhook_router
-from backend.database import URL_DATABASE, engine
 from backend.controller.auth import router as auth_router
 from backend.controller.bank import router as bank_router
 from backend.controller.users import router as users_router
@@ -17,7 +14,6 @@ app = FastAPI()
 
 
 app.include_router(auth_router, prefix="/api")
-app.include_router(webhook_router, prefix="/api")
 app.include_router(users_router, prefix="/api")
 app.include_router(bank_router, prefix="/api")
 
