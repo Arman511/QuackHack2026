@@ -15,7 +15,7 @@ HAS_FRONTEND_NODE_MODULES := $(if $(wildcard frontend/node_modules),yes,no)
 HAS_TESTS_DIR := $(if $(wildcard tests),yes,no)
 HAS_FRONTEND_TEST_SCRIPT := $(shell python -c "import json, pathlib; p = pathlib.Path('frontend/package.json'); print('yes' if p.exists() and 'test' in json.loads(p.read_text()).get('scripts', {}) else 'no')" 2>$(NULL_DEVICE))
 
-.PHONY: serve serve-local local build format lint test down down-local
+.PHONY: serve serve-local local build format lint test down down-local install-hooks
 
 serve:
 	$(COMPOSE) -f $(COMPOSE_FILE) up --build
@@ -76,3 +76,7 @@ down:
 
 down-local:
 	$(COMPOSE) -f $(COMPOSE_LOCAL_FILE) down
+
+install-hooks:
+	git config core.hooksPath .githooks
+	@echo "Git hooks installed. pre-commit now runs 'make format'."

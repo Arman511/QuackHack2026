@@ -6,7 +6,11 @@ from backend.services.bank_service import (
     create_user_transaction,
     list_my_accounts,
 )
-from backend.utils.dependencies import admin_user_dependency, current_user_dependency, db_dependency
+from backend.utils.dependencies import (
+    admin_user_dependency,
+    current_user_dependency,
+    db_dependency,
+)
 
 router = APIRouter(prefix="/bank", tags=["bank"])
 

@@ -141,7 +141,9 @@ class BankAccountRepository:
         )
         return [BankAccountPublic(**row) for row in rows]
 
-    def get_by_id_and_user_id(self, *, account_id: int, user_id: int) -> BankAccountPublic | None:
+    def get_by_id_and_user_id(
+        self, *, account_id: int, user_id: int
+    ) -> BankAccountPublic | None:
         """Get a bank account by ID and owner ID."""
         row = (
             self.db.execute(

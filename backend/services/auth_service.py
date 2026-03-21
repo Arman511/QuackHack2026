@@ -25,7 +25,9 @@ def roles_to_csv(roles: list[UserTypeEnum]) -> str:
     return ",".join(unique_roles)
 
 
-def parse_roles(value: str | list[str] | list[UserTypeEnum] | None) -> list[UserTypeEnum]:
+def parse_roles(
+    value: str | list[str] | list[UserTypeEnum] | None,
+) -> list[UserTypeEnum]:
     if value is None:
         return [UserTypeEnum.USER]
     if isinstance(value, str):

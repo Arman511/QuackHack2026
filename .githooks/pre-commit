@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+set -eu
+
+echo "[pre-commit] Running make format..."
+make format
+
+echo "[pre-commit] Restaging tracked formatting changes..."
+git add -u
+
+echo "[pre-commit] format complete."

@@ -224,7 +224,7 @@ class UserRepository:
         row = self.db.execute(query, params).mappings().first()
         self.db.commit()
         return UserDB(**row) if row else None
-    
+
     def admin_get_user_by_id(self, user_id: int) -> UserDB | None:
         """Get a user by their ID."""
         row = (

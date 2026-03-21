@@ -14,10 +14,14 @@ def update_current_user_profile(
         user_id=current_user.id,
         email=payload.email,
         full_name=payload.full_name,
-        hashed_password=get_password_hash(payload.password) if payload.password else None,
+        hashed_password=(
+            get_password_hash(payload.password) if payload.password else None
+        ),
     )
     if updated_user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
     return UserRead.model_validate(updated_user)
 
 
@@ -31,7 +35,9 @@ def admin_patch_user(
     user_repo = UserRepository(db)
     target = user_repo.get_by_id(user_id)
     if target is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
 
     new_roles = payload.roles
     if actor.id == user_id and new_roles and UserTypeEnum.ADMIN not in new_roles:
@@ -47,14 +53,19 @@ def admin_patch_user(
     updated_user = user_repo.admin_update_user(
         user_id=user_id,
         username=payload.username,
-        hashed_password=get_password_hash(payload.password) if payload.password else None,
+        hashed_password=(
+            get_password_hash(payload.password) if payload.password else None
+        ),
         is_active=payload.is_active,
         roles=roles_csv,
     )
     if updated_user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
 
     return UserRead.model_validate(updated_user)
+
 
 def admin_get_user_by_id(db: Session, actor: UserDB, user_id: int) -> UserRead:
     user_repo = UserRepository(db)
@@ -65,5 +76,7 @@ def admin_get_user_by_id(db: Session, actor: UserDB, user_id: int) -> UserRead:
         )
     target = user_repo.admin_get_user_by_id(user_id)
     if target is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
     return UserRead.model_validate(target)
