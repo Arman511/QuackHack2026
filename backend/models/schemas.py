@@ -106,6 +106,7 @@ class PossibleImpulseZonePublic(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    user_id: int | None = None
     name: str
     created_at: datetime
 
@@ -138,6 +139,16 @@ class CreateBankAccountsResponse(BaseModel):
 
 class TransactionCreate(BaseModel):
     source_account_id: int
+    amount: int
+    timestamp: datetime
+    merchant: str
+    impulse_zone_id: int | None = None
+    possible_impulse_zone_id: int | None = None
+
+
+class TransactionWebhookCreate(BaseModel):
+    sort_code: str
+    account_number: str
     amount: int
     timestamp: datetime
     merchant: str

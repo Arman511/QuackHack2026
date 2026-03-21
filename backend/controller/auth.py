@@ -122,6 +122,7 @@ def _require_refresh_token_payload(
     "/register", response_model=UserPublic, status_code=status.HTTP_201_CREATED
 )
 def register(payload: UserRegisterRequest, db: db_dependency):
+    """Register a new user account."""
     user_repo = UserRepository(db)
     existing_user = user_repo.get_by_username(payload.username)
     if existing_user is not None:
@@ -140,6 +141,7 @@ def register(payload: UserRegisterRequest, db: db_dependency):
 
 @router.post("/login", response_model=TokenPayload)
 def login(payload: UserLoginRequest, response: Response, db: db_dependency):
+    """Authenticate a user and issue fresh access/refresh tokens."""
     user = authenticate_user(db, payload.username, payload.password)
     if user is None:
         raise HTTPException(
@@ -196,6 +198,7 @@ def me(
     current_user: Annotated[UserDB, Depends(get_current_active_user)],
     db: db_dependency,
 ):
+    """Return the authenticated user's profile and spending summary."""
     return get_user_me_payload(db, current_user=current_user)
 
 
@@ -205,6 +208,7 @@ def list_usernames(
     db: db_dependency,
     access_token: str | None = Cookie(default=None, alias=JWT_ACCESS_COOKIE_NAME),
 ):
+    """List usernames for authenticated sessions validated via access cookie."""
     _require_access_token_payload(response, access_token, db)
     return UserRepository(db).list_usernames()
 
@@ -216,6 +220,7 @@ def refresh_tokens(
     refresh_token: str | None = Cookie(default=None, alias=JWT_REFRESH_COOKIE_NAME),
     access_token: str | None = Cookie(default=None, alias=JWT_ACCESS_COOKIE_NAME),
 ):
+    """Rotate refresh tokens and return a new auth token pair."""
     payload = _require_refresh_token_payload(response, refresh_token, db)
     subject = payload.get("sub")
     if not isinstance(subject, str):
@@ -300,6 +305,7 @@ def logout(
     access_token: str | None = Cookie(default=None, alias=JWT_ACCESS_COOKIE_NAME),
     refresh_token: str | None = Cookie(default=None, alias=JWT_REFRESH_COOKIE_NAME),
 ):
+    """Revoke active tokens and clear auth cookies."""
     if access_token:
         try:
             payload = decode_token(access_token, "access")

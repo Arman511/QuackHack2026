@@ -16,6 +16,7 @@ from backend.models import (
     PromotePossibleImpulseRequest,
     TransactionDateRangeQuery,
     TransactionCreate,
+    TransactionWebhookCreate,
     TransactionHydratedPublic,
     TransactionPublic,
     UserDB,
@@ -52,6 +53,34 @@ def create_user_transaction(
     transaction = TransactionRepository(db).create_transaction(
         user_id=current_user.id,
         source_account_id=payload.source_account_id,
+        amount=payload.amount,
+        timestamp=payload.timestamp,
+        merchant=payload.merchant,
+        impulse_zone_id=payload.impulse_zone_id,
+        possible_impulse_zone_id=payload.possible_impulse_zone_id,
+    )
+    return transaction
+
+
+def create_webhook_transaction(
+    db: Session,
+    *,
+    payload: TransactionWebhookCreate,
+) -> TransactionPublic:
+    account_repo = BankAccountRepository(db)
+    source_account = account_repo.get_by_account_number_and_sort_code(
+        account_number=payload.account_number,
+        sort_code=payload.sort_code,
+    )
+    if source_account is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Bank account not found for provided account number and sort code",
+        )
+
+    transaction = TransactionRepository(db).create_transaction(
+        user_id=source_account.user_id,
+        source_account_id=source_account.id,
         amount=payload.amount,
         timestamp=payload.timestamp,
         merchant=payload.merchant,
@@ -137,7 +166,17 @@ def get_user_impulses_bundle(
     repo = ImpulseZoneRepository(db)
     return UserImpulsesBundlePublic(
         impulses=repo.get_user_impulses(current_user.id),
-        possible=repo.get_all_possible_impulse_zones(),
+        possible=repo.get_possible_impulse_zones_for_user(current_user.id),
+    )
+
+
+def get_user_possible_impulses(
+    db: Session,
+    *,
+    current_user: UserDB,
+) -> list[PossibleImpulseZonePublic]:
+    return ImpulseZoneRepository(db).get_possible_impulse_zones_for_user(
+        current_user.id
     )
 
 
@@ -164,10 +203,14 @@ def set_user_impulses(
 def create_possible_impulse_zone(
     db: Session,
     *,
+    current_user: UserDB,
     payload: ImpulseZoneCreate,
 ) -> PossibleImpulseZonePublic:
     try:
-        return ImpulseZoneRepository(db).create_possible_impulse_zone(payload.name)
+        return ImpulseZoneRepository(db).create_possible_impulse_zone(
+            payload.name,
+            current_user.id,
+        )
     except IntegrityError as exc:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
