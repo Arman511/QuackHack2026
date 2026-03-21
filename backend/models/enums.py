@@ -7,8 +7,10 @@ class UserTypeEnum(str, Enum):
 
 
 class BankProviderEnum(str, Enum):
-    REVOLITE = "REVOLITE"
-    HAYSBC = "HAYSBC"
+    REV_O_TROT = "REV-O-TROT"
+    HAY_CHSBC = "HAY-CHSBC"
+    MANE_ZO = "MANE-ZO"
+    BUCK_LAYS = "BUCK-LAYS"
 
 
 class AccountTypeEnum(str, Enum):
