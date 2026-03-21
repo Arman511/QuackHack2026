@@ -218,6 +218,7 @@ __marimo__/
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
+node_modules/
 */node_modules
 /.pnp
 .pnp.*
@@ -226,6 +227,15 @@ __marimo__/
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+
+# lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+bun.lockb
+
+# bun
+.bun
 
 # testing
 /coverage
