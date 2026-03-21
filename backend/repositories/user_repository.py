@@ -1,26 +1,27 @@
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from backend.models import UserDB
+from backend.models import BankAccountPublic, UserDB, UserTypeEnum, BankProviderEnum
+from backend.repositories.bank_account_repository import BankAccountRepository
 
 
 class UserRepository:
     """Repository for user-related SQL operations."""
 
     SQL_INSERT_USER = text("""
-        INSERT INTO users (username, email, full_name, hashed_password, is_active)
-        VALUES (:username, :email, :full_name, :hashed_password, :is_active)
-        RETURNING id, username, email, full_name, hashed_password, is_active, created_at
+        INSERT INTO users (username, email, full_name, hashed_password, is_active, type)
+        VALUES (:username, :email, :full_name, :hashed_password, :is_active, :type)
+        RETURNING id, username, email, full_name, hashed_password, is_active, type, created_at
         """)
 
     SQL_SELECT_BY_USERNAME = text("""
-        SELECT id, username, email, full_name, hashed_password, is_active, created_at
+        SELECT id, username, email, full_name, hashed_password, is_active, type, created_at
         FROM users
         WHERE username = :username
         """)
 
     SQL_SELECT_BY_ID = text("""
-        SELECT id, username, email, full_name, hashed_password, is_active, created_at
+        SELECT id, username, email, full_name, hashed_password, is_active, type, created_at
         FROM users
         WHERE id = :user_id
         """)
@@ -59,7 +60,9 @@ class UserRepository:
         full_name: str | None,
         hashed_password: str,
         is_active: bool = True,
+        user_type: UserTypeEnum = UserTypeEnum.USER,
     ) -> UserDB:
+        """Create a new user."""
         row = (
             self.db.execute(
                 self.SQL_INSERT_USER,
@@ -69,6 +72,7 @@ class UserRepository:
                     "full_name": full_name,
                     "hashed_password": hashed_password,
                     "is_active": is_active,
+                    "type": user_type.value,
                 },
             )
             .mappings()
@@ -78,6 +82,42 @@ class UserRepository:
         if row is None:
             raise RuntimeError("Failed to create user")
         return UserDB(**row)
+
+    def create_user_with_default_accounts(
+        self,
+        *,
+        username: str,
+        email: str | None,
+        full_name: str | None,
+        hashed_password: str,
+        is_active: bool = True,
+        user_type: UserTypeEnum = UserTypeEnum.USER,
+        bank_provider: BankProviderEnum = BankProviderEnum.REVOLITE,
+    ) -> tuple[UserDB, BankAccountPublic, BankAccountPublic]:
+        """
+        Create a new user and automatically create their default bank accounts.
+
+        Returns:
+            Tuple of (UserDB, current_account, saving_account)
+        """
+        # Create the user first
+        user = self.create_user(
+            username=username,
+            email=email,
+            full_name=full_name,
+            hashed_password=hashed_password,
+            is_active=is_active,
+            user_type=user_type,
+        )
+
+        # Create default bank accounts (CURRENT and SAVING)
+        bank_repo = BankAccountRepository(self.db)
+        current_account, saving_account = bank_repo.create_default_accounts_for_user(
+            user_id=user.id,
+            provider=bank_provider,
+        )
+
+        return user, current_account, saving_account
 
     def list_usernames(self, *, page: int = 1, page_size: int = 100) -> list[str]:
         offset = (page - 1) * page_size
