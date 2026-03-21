@@ -31,7 +31,10 @@ const BudgetPage = () => {
           step={10}
           value={impulseBudget}
           onChange={(e) => setImpulseBudget(Number(e.target.value))}
-          className="w-full accent-primary h-2"
+          className="w-full h-3 bg-secondary rounded-lg appearance-none cursor-pointer slider"
+          style={{
+            background: `linear-gradient(to right, hsl(var(--primary)) 0%, hsl(var(--primary)) ${(impulseBudget / 500) * 100}%, hsl(var(--secondary)) ${(impulseBudget / 500) * 100}%, hsl(var(--secondary)) 100%)`,
+          }}
         />
         <div className="flex justify-between text-xs text-muted-foreground">
           <span>£0</span>
@@ -53,7 +56,7 @@ const BudgetPage = () => {
             <button
               key={pct}
               onClick={() => setNeighTaxPercent(pct)}
-              className={`py-3 rounded-xl text-sm font-semibold transition-all duration-200 active:scale-[0.96] border ${
+              className={`py-3 rounded-xl text-sm font-semibold transition-all duration-200 active:scale-[0.96] border focus:outline-none focus:ring-2 focus:ring-primary/50 ${
                 neighTaxPercent === pct
                   ? "bg-primary/5 text-primary border-primary ring-2 ring-primary shadow-lg shadow-primary/20"
                   : "bg-secondary text-secondary-foreground border-border hover:shadow-md"
@@ -70,7 +73,7 @@ const BudgetPage = () => {
         className="w-full h-11 active:scale-[0.97] flex items-center gap-2 justify-center"
       >
         <span>Start Saving</span>
-        <img src="/horse-gallop.png" alt="Horse" className="w-5 h-5 object-contain" />
+        <img src="/blonde-horse-head.png" alt="Horse" className="w-5 h-5 object-contain" />
       </Button>
     </div>
   );

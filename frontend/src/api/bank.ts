@@ -3,6 +3,7 @@ import type {
   BankAccountPublic,
   CreateBankAccountsRequest,
   CreateBankAccountsResponse,
+  SetupBankAccountsRequest,
   TransactionCreate,
   TransactionHydratedPublic,
   TransactionPublic,
@@ -41,6 +42,12 @@ export const searchMyTransactions = (start: string | Date, end: string | Date) =
 
 export const createBankAccounts = (body: CreateBankAccountsRequest) =>
   apiRequest<CreateBankAccountsResponse>("/api/bank/accounts/create", {
+    method: "POST",
+    body,
+  });
+
+export const setupBankAccounts = (body: SetupBankAccountsRequest) =>
+  apiRequest<CreateBankAccountsResponse>("/api/bank/accounts/setup", {
     method: "POST",
     body,
   });

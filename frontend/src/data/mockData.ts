@@ -99,9 +99,9 @@ export const bankOptions = [
 ];
 
 export const goalPresets = [
-  { name: 'Travel', icon: 'plane' },
-  { name: 'Emergency Fund', icon: 'shield' },
-  { name: 'New Laptop', icon: 'laptop' },
-  { name: 'First Apartment', icon: 'home' },
-  { name: 'Pay Off Debt', icon: 'credit-card' },
+  { name: 'Travel', icon: 'travel' },
+  { name: 'Emergency Funds', icon: 'shield' },
+  { name: 'Shopping', icon: 'shopping' },
+  { name: 'House Mortgage', icon: 'house' },
+  { name: 'Pay Off Debt', icon: 'debt' },
 ];

@@ -71,12 +71,12 @@ const ImpulseZonesPage = () => {
       </div>
 
       <Button
-        onClick={() => setOnboardingStep(3)}
+        onClick={() => setOnboardingStep(4)}
         disabled={selected.length === 0}
         className="w-full h-11 active:scale-[0.97] flex items-center gap-2 justify-center"
       >
         <span>Continue</span>
-        <img src="/horse-head.png" alt="Horse" className="w-5 h-5 object-contain" />
+        <img src="/blonde-horse-head.png" alt="Horse" className="w-5 h-5 object-contain" />
       </Button>
     </div>
   );

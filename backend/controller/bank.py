@@ -6,6 +6,7 @@ from backend.models import (
     BankAccountPublic,
     CreateBankAccountsRequest,
     CreateBankAccountsResponse,
+    SetupBankAccountsRequest,
     TransactionDateRangeQuery,
     TransactionCreate,
     TransactionWebhookCreate,
@@ -21,6 +22,7 @@ from backend.services.bank_service import (
     list_user_transactions_hydrated,
     list_my_accounts,
     search_user_transactions_by_date,
+    setup_bank_accounts_for_user,
 )
 from backend.utils.dependencies import (
     admin_user_dependency,
@@ -95,6 +97,20 @@ def create_bank_accounts(
         db,
         current_user=current_user,
         provider=payload.provider,
+    )
+
+
+@router.post("/accounts/setup", response_model=CreateBankAccountsResponse)
+def setup_bank_accounts(
+    payload: SetupBankAccountsRequest,
+    db: db_dependency,
+    current_user: current_user_dependency,
+):
+    """Set up one current and one saving account for the authenticated user."""
+    return setup_bank_accounts_for_user(
+        db,
+        current_user=current_user,
+        payload=payload,
     )
 
 
