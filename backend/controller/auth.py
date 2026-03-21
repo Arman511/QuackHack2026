@@ -1,25 +1,19 @@
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from typing import Annotated
-from uuid import uuid4
 
-from fastapi.params import Body, Depends
+from fastapi.params import Depends
 from fastapi.security import OAuth2PasswordRequestForm
-import jwt
-from jwt.exceptions import PyJWTError
 from fastapi import APIRouter, Cookie, HTTPException, Response, status
-from pwdlib import PasswordHash
 from sqlalchemy.orm import Session
 
-from backend.config import (
+from backend.utils.config import (
     ACCESS_EXPIRES,
     JWT_ACCESS_COOKIE_NAME,
-    JWT_ALGORITHM,
     JWT_COOKIE_SECURE,
     JWT_REFRESH_COOKIE_NAME,
     REFRESH_EXPIRES,
-    SECRET_KEY,
 )
-from backend.dependencies import db_dependency
+from backend.utils.dependencies import db_dependency, get_current_active_user
 from backend.models import (
     TokenPayload,
     UserDB,
@@ -30,17 +24,15 @@ from backend.models import (
 )
 from backend.repositories.token_denylist_repository import TokenDenylistRepository
 from backend.repositories.user_repository import UserRepository
+from backend.services.auth_service import (
+    build_scopes_for_user,
+    decode_token,
+    encode_token,
+    get_password_hash,
+    verify_password,
+)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-password_hash = PasswordHash.recommended()
-
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return password_hash.verify(plain_password, hashed_password)
-
-
-def get_password_hash(password: str) -> str:
-    return password_hash.hash(password)
 
 
 def authenticate_user(db: Session, username: str, password: str) -> UserDB | None:
@@ -51,40 +43,6 @@ def authenticate_user(db: Session, username: str, password: str) -> UserDB | Non
     if not verify_password(password, user.hashed_password):
         return None
     return user
-
-
-def _encode_token(
-    *, subject: str, token_type: str, expires_delta: timedelta, fresh: bool
-) -> str:
-    now = datetime.now(UTC)
-    payload = {
-        "sub": subject,
-        "type": token_type,
-        "fresh": fresh,
-        "jti": str(uuid4()),
-        "iat": int(now.timestamp()),
-        "exp": int((now + expires_delta).timestamp()),
-    }
-    token = jwt.encode(payload, SECRET_KEY, algorithm=JWT_ALGORITHM)  # type: ignore[attr-defined]
-    if isinstance(token, bytes):
-        return token.decode("utf-8")
-    return token
-
-
-def _decode_token(token: str, expected_type: str) -> dict:
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[JWT_ALGORITHM])  # type: ignore[attr-defined]
-    except PyJWTError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token"
-        ) from exc
-
-    token_type = payload.get("type")
-    if token_type != expected_type:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type"
-        )
-    return dict(payload)
 
 
 def _set_auth_cookies(
@@ -131,7 +89,7 @@ def _require_access_token_payload(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing access token"
         )
-    payload = _decode_token(token, "access")
+    payload = decode_token(token, "access")
     jti = str(payload.get("jti", ""))
     if jti and TokenDenylistRepository(db).is_token_revoked(jti):
         _clear_auth_cookies(response)
@@ -148,7 +106,7 @@ def _require_refresh_token_payload(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing refresh token"
         )
-    payload = _decode_token(token, "refresh")
+    payload = decode_token(token, "refresh")
     jti = str(payload.get("jti", ""))
     if jti and TokenDenylistRepository(db).is_token_revoked(jti):
         _clear_auth_cookies(response)
@@ -185,18 +143,27 @@ def login(payload: UserLoginRequest, response: Response, db: db_dependency):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Bad username or password"
         )
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Inactive account",
+        )
 
-    access_token = _encode_token(
+    scopes = build_scopes_for_user(user)
+
+    access_token = encode_token(
         subject=user.username,
         token_type="access",
         expires_delta=ACCESS_EXPIRES,
         fresh=True,
+        scopes=scopes,
     )
-    refresh_token = _encode_token(
+    refresh_token = encode_token(
         subject=user.username,
         token_type="refresh",
         expires_delta=REFRESH_EXPIRES,
         fresh=False,
+        scopes=scopes,
     )
     _set_auth_cookies(response, access_token, refresh_token)
 
@@ -204,6 +171,7 @@ def login(payload: UserLoginRequest, response: Response, db: db_dependency):
         access_token=access_token,
         refresh_token=refresh_token,
         expires_in=int(ACCESS_EXPIRES.total_seconds()),
+        scopes=scopes,
     )
 
 
@@ -222,25 +190,8 @@ def login_oauth2_compat(
 
 
 @router.get("/me", response_model=UserPublic)
-def me(
-    response: Response,
-    db: db_dependency,
-    access_token: str | None = Cookie(default=None, alias=JWT_ACCESS_COOKIE_NAME),
-):
-    payload = _require_access_token_payload(response, access_token, db)
-    subject = payload.get("sub")
-    if not isinstance(subject, str):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token subject"
-        )
-
-    user_repo = UserRepository(db)
-    user = user_repo.get_by_username(str(subject))
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
-    return UserPublic.model_validate(user)
+def me(current_user: Annotated[UserDB, Depends(get_current_active_user)]):
+    return UserPublic.model_validate(current_user)
 
 
 @router.get("/users", response_model=list[str])
@@ -267,32 +218,48 @@ def refresh_tokens(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token subject"
         )
 
+    user = UserRepository(db).get_by_username(subject)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Inactive account",
+        )
+    scopes = build_scopes_for_user(user)
+
     # Rotate the current refresh token: revoke old one before issuing a new pair.
     _revoke_payload(db, payload)
     if access_token:
         try:
-            access_payload = _decode_token(access_token, "access")
+            access_payload = decode_token(access_token, "access")
             _revoke_payload(db, access_payload)
         except HTTPException:
             pass
 
-    new_access_token = _encode_token(
+    new_access_token = encode_token(
         subject=subject,
         token_type="access",
         expires_delta=ACCESS_EXPIRES,
         fresh=True,
+        scopes=scopes,
     )
-    new_refresh_token = _encode_token(
+    new_refresh_token = encode_token(
         subject=subject,
         token_type="refresh",
         expires_delta=REFRESH_EXPIRES,
         fresh=False,
+        scopes=scopes,
     )
     _set_auth_cookies(response, new_access_token, new_refresh_token)
     return TokenPayload(
         access_token=new_access_token,
         refresh_token=new_refresh_token,
         expires_in=int(ACCESS_EXPIRES.total_seconds()),
+        scopes=scopes,
     )
 
 
@@ -330,14 +297,14 @@ def logout(
 ):
     if access_token:
         try:
-            payload = _decode_token(access_token, "access")
+            payload = decode_token(access_token, "access")
             _revoke_payload(db, payload)
         except HTTPException:
             pass
 
     if refresh_token:
         try:
-            payload = _decode_token(refresh_token, "refresh")
+            payload = decode_token(refresh_token, "refresh")
             _revoke_payload(db, payload)
         except HTTPException:
             pass

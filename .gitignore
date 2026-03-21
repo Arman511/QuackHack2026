@@ -256,3 +256,6 @@ next-env.d.ts
 */data
 data/stables.db
 data/*
+
+.sources.*
+.source.swp

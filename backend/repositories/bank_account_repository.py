@@ -1,8 +1,7 @@
-from sqlalchemy import text, and_
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from backend.models import (
-    BankAccountORM,
     BankAccountPublic,
     BankProviderEnum,
     AccountTypeEnum,
@@ -29,6 +28,12 @@ class BankAccountRepository:
         SELECT id, user_id, bank_account_id, account_number, sort_code, name, provider, type, amount, created_at, updated_at
         FROM bank_accounts
         WHERE id = :account_id
+        """)
+
+    SQL_SELECT_BY_ID_AND_USER_ID = text("""
+        SELECT id, user_id, bank_account_id, account_number, sort_code, name, provider, type, amount, created_at, updated_at
+        FROM bank_accounts
+        WHERE id = :account_id AND user_id = :user_id
         """)
 
     SQL_UPDATE_AMOUNT = text("""
@@ -135,6 +140,18 @@ class BankAccountRepository:
             .all()
         )
         return [BankAccountPublic(**row) for row in rows]
+
+    def get_by_id_and_user_id(self, *, account_id: int, user_id: int) -> BankAccountPublic | None:
+        """Get a bank account by ID and owner ID."""
+        row = (
+            self.db.execute(
+                self.SQL_SELECT_BY_ID_AND_USER_ID,
+                {"account_id": account_id, "user_id": user_id},
+            )
+            .mappings()
+            .first()
+        )
+        return BankAccountPublic(**row) if row else None
 
     def get_by_account_number_and_sort_code(
         self, account_number: str, sort_code: str

@@ -1,0 +1,8 @@
+ALTER TABLE users ADD COLUMN roles TEXT NOT NULL DEFAULT 'USER';
+
+UPDATE users
+SET roles = CASE
+    WHEN type = 'ADMIN' THEN 'ADMIN,USER'
+    ELSE 'USER'
+END
+WHERE roles IS NULL OR trim(roles) = '';

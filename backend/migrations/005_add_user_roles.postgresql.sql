@@ -1,0 +1,9 @@
+ALTER TABLE IF EXISTS users
+ADD COLUMN IF NOT EXISTS roles TEXT NOT NULL DEFAULT 'USER';
+
+UPDATE users
+SET roles = CASE
+    WHEN type::text = 'ADMIN' THEN 'ADMIN,USER'
+    ELSE 'USER'
+END
+WHERE roles IS NULL OR btrim(roles) = '';

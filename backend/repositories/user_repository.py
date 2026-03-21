@@ -1,3 +1,5 @@
+from typing import Any
+
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -9,25 +11,32 @@ class UserRepository:
     """Repository for user-related SQL operations."""
 
     SQL_INSERT_USER = text("""
-        INSERT INTO users (username, email, full_name, hashed_password, is_active, type)
-        VALUES (:username, :email, :full_name, :hashed_password, :is_active, :type)
-        RETURNING id, username, email, full_name, hashed_password, is_active, type, created_at
+        INSERT INTO users (username, email, full_name, hashed_password, is_active, roles)
+        VALUES (:username, :email, :full_name, :hashed_password, :is_active, :roles)
+        RETURNING id, username, email, full_name, hashed_password, is_active, roles, created_at
         """)
 
     SQL_SELECT_BY_USERNAME = text("""
-        SELECT id, username, email, full_name, hashed_password, is_active, type, created_at
+        SELECT id, username, email, full_name, hashed_password, is_active, roles, created_at
         FROM users
         WHERE username = :username
         """)
 
     SQL_SELECT_BY_ID = text("""
-        SELECT id, username, email, full_name, hashed_password, is_active, type, created_at
+        SELECT id, username, email, full_name, hashed_password, is_active, roles, created_at
         FROM users
         WHERE id = :user_id
         """)
 
     SQL_SELECT_ALL_USERNAMES = text("""
         SELECT username
+        FROM users
+        ORDER BY created_at DESC, id DESC
+        LIMIT :limit OFFSET :offset
+        """)
+
+    SQL_SELECT_ALL_USERS = text("""
+        SELECT id, username, email, full_name, hashed_password, is_active, roles, created_at
         FROM users
         ORDER BY created_at DESC, id DESC
         LIMIT :limit OFFSET :offset
@@ -63,6 +72,7 @@ class UserRepository:
         user_type: UserTypeEnum = UserTypeEnum.USER,
     ) -> UserDB:
         """Create a new user."""
+        roles = "ADMIN,USER" if user_type == UserTypeEnum.ADMIN else "USER"
         row = (
             self.db.execute(
                 self.SQL_INSERT_USER,
@@ -72,7 +82,7 @@ class UserRepository:
                     "full_name": full_name,
                     "hashed_password": hashed_password,
                     "is_active": is_active,
-                    "type": user_type.value,
+                    "roles": roles,
                 },
             )
             .mappings()
@@ -130,3 +140,99 @@ class UserRepository:
             .all()
         )
         return [str(row["username"]) for row in rows]
+
+    def list_users(self, *, page: int = 1, page_size: int = 100) -> list[UserDB]:
+        offset = (page - 1) * page_size
+        rows = (
+            self.db.execute(
+                self.SQL_SELECT_ALL_USERS,
+                {"limit": page_size, "offset": offset},
+            )
+            .mappings()
+            .all()
+        )
+        return [UserDB(**row) for row in rows]
+
+    def update_self(
+        self,
+        *,
+        user_id: int,
+        email: str | None,
+        full_name: str | None,
+        hashed_password: str | None,
+    ) -> UserDB | None:
+        fields: list[str] = []
+        params: dict[str, Any] = {"user_id": user_id}
+
+        if email is not None:
+            fields.append("email = :email")
+            params["email"] = email
+        if full_name is not None:
+            fields.append("full_name = :full_name")
+            params["full_name"] = full_name
+        if hashed_password is not None:
+            fields.append("hashed_password = :hashed_password")
+            params["hashed_password"] = hashed_password
+
+        if not fields:
+            return self.get_by_id(user_id)
+
+        query = text(
+            "UPDATE users "
+            f"SET {', '.join(fields)} "
+            "WHERE id = :user_id "
+            "RETURNING id, username, email, full_name, hashed_password, is_active, roles, created_at"
+        )
+        row = self.db.execute(query, params).mappings().first()
+        self.db.commit()
+        return UserDB(**row) if row else None
+
+    def admin_update_user(
+        self,
+        *,
+        user_id: int,
+        username: str | None,
+        hashed_password: str | None,
+        is_active: bool | None,
+        roles: str | None,
+    ) -> UserDB | None:
+        fields: list[str] = []
+        params: dict[str, Any] = {"user_id": user_id}
+
+        if username is not None:
+            fields.append("username = :username")
+            params["username"] = username
+        if hashed_password is not None:
+            fields.append("hashed_password = :hashed_password")
+            params["hashed_password"] = hashed_password
+        if is_active is not None:
+            fields.append("is_active = :is_active")
+            params["is_active"] = is_active
+        if roles is not None:
+            fields.append("roles = :roles")
+            params["roles"] = roles
+
+        if not fields:
+            return self.get_by_id(user_id)
+
+        query = text(
+            "UPDATE users "
+            f"SET {', '.join(fields)} "
+            "WHERE id = :user_id "
+            "RETURNING id, username, email, full_name, hashed_password, is_active, roles, created_at"
+        )
+        row = self.db.execute(query, params).mappings().first()
+        self.db.commit()
+        return UserDB(**row) if row else None
+    
+    def admin_get_user_by_id(self, user_id: int) -> UserDB | None:
+        """Get a user by their ID."""
+        row = (
+            self.db.execute(
+                self.SQL_SELECT_BY_ID,
+                {"user_id": user_id},
+            )
+            .mappings()
+            .first()
+        )
+        return UserDB(**row) if row else None
