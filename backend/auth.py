@@ -2,7 +2,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Annotated
 from uuid import uuid4
 
-from fastapi.params import Depends
+from fastapi.params import Body, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 import jwt
 from jwt.exceptions import PyJWTError
@@ -26,6 +26,7 @@ from backend.models import (
     UserLoginRequest,
     UserPublic,
     UserRegisterRequest,
+    RefreshTokensCompatRequest
 )
 from backend.repositories.token_denylist_repository import TokenDenylistRepository
 from backend.repositories.user_repository import UserRepository
@@ -33,6 +34,9 @@ from backend.repositories.user_repository import UserRepository
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 password_hash = PasswordHash.recommended()
+
+
+
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -179,8 +183,8 @@ def register(payload: UserRegisterRequest, db: db_dependency):
 
 
 @router.post("/login", response_model=TokenPayload)
-def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], response: Response, db: db_dependency):
-    user = authenticate_user(db, form_data.username, form_data.password)
+def login(payload: UserLoginRequest, response: Response, db: db_dependency):
+    user = authenticate_user(db, payload.username, payload.password)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Bad username or password"
@@ -201,6 +205,20 @@ def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], response: 
     _set_auth_cookies(response, access_token, refresh_token)
 
     return TokenPayload(access_token=access_token, refresh_token=refresh_token, expires_in=int(ACCESS_EXPIRES.total_seconds()))
+
+
+@router.post("/token", response_model=TokenPayload)
+def login_oauth2_compat(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    response: Response,
+    db: db_dependency,
+):
+    """Compatibility endpoint for OAuth2PasswordRequestForm clients."""
+    payload = UserLoginRequest(
+        username=form_data.username,
+        password=form_data.password,
+    )
+    return login(payload, response, db)
 
 
 @router.get("/me", response_model=UserPublic)
@@ -235,11 +253,12 @@ def list_usernames(
     return UserRepository(db).list_usernames()
 
 
-@router.post("/freshness")
-def refresh_fresh_access_token(
+@router.post("/refresh", response_model=TokenPayload)
+def refresh_tokens(
     response: Response,
     db: db_dependency,
     refresh_token: str | None = Cookie(default=None, alias=JWT_REFRESH_COOKIE_NAME),
+    access_token: str | None = Cookie(default=None, alias=JWT_ACCESS_COOKIE_NAME),
 ):
     payload = _require_refresh_token_payload(response, refresh_token, db)
     subject = payload.get("sub")
@@ -248,15 +267,42 @@ def refresh_fresh_access_token(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token subject"
         )
 
+    # Rotate the current refresh token: revoke old one before issuing a new pair.
+    _revoke_payload(db, payload)
+    if access_token:
+        try:
+            access_payload = _decode_token(access_token, "access")
+            _revoke_payload(db, access_payload)
+        except HTTPException:
+            pass
+
     new_access_token = _encode_token(
         subject=subject,
         token_type="access",
         expires_delta=ACCESS_EXPIRES,
         fresh=True,
     )
-    _set_access_cookie(response, new_access_token)
-    return {"msg": "Fresh access token issued"}
+    new_refresh_token = _encode_token(
+        subject=subject,
+        token_type="refresh",
+        expires_delta=REFRESH_EXPIRES,
+        fresh=False,
+    )
+    _set_auth_cookies(response, new_access_token, new_refresh_token)
+    return TokenPayload(
+        access_token=new_access_token,
+        refresh_token=new_refresh_token,
+        expires_in=int(ACCESS_EXPIRES.total_seconds()),
+    )
 
+@router.post("/refresh/token", response_model=TokenPayload)
+def refresh_tokens_compat(
+    payload: RefreshTokensCompatRequest,
+    response: Response,
+    db: db_dependency,
+):
+    """Backward-compatible alias for clients using POST /refresh/token."""
+    return refresh_tokens(response, db, payload.refresh_token, payload.access_token)
 
 def _revoke_payload(db: Session, payload: dict) -> None:
     jti = str(payload.get("jti", ""))
@@ -273,7 +319,7 @@ def _revoke_payload(db: Session, payload: dict) -> None:
     )
 
 
-@router.delete("/logout")
+@router.post("/logout")
 def logout(
     response: Response,
     db: db_dependency,
@@ -296,3 +342,14 @@ def logout(
 
     _clear_auth_cookies(response)
     return {"msg": "Successfully logout"}
+
+
+@router.delete("/logout")
+def logout_delete_compat(
+    response: Response,
+    db: db_dependency,
+    access_token: str | None = Cookie(default=None, alias=JWT_ACCESS_COOKIE_NAME),
+    refresh_token: str | None = Cookie(default=None, alias=JWT_REFRESH_COOKIE_NAME),
+):
+    """Backward-compatible alias for clients using DELETE logout."""
+    return logout(response, db, access_token, refresh_token)
