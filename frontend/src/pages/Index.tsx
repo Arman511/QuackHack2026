@@ -1,6 +1,16 @@
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { AppProvider, useApp } from '@/context/AppContext';
+import OnboardingFlow from '@/components/onboarding/OnboardingFlow';
+import MainApp from '@/components/main/MainApp';
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+const AppContent = () => {
+  const { isOnboarded } = useApp();
+  return isOnboarded ? <MainApp /> : <OnboardingFlow />;
+};
+
+const Index = () => (
+  <AppProvider>
+    <AppContent />
+  </AppProvider>
+);
+
+export default Index;
