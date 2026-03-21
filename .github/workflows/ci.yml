@@ -6,6 +6,8 @@ on:
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
+    env:
+      SECRET_KEY: ci-secret-key
 
     steps:
       - name: Check out repository
