@@ -1,4 +1,5 @@
 from datetime import UTC, datetime, timedelta
+import logging
 from uuid import uuid4
 
 from fastapi import HTTPException, status
@@ -10,6 +11,7 @@ from backend.models.schemas import UserDB
 from backend.utils.config import JWT_ALGORITHM, SECRET_KEY
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+logger = logging.getLogger(__name__)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -64,13 +66,22 @@ def encode_token(
         "exp": int((now + expires_delta).timestamp()),
         "scopes": scopes,
     }
-    return jwt.encode(payload, SECRET_KEY, algorithm=JWT_ALGORITHM)
+    token = jwt.encode(payload, SECRET_KEY, algorithm=JWT_ALGORITHM)
+    logger.debug(
+        "Encoded %s token for subject=%s expires_in=%ss scopes=%s",
+        token_type,
+        subject,
+        int(expires_delta.total_seconds()),
+        scopes,
+    )
+    return token
 
 
 def decode_token(token: str, expected_type: str) -> dict:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[JWT_ALGORITHM])
     except JWTError as exc:
+        logger.warning("Token decode failed for expected_type=%s", expected_type)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
@@ -78,8 +89,14 @@ def decode_token(token: str, expected_type: str) -> dict:
 
     token_type = payload.get("type")
     if token_type != expected_type:
+        logger.warning(
+            "Token type mismatch expected=%s actual=%s",
+            expected_type,
+            token_type,
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token type",
         )
+    logger.debug("Decoded token for subject=%s type=%s", payload.get("sub"), token_type)
     return dict(payload)

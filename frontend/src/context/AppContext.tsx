@@ -9,11 +9,25 @@ import {
   Notification,
 } from "@/data/mockData";
 
+interface BankDetails {
+  bank: string;
+  sortCode: string;
+  checkingAccount: {
+    number: string;
+    name: string;
+  };
+  savingsAccount: {
+    number: string;
+    name: string;
+  };
+}
+
 interface AppState {
   isOnboarded: boolean;
   onboardingStep: number;
   email: string;
   connectedBank: string | null;
+  bankDetails: BankDetails | null;
   impulseCategories: string[];
   goals: Goal[];
   impulseBudget: number;
@@ -32,6 +46,7 @@ interface AppContextType extends AppState {
   completeOnboarding: () => void;
   setEmail: (e: string) => void;
   connectBank: (b: string) => void;
+  saveBankDetails: (details: BankDetails) => void;
   toggleImpulseCategory: (c: string) => void;
   addCustomCategory: (c: string) => void;
   addGoal: (g: Goal) => void;
@@ -59,6 +74,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     onboardingStep: 0,
     email: "",
     connectedBank: null,
+    bankDetails: null,
     impulseCategories: [],
     goals: [],
     impulseBudget: 100,
@@ -80,6 +96,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     completeOnboarding: () => update({ isOnboarded: true }),
     setEmail: (e) => update({ email: e }),
     connectBank: (b) => update({ connectedBank: b }),
+    saveBankDetails: (details) => update({ bankDetails: details }),
     toggleImpulseCategory: (c) => {
       setState((prev) => ({
         ...prev,

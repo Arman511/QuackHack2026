@@ -146,7 +146,7 @@ const GoalsPage = () => {
       )}
 
       <Button
-        onClick={() => setOnboardingStep(4)}
+        onClick={() => setOnboardingStep(5)}
         disabled={goals.length === 0}
         className="w-full h-11 active:scale-[0.97] flex items-center gap-2 justify-center"
       >

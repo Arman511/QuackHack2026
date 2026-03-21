@@ -1,4 +1,5 @@
 from typing import Annotated
+import logging
 
 from fastapi import Cookie, Depends, HTTPException, Security, status
 from fastapi.security import OAuth2PasswordBearer
@@ -11,12 +12,16 @@ from backend.services.auth_service import decode_token
 from backend.utils.config import JWT_ACCESS_COOKIE_NAME
 from backend.utils.database import SessionLocal
 
+logger = logging.getLogger(__name__)
+
 
 def get_db():
+    logger.debug("Opening database session")
     db = SessionLocal()
     try:
         yield db
     finally:
+        logger.debug("Closing database session")
         db.close()
 
 
@@ -36,6 +41,7 @@ def get_current_access_payload(
 ) -> dict:
     token = bearer_token or access_cookie
     if not token:
+        logger.warning("Access token missing from both bearer and cookie")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Missing access token",
@@ -44,10 +50,12 @@ def get_current_access_payload(
     payload = decode_token(token, "access")
     jti = str(payload.get("jti", ""))
     if jti and TokenDenylistRepository(db).is_token_revoked(jti):
+        logger.warning("Rejected revoked access token jti=%s", jti)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has been revoked",
         )
+    logger.debug("Access payload accepted for subject=%s", payload.get("sub"))
     return payload
 
 
@@ -57,6 +65,7 @@ def get_current_active_user(
 ) -> UserDB:
     subject = payload.get("sub")
     if not isinstance(subject, str):
+        logger.warning("Access token payload missing valid subject")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token subject",
@@ -64,14 +73,17 @@ def get_current_active_user(
 
     user = UserRepository(db).get_by_username(subject)
     if user is None:
+        logger.warning("User not found for token subject=%s", subject)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
     if not user.is_active:
+        logger.warning("Inactive account attempted access user_id=%s", user.id)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Inactive account",
         )
+    logger.debug("Authenticated active user user_id=%s", user.id)
     return user
 
 
@@ -81,10 +93,16 @@ def check_admin_privileges(
 ) -> UserDB:
     token_scopes = payload.get("scopes", [])
     if not isinstance(token_scopes, list) or "ADMIN" not in token_scopes:
+        logger.warning(
+            "Admin privileges denied user_id=%s scopes=%s",
+            current_user.id,
+            token_scopes,
+        )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Insufficient permissions",
         )
+    logger.debug("Admin privileges granted user_id=%s", current_user.id)
     return current_user
 
 

@@ -1,6 +1,7 @@
 from datetime import UTC, datetime
 from random import choice
 from typing import Annotated
+import logging
 
 from fastapi.params import Depends
 from fastapi.security import OAuth2PasswordRequestForm
@@ -36,15 +37,19 @@ from backend.services.auth_service import (
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+logger = logging.getLogger(__name__)
 
 
 def authenticate_user(db: Session, username: str, password: str) -> UserDB | None:
     user_repo = UserRepository(db)
     user = user_repo.get_by_username(username)
     if user is None:
+        logger.info("Authentication failed: unknown username=%s", username)
         return None
     if not verify_password(password, user.hashed_password):
+        logger.info("Authentication failed: invalid password username=%s", username)
         return None
+    logger.debug("Authentication succeeded user_id=%s", user.id)
     return user
 
 
@@ -128,6 +133,7 @@ def register(payload: UserRegisterRequest, db: db_dependency):
     bank_repo = BankAccountRepository(db)
     existing_user = user_repo.get_by_username(payload.username)
     if existing_user is not None:
+        logger.warning("Registration conflict for username=%s", payload.username)
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="Username already exists"
         )
@@ -138,10 +144,7 @@ def register(payload: UserRegisterRequest, db: db_dependency):
         full_name=payload.full_name,
         hashed_password=get_password_hash(payload.password),
     )
-    bank_repo.create_default_accounts_for_user(
-        user_id=user.id, provider=choice(list(BankProviderEnum))
-    )
-
+    logger.info("Registered new user user_id=%s username=%s", user.id, user.username)
     return UserPublic.model_validate(user)
 
 
@@ -150,10 +153,12 @@ def login(payload: UserLoginRequest, response: Response, db: db_dependency):
     """Authenticate a user and issue fresh access/refresh tokens."""
     user = authenticate_user(db, payload.username, payload.password)
     if user is None:
+        logger.warning("Login denied for username=%s", payload.username)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Bad username or password"
         )
     if not user.is_active:
+        logger.warning("Login denied for inactive account user_id=%s", user.id)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Inactive account",
@@ -176,6 +181,7 @@ def login(payload: UserLoginRequest, response: Response, db: db_dependency):
         scopes=scopes,
     )
     _set_auth_cookies(response, access_token, refresh_token)
+    logger.info("Login succeeded user_id=%s scopes=%s", user.id, scopes)
 
     return TokenPayload(
         access_token=access_token,
@@ -199,19 +205,14 @@ def login_oauth2_compat(
     return login(payload, response, db)
 
 
-<<<<<<< HEAD
-@router.get("/me", response_model=UserPublic)
-def me(current_user: Annotated[UserDB, Depends(get_current_active_user)]):
-    return UserPublic.model_validate(current_user)
-=======
 @router.get("/me", response_model=UserMePublic)
 def me(
     current_user: Annotated[UserDB, Depends(get_current_active_user)],
     db: db_dependency,
 ):
     """Return the authenticated user's profile and spending summary."""
+    logger.debug("Fetching /auth/me payload for user_id=%s", current_user.id)
     return get_user_me_payload(db, current_user=current_user)
->>>>>>> 9ea8a1b065a02fd741ff5ee339dcf06228c4445f
 
 
 @router.get("/users", response_model=list[str])
@@ -222,7 +223,9 @@ def list_usernames(
 ):
     """List usernames for authenticated sessions validated via access cookie."""
     _require_access_token_payload(response, access_token, db)
-    return UserRepository(db).list_usernames()
+    usernames = UserRepository(db).list_usernames()
+    logger.info("Listed usernames count=%s", len(usernames))
+    return usernames
 
 
 @router.post("/refresh", response_model=TokenPayload)
@@ -236,17 +239,20 @@ def refresh_tokens(
     payload = _require_refresh_token_payload(response, refresh_token, db)
     subject = payload.get("sub")
     if not isinstance(subject, str):
+        logger.warning("Refresh token missing subject")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token subject"
         )
 
     user = UserRepository(db).get_by_username(subject)
     if user is None:
+        logger.warning("Refresh denied: user not found subject=%s", subject)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
         )
     if not user.is_active:
+        logger.warning("Refresh denied: inactive user_id=%s", user.id)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Inactive account",
@@ -277,6 +283,7 @@ def refresh_tokens(
         scopes=scopes,
     )
     _set_auth_cookies(response, new_access_token, new_refresh_token)
+    logger.info("Token refresh succeeded user_id=%s", user.id)
     return TokenPayload(
         access_token=new_access_token,
         refresh_token=new_refresh_token,
@@ -300,6 +307,7 @@ def _revoke_payload(db: Session, payload: dict) -> None:
     exp = payload.get("exp")
     token_type = str(payload.get("type", "access"))
     if not jti or exp is None:
+        logger.debug("Skipping revoke for payload missing jti/exp")
         return
 
     expires_at = datetime.fromtimestamp(int(exp), tz=UTC)
@@ -308,6 +316,7 @@ def _revoke_payload(db: Session, payload: dict) -> None:
         token_type=token_type,
         expires_at=expires_at,
     )
+    logger.info("Revoked token jti=%s type=%s", jti, token_type)
 
 
 @router.post("/logout")
@@ -333,6 +342,7 @@ def logout(
             pass
 
     _clear_auth_cookies(response)
+    logger.info("Logout completed")
     return {"msg": "Successfully logout"}
 
 

@@ -41,8 +41,6 @@
       "description": "Drop deprecated users.type column after roles migration",
       "sqlite": "007_drop_users_type_column.sqlite.sql",
       "postgresql": "007_drop_users_type_column.postgresql.sql"
-<<<<<<< HEAD
-=======
     },
     {
       "id": "008_add_impulse_limit_and_tax_to_user_metadata",
@@ -55,7 +53,6 @@
       "description": "Scope possible impulse zones to users",
       "sqlite": "009_add_user_id_to_possible_impulse_zones.sqlite.sql",
       "postgresql": "009_add_user_id_to_possible_impulse_zones.postgresql.sql"
->>>>>>> 9ea8a1b065a02fd741ff5ee339dcf06228c4445f
     }
   ]
 }

@@ -2,11 +2,12 @@ import { useApp } from "@/context/AppContext";
 import HorseProgressBar from "@/components/HorseProgressBar";
 import LoginPage from "./LoginPage";
 import ConnectBankPage from "./ConnectBankPage";
+import BankDetailsPage from "./BankDetailsPage";
 import ImpulseZonesPage from "./ImpulseZonesPage";
 import GoalsPage from "./GoalsPage";
 import BudgetPage from "./BudgetPage";
 
-const steps = [ConnectBankPage, ImpulseZonesPage, GoalsPage, BudgetPage];
+const steps = [ConnectBankPage, BankDetailsPage, ImpulseZonesPage, GoalsPage, BudgetPage];
 
 const OnboardingFlow = () => {
   const { onboardingStep } = useApp();

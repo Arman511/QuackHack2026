@@ -1,14 +1,18 @@
 from fastapi import HTTPException, status
+import logging
 from sqlalchemy.orm import Session
 
 from backend.models import UserAdminPatch, UserDB, UserRead, UserTypeEnum, UserUpdate
 from backend.repositories.user_repository import UserRepository
 from backend.services.auth_service import get_password_hash, roles_to_csv
 
+logger = logging.getLogger(__name__)
+
 
 def update_current_user_profile(
     db: Session, *, current_user: UserDB, payload: UserUpdate
 ) -> UserRead:
+    logger.info("Updating current user profile user_id=%s", current_user.id)
     user_repo = UserRepository(db)
     updated_user = user_repo.update_self(
         user_id=current_user.id,
@@ -19,9 +23,11 @@ def update_current_user_profile(
         ),
     )
     if updated_user is None:
+        logger.warning("Current user profile update failed user_id=%s", current_user.id)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
+    logger.info("Current user profile updated user_id=%s", current_user.id)
     return UserRead.model_validate(updated_user)
 
 
@@ -32,15 +38,20 @@ def admin_patch_user(
     user_id: int,
     payload: UserAdminPatch,
 ) -> UserRead:
+    logger.info(
+        "Admin patch user requested actor_id=%s target_user_id=%s", actor.id, user_id
+    )
     user_repo = UserRepository(db)
     target = user_repo.get_by_id(user_id)
     if target is None:
+        logger.warning("Admin patch target not found user_id=%s", user_id)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
 
     new_roles = payload.roles
     if actor.id == user_id and new_roles and UserTypeEnum.ADMIN not in new_roles:
+        logger.warning("Admin self-demotion prevented actor_id=%s", actor.id)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admins cannot remove their own ADMIN role",
@@ -60,23 +71,32 @@ def admin_patch_user(
         roles=roles_csv,
     )
     if updated_user is None:
+        logger.warning("Admin patch update failed target_user_id=%s", user_id)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
 
+    logger.info(
+        "Admin patch user completed actor_id=%s target_user_id=%s", actor.id, user_id
+    )
     return UserRead.model_validate(updated_user)
 
 
 def admin_get_user_by_id(db: Session, actor: UserDB, user_id: int) -> UserRead:
     user_repo = UserRepository(db)
     if UserTypeEnum.ADMIN not in actor.roles:
+        logger.warning("Admin-only profile read denied actor_id=%s", actor.id)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only admins can access other users' profiles",
         )
     target = user_repo.admin_get_user_by_id(user_id)
     if target is None:
+        logger.warning("Admin profile lookup target not found user_id=%s", user_id)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
+    logger.info(
+        "Admin profile lookup success actor_id=%s target_user_id=%s", actor.id, user_id
+    )
     return UserRead.model_validate(target)

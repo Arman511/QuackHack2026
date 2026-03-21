@@ -71,7 +71,7 @@ const ImpulseZonesPage = () => {
       </div>
 
       <Button
-        onClick={() => setOnboardingStep(3)}
+        onClick={() => setOnboardingStep(4)}
         disabled={selected.length === 0}
         className="w-full h-11 active:scale-[0.97] flex items-center gap-2 justify-center"
       >
