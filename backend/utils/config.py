@@ -9,7 +9,7 @@ DB_NAME = os.getenv("DB_NAME", "stables_db")
 DB_USER = os.getenv("DB_USER", "db_user")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "db_pass")
 DB_PORT = os.getenv("DB_PORT", 5432)
-DB_DIALECT = os.getenv("DB_DIALECT", "postgresql").lower()
+DB_DIALECT = os.getenv("DB_DIALECT", "sqlite").lower()
 SQLITE_DB_PATH = os.getenv("SQLITE_DB_PATH", "./data/stables.db")
 DATABASE_URL = os.getenv("DATABASE_URL")
 
