@@ -78,6 +78,17 @@ class CreateBankAccountsRequest(BaseModel):
     provider: BankProviderEnum
 
 
+class SetupBankAccountDetails(BaseModel):
+    account_number: str
+    sort_code: str
+
+
+class SetupBankAccountsRequest(BaseModel):
+    provider: BankProviderEnum
+    current: SetupBankAccountDetails
+    saving: SetupBankAccountDetails
+
+
 class BankAccountPublic(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

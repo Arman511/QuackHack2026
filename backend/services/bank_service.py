@@ -25,6 +25,7 @@ from backend.models import (
     UserLimitStatusPublic,
     UserMePublic,
     UserMetadataPublic,
+    SetupBankAccountsRequest,
 )
 from backend.repositories.bank_account_repository import BankAccountRepository
 from backend.repositories.impulse_zone_repository import ImpulseZoneRepository
@@ -160,6 +161,39 @@ def create_bank_accounts_for_user(
 
     current_account = account_repo.update_amount(current_account.id, current_amount)
     saving_account = account_repo.update_amount(saving_account.id, saving_amount)
+
+    return CreateBankAccountsResponse(current=current_account, saving=saving_account)
+
+
+def setup_bank_accounts_for_user(
+    db: Session,
+    *,
+    current_user: UserDB,
+    payload: SetupBankAccountsRequest,
+) -> CreateBankAccountsResponse:
+    account_repo = BankAccountRepository(db)
+    existing_current = account_repo.get_first_by_user_id_and_type(
+        user_id=current_user.id,
+        account_type=AccountTypeEnum.CURRENT,
+    )
+    existing_saving = account_repo.get_first_by_user_id_and_type(
+        user_id=current_user.id,
+        account_type=AccountTypeEnum.SAVING,
+    )
+    if existing_current is not None or existing_saving is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Bank accounts are already set up for this user",
+        )
+
+    current_account, saving_account = account_repo.create_accounts_for_user(
+        user_id=current_user.id,
+        provider=payload.provider,
+        current_account_number=payload.current.account_number,
+        current_sort_code=payload.current.sort_code,
+        saving_account_number=payload.saving.account_number,
+        saving_sort_code=payload.saving.sort_code,
+    )
 
     return CreateBankAccountsResponse(current=current_account, saving=saving_account)
 

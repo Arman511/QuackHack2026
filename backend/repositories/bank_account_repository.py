@@ -130,6 +130,41 @@ class BankAccountRepository:
 
         return current_account, saving_account
 
+    def create_accounts_for_user(
+        self,
+        *,
+        user_id: int,
+        provider: BankProviderEnum,
+        current_account_number: str,
+        current_sort_code: str,
+        saving_account_number: str,
+        saving_sort_code: str,
+    ) -> tuple[BankAccountPublic, BankAccountPublic]:
+        """Create CURRENT and SAVING accounts for a user using explicit details."""
+        current_initial_amount = int(round(random.triangular(0, 3000, 200)))
+        saving_initial_amount = int(round(random.triangular(0, 6000, 500)))
+
+        current_account = self.create_account(
+            user_id=user_id,
+            account_number=current_account_number,
+            sort_code=current_sort_code,
+            name=f"{provider.value} Current Account",
+            provider=provider,
+            account_type=AccountTypeEnum.CURRENT,
+            initial_amount=current_initial_amount,
+        )
+        saving_account = self.create_account(
+            user_id=user_id,
+            account_number=saving_account_number,
+            sort_code=saving_sort_code,
+            name=f"{provider.value} Saving Account",
+            provider=provider,
+            account_type=AccountTypeEnum.SAVING,
+            initial_amount=saving_initial_amount,
+        )
+
+        return current_account, saving_account
+
     @staticmethod
     def _generate_account_number() -> str:
         """Generate a random account number (digit string)."""
