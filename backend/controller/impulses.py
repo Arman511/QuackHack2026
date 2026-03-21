@@ -38,6 +38,7 @@ def get_all_impulses(
     db: db_dependency,
     _: current_user_dependency,
 ):
+    """List all real impulse zones available to signed-in users."""
     return list_all_impulse_zones(db)
 
 
@@ -46,6 +47,7 @@ def get_my_impulses(
     db: db_dependency,
     current_user: current_user_dependency,
 ):
+    """Get the authenticated user's real and possible impulse bundle."""
     return get_user_impulses_bundle(db, current_user=current_user)
 
 
@@ -55,6 +57,7 @@ def replace_my_impulses(
     db: db_dependency,
     current_user: current_user_dependency,
 ):
+    """Replace the authenticated user's selected real impulses."""
     return set_user_impulses(
         db,
         current_user=current_user,
@@ -66,8 +69,14 @@ def replace_my_impulses(
 def create_possible_impulse(
     payload: ImpulseZoneCreate,
     db: db_dependency,
+    current_user: current_user_dependency,
 ):
-    return create_possible_impulse_zone(db, payload=payload)
+    """Create a user-owned possible impulse suggestion."""
+    return create_possible_impulse_zone(
+        db,
+        current_user=current_user,
+        payload=payload,
+    )
 
 
 @router.get("/admin/real", response_model=list[ImpulseZonePublic])
@@ -75,6 +84,7 @@ def admin_get_impulses(
     db: db_dependency,
     _: admin_user_dependency,
 ):
+    """List all real impulse zones (admin only)."""
     return admin_list_impulse_zones(db)
 
 
@@ -84,6 +94,7 @@ def admin_create_impulse(
     db: db_dependency,
     _: admin_user_dependency,
 ):
+    """Create a real impulse zone (admin only)."""
     return admin_create_impulse_zone(db, payload=payload)
 
 
@@ -94,6 +105,7 @@ def admin_patch_impulse(
     db: db_dependency,
     _: admin_user_dependency,
 ):
+    """Update a real impulse zone by ID (admin only)."""
     return admin_update_impulse_zone(db, zone_id=zone_id, payload=payload)
 
 
@@ -103,6 +115,7 @@ def admin_remove_impulse(
     db: db_dependency,
     _: admin_user_dependency,
 ):
+    """Delete a real impulse zone by ID (admin only)."""
     return admin_delete_impulse_zone(db, zone_id=zone_id)
 
 
@@ -111,6 +124,7 @@ def admin_get_possible_impulses(
     db: db_dependency,
     _: admin_user_dependency,
 ):
+    """List all possible impulse zones (admin only)."""
     return admin_list_possible_impulse_zones(db)
 
 
@@ -120,6 +134,7 @@ def admin_create_possible_impulse(
     db: db_dependency,
     _: admin_user_dependency,
 ):
+    """Create a possible impulse zone without user scope (admin only)."""
     return admin_create_possible_impulse_zone(db, payload=payload)
 
 
@@ -130,6 +145,7 @@ def admin_patch_possible_impulse(
     db: db_dependency,
     _: admin_user_dependency,
 ):
+    """Update a possible impulse zone by ID (admin only)."""
     return admin_update_possible_impulse_zone(db, zone_id=zone_id, payload=payload)
 
 
@@ -139,6 +155,7 @@ def admin_remove_possible_impulse(
     db: db_dependency,
     _: admin_user_dependency,
 ):
+    """Delete a possible impulse zone by ID (admin only)."""
     return admin_delete_possible_impulse_zone(db, zone_id=zone_id)
 
 
@@ -149,4 +166,5 @@ def admin_promote_possible_impulse(
     db: db_dependency,
     _: admin_user_dependency,
 ):
+    """Promote a possible impulse zone into a real impulse zone (admin only)."""
     return admin_promote_possible_impulse_zone(db, zone_id=zone_id, payload=payload)

@@ -1,10 +1,12 @@
 from datetime import datetime
 from types import SimpleNamespace
+from typing import cast
 
 import pytest
 from fastapi import HTTPException
+from sqlalchemy.orm import Session
 
-from backend.models import TransactionDateRangeQuery
+from backend.models import TransactionDateRangeQuery, UserDB
 from backend.services import bank_service
 
 
@@ -16,8 +18,8 @@ def test_search_user_transactions_by_date_rejects_inverted_range() -> None:
 
     with pytest.raises(HTTPException) as exc_info:
         bank_service.search_user_transactions_by_date(
-            db=object(),
-            current_user=SimpleNamespace(id=7),
+            db=cast(Session, object()),
+            current_user=cast(UserDB, SimpleNamespace(id=7)),
             payload=payload,
         )
 
@@ -51,14 +53,14 @@ def test_search_user_transactions_by_date_delegates_to_repository(monkeypatch) -
             }
             return expected
 
-    marker_db = object()
+    marker_db = cast(Session, object())
     monkeypatch.setattr(
         bank_service, "TransactionRepository", FakeTransactionRepository
     )
 
     result = bank_service.search_user_transactions_by_date(
         db=marker_db,
-        current_user=SimpleNamespace(id=11),
+        current_user=cast(UserDB, SimpleNamespace(id=11)),
         payload=payload,
     )
 
