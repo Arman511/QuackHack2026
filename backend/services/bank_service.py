@@ -172,7 +172,9 @@ def search_user_transactions_by_date(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="start must be before or equal to end",
         )
-    items, total = TransactionRepository(db).get_by_user_id_and_date_range_search_paginated(
+    items, total = TransactionRepository(
+        db
+    ).get_by_user_id_and_date_range_search_paginated(
         user_id=current_user.id,
         start=payload.start,
         end=payload.end,

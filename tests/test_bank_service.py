@@ -6,7 +6,13 @@ import pytest
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from backend.models import SetupBankAccountsRequest, TransactionDateRangeQuery, UserDB
+from backend.models import (
+    BankProviderEnum,
+    SetupBankAccountDetails,
+    SetupBankAccountsRequest,
+    TransactionDateRangeQuery,
+    UserDB,
+)
 from backend.services import bank_service
 
 
@@ -101,9 +107,15 @@ def test_setup_bank_accounts_for_user_rejects_when_already_configured(
     monkeypatch,
 ) -> None:
     payload = SetupBankAccountsRequest(
-        provider="REV-O-TROT",
-        current={"account_number": "12345678", "sort_code": "112233"},
-        saving={"account_number": "87654321", "sort_code": "112233"},
+        provider=BankProviderEnum.REV_O_TROT,
+        current=SetupBankAccountDetails(
+            account_number="12345678",
+            sort_code="112233",
+        ),
+        saving=SetupBankAccountDetails(
+            account_number="87654321",
+            sort_code="112233",
+        ),
     )
 
     class FakeBankAccountRepository:
@@ -132,9 +144,15 @@ def test_setup_bank_accounts_for_user_rejects_when_already_configured(
 
 def test_setup_bank_accounts_for_user_creates_current_and_saving(monkeypatch) -> None:
     payload = SetupBankAccountsRequest(
-        provider="REV-O-TROT",
-        current={"account_number": "12345678", "sort_code": "112233"},
-        saving={"account_number": "87654321", "sort_code": "445566"},
+        provider=BankProviderEnum.REV_O_TROT,
+        current=SetupBankAccountDetails(
+            account_number="12345678",
+            sort_code="112233",
+        ),
+        saving=SetupBankAccountDetails(
+            account_number="87654321",
+            sort_code="445566",
+        ),
     )
     calls = {}
 
