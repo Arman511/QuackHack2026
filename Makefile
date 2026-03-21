@@ -11,6 +11,7 @@ HAS_PNPM := $(shell command -v pnpm >/dev/null 2>&1 && echo yes)
 endif
 
 HAS_FRONTEND_PACKAGE := $(if $(wildcard frontend/package.json),yes,no)
+HAS_FRONTEND_NODE_MODULES := $(if $(wildcard frontend/node_modules),yes,no)
 HAS_TESTS_DIR := $(if $(wildcard tests),yes,no)
 HAS_FRONTEND_TEST_SCRIPT := $(shell python -c "import json, pathlib; p = pathlib.Path('frontend/package.json'); print('yes' if p.exists() and 'test' in json.loads(p.read_text()).get('scripts', {}) else 'no')" 2>$(NULL_DEVICE))
 
@@ -39,6 +40,12 @@ lint:
 	uvx black --check .
 ifeq ($(HAS_PNPM),yes)
 ifeq ($(HAS_FRONTEND_PACKAGE),yes)
+ifeq ($(HAS_FRONTEND_NODE_MODULES),yes)
+	@echo "frontend/node_modules found; skipping frontend install"
+else
+	@echo "frontend/node_modules not found; installing frontend dependencies"
+	pnpm --dir frontend install --frozen-lockfile
+endif
 	pnpm --dir frontend lint
 else
 	@echo "frontend/package.json not found; skipping frontend lint"
