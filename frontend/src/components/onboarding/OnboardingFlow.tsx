@@ -2,11 +2,12 @@ import { useApp } from "@/context/AppContext";
 import HorseProgressBar from "@/components/HorseProgressBar";
 import LoginPage from "./LoginPage";
 import ConnectBankPage from "./ConnectBankPage";
+import BankDetailsPage from "./BankDetailsPage";
 import ImpulseZonesPage from "./ImpulseZonesPage";
 import GoalsPage from "./GoalsPage";
 import BudgetPage from "./BudgetPage";
 
-const steps = [ConnectBankPage, ImpulseZonesPage, GoalsPage, BudgetPage];
+const steps = [ConnectBankPage, BankDetailsPage, ImpulseZonesPage, GoalsPage, BudgetPage];
 
 const OnboardingFlow = () => {
   const { onboardingStep } = useApp();
@@ -22,7 +23,7 @@ const OnboardingFlow = () => {
           <img src="/horse-head.png" alt="Horse" className="w-6 h-6 object-contain" />
           <span className="font-bold text-sm">Neigh-ver Go Broke!</span>
         </div>
-        <HorseProgressBar totalSteps={4} />
+        <HorseProgressBar totalSteps={5} />
       </div>
       <div className="flex-1 flex items-start justify-center px-4 py-6">
         <div className="w-full max-w-md">
