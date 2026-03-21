@@ -1,4 +1,5 @@
-import { AppProvider, useApp } from "@/context/AppContext";
+import { AppProvider } from "@/context/AppContext";
+import { useApp } from "@/hooks/useApp";
 import OnboardingFlow from "@/components/onboarding/OnboardingFlow";
 import MainApp from "@/components/main/MainApp";
 import LoginPage from "@/components/onboarding/LoginPage";

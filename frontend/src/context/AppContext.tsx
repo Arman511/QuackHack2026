@@ -79,12 +79,6 @@ interface AppContextType extends AppState {
 
 const AppContext = createContext<AppContextType | null>(null);
 
-export const useApp = () => {
-  const ctx = useContext(AppContext);
-  if (!ctx) throw new Error("useApp must be inside AppProvider");
-  return ctx;
-};
-
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [state, setState] = useState<AppState>({
     // Authentication state
@@ -158,8 +152,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         authLoading: false,
         onboardingStep: userData.total_impulse_spent !== undefined ? 0 : 1, // Skip onboarding if user has data
       });
-    } catch (error: any) {
-      const errorMessage = error.message || "Login failed. Please try again.";
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Login failed. Please try again.";
       update({
         isAuthenticated: false,
         user: null,
@@ -179,8 +174,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         authLoading: false,
         authError: null,
       });
-    } catch (error: any) {
-      const errorMessage = error.message || "Registration failed. Please try again.";
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Registration failed. Please try again.";
       update({
         authLoading: false,
         authError: errorMessage,
@@ -272,3 +268,5 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   return <AppContext.Provider value={ctx}>{children}</AppContext.Provider>;
 };
+
+export { AppContext };

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useApp } from "@/context/AppContext";
+import { useApp } from "@/hooks/useApp";
 import { Button } from "@/components/ui/button";
 
 const LoginPage = () => {
@@ -101,7 +101,7 @@ const LoginPage = () => {
         clearFormData();
         setIsLogin(true);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Errors are handled by AppContext and reflected in authError
       console.error("Authentication error:", error);
     }

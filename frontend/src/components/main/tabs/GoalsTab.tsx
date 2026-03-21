@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useApp } from "@/context/AppContext";
+import { useApp } from "@/hooks/useApp";
 import { Button } from "@/components/ui/button";
 import { Target } from "lucide-react";
 
