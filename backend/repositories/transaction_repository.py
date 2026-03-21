@@ -9,41 +9,48 @@ class TransactionRepository:
     """Repository for transaction operations."""
 
     SQL_CREATE_TRANSACTION = text("""
-        INSERT INTO transactions (user_id, amount, timestamp, merchant, impulse_zone_id, possible_impulse_zone_id)
-        VALUES (:user_id, :amount, :timestamp, :merchant, :impulse_zone_id, :possible_impulse_zone_id)
-        RETURNING id, user_id, amount, timestamp, merchant, impulse_zone_id, possible_impulse_zone_id, created_at
+        INSERT INTO transactions (user_id, source_account_id, amount, timestamp, merchant, impulse_zone_id, possible_impulse_zone_id)
+        VALUES (:user_id, :source_account_id, :amount, :timestamp, :merchant, :impulse_zone_id, :possible_impulse_zone_id)
+        RETURNING id, user_id, source_account_id, amount, timestamp, merchant, impulse_zone_id, possible_impulse_zone_id, created_at
         """)
 
     SQL_SELECT_BY_ID = text("""
-        SELECT id, user_id, amount, timestamp, merchant, impulse_zone_id, possible_impulse_zone_id, created_at
+        SELECT id, user_id, source_account_id, amount, timestamp, merchant, impulse_zone_id, possible_impulse_zone_id, created_at
         FROM transactions
         WHERE id = :transaction_id
         """)
 
     SQL_SELECT_BY_USER_ID = text("""
-        SELECT id, user_id, amount, timestamp, merchant, impulse_zone_id, possible_impulse_zone_id, created_at
+        SELECT id, user_id, source_account_id, amount, timestamp, merchant, impulse_zone_id, possible_impulse_zone_id, created_at
         FROM transactions
         WHERE user_id = :user_id
         ORDER BY timestamp DESC
         """)
 
     SQL_SELECT_BY_USER_ID_PAGINATED = text("""
-        SELECT id, user_id, amount, timestamp, merchant, impulse_zone_id, possible_impulse_zone_id, created_at
+        SELECT id, user_id, source_account_id, amount, timestamp, merchant, impulse_zone_id, possible_impulse_zone_id, created_at
         FROM transactions
         WHERE user_id = :user_id
         ORDER BY timestamp DESC
         LIMIT :limit OFFSET :offset
         """)
 
+    SQL_SELECT_ALL_PAGINATED = text("""
+        SELECT id, user_id, source_account_id, amount, timestamp, merchant, impulse_zone_id, possible_impulse_zone_id, created_at
+        FROM transactions
+        ORDER BY timestamp DESC
+        LIMIT :limit OFFSET :offset
+        """)
+
     SQL_SELECT_BY_IMPULSE_ZONE = text("""
-        SELECT id, user_id, amount, timestamp, merchant, impulse_zone_id, possible_impulse_zone_id, created_at
+        SELECT id, user_id, source_account_id, amount, timestamp, merchant, impulse_zone_id, possible_impulse_zone_id, created_at
         FROM transactions
         WHERE impulse_zone_id = :impulse_zone_id
         ORDER BY timestamp DESC
         """)
 
     SQL_SELECT_BY_POSSIBLE_IMPULSE_ZONE = text("""
-        SELECT id, user_id, amount, timestamp, merchant, impulse_zone_id, possible_impulse_zone_id, created_at
+        SELECT id, user_id, source_account_id, amount, timestamp, merchant, impulse_zone_id, possible_impulse_zone_id, created_at
         FROM transactions
         WHERE possible_impulse_zone_id = :possible_impulse_zone_id
         ORDER BY timestamp DESC
@@ -56,6 +63,7 @@ class TransactionRepository:
         self,
         *,
         user_id: int,
+        source_account_id: int,
         amount: int,
         timestamp: datetime,
         merchant: str,
@@ -68,6 +76,7 @@ class TransactionRepository:
                 self.SQL_CREATE_TRANSACTION,
                 {
                     "user_id": user_id,
+                    "source_account_id": source_account_id,
                     "amount": amount,
                     "timestamp": timestamp,
                     "merchant": merchant,
@@ -116,6 +125,21 @@ class TransactionRepository:
             self.db.execute(
                 self.SQL_SELECT_BY_USER_ID_PAGINATED,
                 {"user_id": user_id, "limit": page_size, "offset": offset},
+            )
+            .mappings()
+            .all()
+        )
+        return [TransactionPublic(**row) for row in rows]
+
+    def get_all_paginated(
+        self, *, page: int = 1, page_size: int = 50
+    ) -> list[TransactionPublic]:
+        """Get paginated transactions across all users."""
+        offset = (page - 1) * page_size
+        rows = (
+            self.db.execute(
+                self.SQL_SELECT_ALL_PAGINATED,
+                {"limit": page_size, "offset": offset},
             )
             .mappings()
             .all()

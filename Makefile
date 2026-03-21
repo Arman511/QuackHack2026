@@ -5,9 +5,11 @@ COMPOSE_LOCAL_FILE := docker-compose.local.yml
 ifeq ($(OS),Windows_NT)
 NULL_DEVICE := NUL
 HAS_PNPM := $(shell where pnpm >NUL 2>NUL && echo yes)
+PRE_COMMIT_HOOK_SOURCE := .githooks/pre-commit.ps1
 else
 NULL_DEVICE := /dev/null
 HAS_PNPM := $(shell command -v pnpm >/dev/null 2>&1 && echo yes)
+PRE_COMMIT_HOOK_SOURCE := .githooks/pre-commit.sh
 endif
 
 HAS_FRONTEND_PACKAGE := $(if $(wildcard frontend/package.json),yes,no)
@@ -15,7 +17,7 @@ HAS_FRONTEND_NODE_MODULES := $(if $(wildcard frontend/node_modules),yes,no)
 HAS_TESTS_DIR := $(if $(wildcard tests),yes,no)
 HAS_FRONTEND_TEST_SCRIPT := $(shell python -c "import json, pathlib; p = pathlib.Path('frontend/package.json'); print('yes' if p.exists() and 'test' in json.loads(p.read_text()).get('scripts', {}) else 'no')" 2>$(NULL_DEVICE))
 
-.PHONY: serve serve-local local build format lint test down down-local
+.PHONY: serve serve-local local build format lint test down down-local install-hooks
 
 serve:
 	$(COMPOSE) -f $(COMPOSE_FILE) up --build
@@ -76,3 +78,14 @@ down:
 
 down-local:
 	$(COMPOSE) -f $(COMPOSE_LOCAL_FILE) down
+
+install-hooks:
+	cp $(PRE_COMMIT_HOOK_SOURCE) .githooks/pre-commit
+ifeq ($(OS),Windows_NT)
+	@echo "Installed PowerShell pre-commit hook from $(PRE_COMMIT_HOOK_SOURCE)"
+else
+	chmod +x .githooks/pre-commit
+	@echo "Installed shell pre-commit hook from $(PRE_COMMIT_HOOK_SOURCE)"
+endif
+	git config core.hooksPath .githooks
+	@echo "Git hooks installed."

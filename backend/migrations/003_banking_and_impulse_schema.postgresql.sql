@@ -1,8 +1,6 @@
 -- Create ENUM types for PostgreSQL
 CREATE TYPE user_type_enum AS ENUM ('ADMIN', 'USER');
 
-CREATE TYPE bank_provider_enum AS ENUM ('REVOLITE', 'HAYSBC');
-
 CREATE TYPE account_type_enum AS ENUM ('CURRENT', 'SAVING');
 
 -- Add type column to users table
@@ -18,7 +16,7 @@ CREATE TABLE IF NOT EXISTS bank_accounts (
     sort_code TEXT NOT NULL,
     name TEXT NOT NULL,
     provider bank_provider_enum NOT NULL,
-    type account_type_enum NOT NULL,
+    type TEXT NOT NULL,
     amount BIGINT NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
