@@ -121,6 +121,17 @@ export interface CreateBankAccountsRequest {
   provider: BankProviderEnum;
 }
 
+export interface SetupBankAccountDetails {
+  account_number: string;
+  sort_code: string;
+}
+
+export interface SetupBankAccountsRequest {
+  provider: BankProviderEnum;
+  current: SetupBankAccountDetails;
+  saving: SetupBankAccountDetails;
+}
+
 export interface CreateBankAccountsResponse {
   current: BankAccountPublic;
   saving: BankAccountPublic;
