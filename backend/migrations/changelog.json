@@ -1,0 +1,16 @@
+{
+  "migrations": [
+    {
+      "id": "001_initial_schema",
+      "description": "Create initial application tables",
+      "sqlite": "001_initial_schema.sqlite.sql",
+      "postgresql": "001_initial_schema.postgresql.sql"
+    },
+    {
+      "id": "002_users_created_at_index",
+      "description": "Add users created_at index for paged ordering",
+      "sqlite": "002_users_created_at_index.sqlite.sql",
+      "postgresql": "002_users_created_at_index.postgresql.sql"
+    }
+  ]
+}

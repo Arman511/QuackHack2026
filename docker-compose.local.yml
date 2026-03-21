@@ -1,0 +1,16 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: quackhack2026-api:local
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-change-me}
+      DB_DIALECT: sqlite
+      SQLITE_DB_PATH: ./data/stables.db
+      JWT_COOKIE_SECURE: "false"
+    ports:
+      - "8000:8000"
