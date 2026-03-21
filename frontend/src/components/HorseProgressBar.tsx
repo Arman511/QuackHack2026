@@ -34,16 +34,6 @@ const HorseProgressBar = ({ totalSteps }: HorseProgressBarProps) => {
           />
         </div>
 
-        {/* Checkered flag at the end */}
-        <div className="absolute right-0 top-1/2 -translate-y-1/2 -mr-1">
-          <div className="w-6 h-6 bg-white rounded-sm flex flex-wrap overflow-hidden border border-gray-300">
-            <div className="w-1/2 h-1/2 bg-black"></div>
-            <div className="w-1/2 h-1/2 bg-white"></div>
-            <div className="w-1/2 h-1/2 bg-white"></div>
-            <div className="w-1/2 h-1/2 bg-black"></div>
-          </div>
-        </div>
-
         {/* Horse galloping */}
         <div
           className="absolute top-1/2 -translate-y-1/2 transition-all duration-700 ease-out"
