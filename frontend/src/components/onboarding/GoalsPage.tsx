@@ -12,11 +12,11 @@ const GoalsPage = () => {
 
   const getIcon = (iconName: string) => {
     const iconMap: Record<string, string> = {
-      travel: '/travel.png',
-      shield: '/sheild.png', // Note: filename is "sheild" not "shield"
-      shopping: '/shopping.png',
-      house: '/house.png',
-      debt: '/debt.png',
+      travel: "/travel.png",
+      shield: "/sheild.png", // Note: filename is "sheild" not "shield"
+      shopping: "/shopping.png",
+      house: "/house.png",
+      debt: "/debt.png",
     };
 
     const iconPath = iconMap[iconName];
