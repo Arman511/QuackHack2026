@@ -363,7 +363,9 @@ def _month_window(now: datetime) -> tuple[datetime, datetime]:
     return start, end
 
 
-def get_user_limit_status(db: Session, *, current_user: UserDB) -> UserLimitStatusPublic:
+def get_user_limit_status(
+    db: Session, *, current_user: UserDB
+) -> UserLimitStatusPublic:
     now = datetime.now()
     start, end = _month_window(now)
 
