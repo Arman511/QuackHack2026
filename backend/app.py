@@ -6,6 +6,7 @@ from fastapi import FastAPI, HTTPException, status
 
 from backend.controller.auth import router as auth_router
 from backend.controller.bank import router as bank_router
+from backend.controller.impulses import router as impulses_router
 from backend.controller.users import router as users_router
 from backend.utils.database import URL_DATABASE, engine
 from backend.utils.sql_migration import run_sql_migrations
@@ -16,6 +17,7 @@ app = FastAPI()
 app.include_router(auth_router, prefix="/api")
 app.include_router(users_router, prefix="/api")
 app.include_router(bank_router, prefix="/api")
+app.include_router(impulses_router, prefix="/api")
 
 run_sql_migrations(engine, URL_DATABASE)
 

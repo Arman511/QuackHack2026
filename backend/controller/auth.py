@@ -1,5 +1,4 @@
 from datetime import UTC, datetime
-from random import choice
 from typing import Annotated
 
 from fastapi.params import Depends
@@ -19,13 +18,12 @@ from backend.models import (
     TokenPayload,
     UserDB,
     UserLoginRequest,
+    UserMePublic,
     UserPublic,
     UserRegisterRequest,
     RefreshTokensCompatRequest,
-    BankProviderEnum,
 )
 from backend.repositories.token_denylist_repository import TokenDenylistRepository
-from backend.repositories.bank_account_repository import BankAccountRepository
 from backend.repositories.user_repository import UserRepository
 from backend.services.auth_service import (
     build_scopes_for_user,
@@ -34,6 +32,7 @@ from backend.services.auth_service import (
     get_password_hash,
     verify_password,
 )
+from backend.services.bank_service import get_user_me_payload
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -124,7 +123,6 @@ def _require_refresh_token_payload(
 )
 def register(payload: UserRegisterRequest, db: db_dependency):
     user_repo = UserRepository(db)
-    bank_repo = BankAccountRepository(db)
     existing_user = user_repo.get_by_username(payload.username)
     if existing_user is not None:
         raise HTTPException(
@@ -137,10 +135,6 @@ def register(payload: UserRegisterRequest, db: db_dependency):
         full_name=payload.full_name,
         hashed_password=get_password_hash(payload.password),
     )
-    bank_repo.create_default_accounts_for_user(
-        user_id=user.id, provider=choice(list(BankProviderEnum))
-    )
-
     return UserPublic.model_validate(user)
 
 
@@ -197,9 +191,12 @@ def login_oauth2_compat(
     return login(payload, response, db)
 
 
-@router.get("/me", response_model=UserPublic)
-def me(current_user: Annotated[UserDB, Depends(get_current_active_user)]):
-    return UserPublic.model_validate(current_user)
+@router.get("/me", response_model=UserMePublic)
+def me(
+    current_user: Annotated[UserDB, Depends(get_current_active_user)],
+    db: db_dependency,
+):
+    return get_user_me_payload(db, current_user=current_user)
 
 
 @router.get("/users", response_model=list[str])

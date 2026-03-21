@@ -1,6 +1,14 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter
 
-from backend.models import UserAdminPatch, UserRead, UserUpdate
+from backend.models import (
+    UserAdminPatch,
+    UserGoalSetRequest,
+    UserLimitStatusPublic,
+    UserMetadataPublic,
+    UserRead,
+    UserUpdate,
+)
+from backend.services.bank_service import get_user_limit_status, set_user_goal
 from backend.services.user_service import (
     admin_patch_user,
     update_current_user_profile,
@@ -22,6 +30,23 @@ def update_my_profile(
     current_user: current_user_dependency,
 ):
     return update_current_user_profile(db, current_user=current_user, payload=payload)
+
+
+@router.post("/me/goal", response_model=UserMetadataPublic)
+def set_my_goal(
+    payload: UserGoalSetRequest,
+    db: db_dependency,
+    current_user: current_user_dependency,
+):
+    return set_user_goal(db, current_user=current_user, payload=payload)
+
+
+@router.get("/me/is-passed-limit", response_model=UserLimitStatusPublic)
+def get_my_limit_status(
+    db: db_dependency,
+    current_user: current_user_dependency,
+):
+    return get_user_limit_status(db, current_user=current_user)
 
 
 @router.get("/{user_id}", response_model=UserRead)
