@@ -5,9 +5,11 @@ COMPOSE_LOCAL_FILE := docker-compose.local.yml
 ifeq ($(OS),Windows_NT)
 NULL_DEVICE := NUL
 HAS_PNPM := $(shell where pnpm >NUL 2>NUL && echo yes)
+PRE_COMMIT_HOOK_SOURCE := .githooks/pre-commit.ps1
 else
 NULL_DEVICE := /dev/null
 HAS_PNPM := $(shell command -v pnpm >/dev/null 2>&1 && echo yes)
+PRE_COMMIT_HOOK_SOURCE := .githooks/pre-commit.sh
 endif
 
 HAS_FRONTEND_PACKAGE := $(if $(wildcard frontend/package.json),yes,no)
@@ -78,5 +80,12 @@ down-local:
 	$(COMPOSE) -f $(COMPOSE_LOCAL_FILE) down
 
 install-hooks:
+	cp $(PRE_COMMIT_HOOK_SOURCE) .githooks/pre-commit
+ifeq ($(OS),Windows_NT)
+	@echo "Installed PowerShell pre-commit hook from $(PRE_COMMIT_HOOK_SOURCE)"
+else
+	chmod +x .githooks/pre-commit
+	@echo "Installed shell pre-commit hook from $(PRE_COMMIT_HOOK_SOURCE)"
+endif
 	git config core.hooksPath .githooks
-	@echo "Git hooks installed. pre-commit now runs 'make format'."
+	@echo "Git hooks installed."
