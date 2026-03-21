@@ -1,7 +1,10 @@
 from sqlalchemy import text
+import logging
 from sqlalchemy.orm import Session
 
 from backend.models import UserMetadataPublic
+
+logger = logging.getLogger(__name__)
 
 
 class UserMetadataRepository:
@@ -35,7 +38,10 @@ class UserMetadataRepository:
             .mappings()
             .first()
         )
-        return UserMetadataPublic(**row) if row else None
+        if row is None:
+            logger.debug("User metadata not found user_id=%s", user_id)
+            return None
+        return UserMetadataPublic(**row)
 
     def set_goal(
         self,
@@ -46,6 +52,7 @@ class UserMetadataRepository:
         impulse_limit: int | None,
         tax_percentage: int | None,
     ) -> UserMetadataPublic:
+        logger.info("Upserting user metadata goal for user_id=%s", user_id)
         row = (
             self.db.execute(
                 self.SQL_UPSERT_USER_GOAL,
@@ -62,5 +69,10 @@ class UserMetadataRepository:
         )
         self.db.commit()
         if row is None:
+            logger.error("User metadata upsert failed user_id=%s", user_id)
             raise RuntimeError("Failed to upsert user goal")
-        return UserMetadataPublic(**row)
+        metadata = UserMetadataPublic(**row)
+        logger.info(
+            "User metadata upserted user_id=%s metadata_id=%s", user_id, metadata.id
+        )
+        return metadata
