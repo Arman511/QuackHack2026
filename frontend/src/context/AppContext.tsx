@@ -89,7 +89,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }));
     },
     addGoal: (g) => setState((prev) => ({ ...prev, goals: [...prev.goals, g] })),
-    removeGoal: (id) => setState((prev) => ({ ...prev, goals: prev.goals.filter((g) => g.id !== id) })),
+    removeGoal: (id) =>
+      setState((prev) => ({ ...prev, goals: prev.goals.filter((g) => g.id !== id) })),
     clearGoals: () => setState((prev) => ({ ...prev, goals: [] })),
     updateGoal: (id, updates) =>
       setState((prev) => ({
