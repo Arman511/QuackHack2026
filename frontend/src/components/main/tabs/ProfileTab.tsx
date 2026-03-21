@@ -1,12 +1,16 @@
 import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
+import { User, Check } from "lucide-react";
 
 const ProfileTab = () => {
   const { email, connectedBank, logout } = useApp();
 
   return (
     <div className="p-4 space-y-5">
-      <h1 className="text-lg font-bold font-display animate-fade-up">Profile 👤</h1>
+      <div className="flex items-center gap-2">
+        <h1 className="text-lg font-bold animate-fade-up">Profile</h1>
+        <User size={20} className="text-muted-foreground animate-fade-up" />
+      </div>
 
       {/* Profile Info */}
       <div className="card-neigh animate-fade-up" style={{ animationDelay: "100ms" }}>
@@ -37,7 +41,10 @@ const ProfileTab = () => {
         {connectedBank ? (
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">{connectedBank}</span>
-            <span className="text-xs text-primary font-medium">Connected ✓</span>
+            <div className="flex items-center gap-1 text-xs text-primary font-medium">
+              <span>Connected</span>
+              <Check size={12} />
+            </div>
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">No banks connected</p>
@@ -72,7 +79,6 @@ const ProfileTab = () => {
       </div>
 
       <Button
-        variant="outline"
         onClick={logout}
         className="w-full active:scale-[0.97] flex items-center gap-2 justify-center"
       >

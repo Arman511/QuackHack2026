@@ -20,7 +20,7 @@ const OnboardingFlow = () => {
       <div className="pt-4 px-4">
         <div className="flex items-center gap-2 mb-2">
           <img src="/horse-head.png" alt="Horse" className="w-6 h-6 object-contain" />
-          <span className="font-bold text-sm">Neigh-ver Go Broke</span>
+          <span className="font-bold text-sm">Neigh-ver Go Broke!</span>
         </div>
         <HorseProgressBar totalSteps={4} />
       </div>

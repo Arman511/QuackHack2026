@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
+import { Target } from "lucide-react";
 
 const GoalsTab = () => {
   const { goals, updateGoal, neighTaxPercent, setNeighTaxPercent } = useApp();
@@ -28,7 +29,10 @@ const GoalsTab = () => {
 
   return (
     <div className="p-4 space-y-5">
-      <h1 className="text-lg font-bold font-display animate-fade-up">Savings Goals 💰</h1>
+      <div className="flex items-center gap-2">
+        <h1 className="text-lg font-bold animate-fade-up">Savings Goals</h1>
+        <Target size={20} className="text-muted-foreground animate-fade-up" />
+      </div>
 
       <div className="space-y-3">
         {goals.map((goal, i) => {
@@ -91,7 +95,7 @@ const GoalsTab = () => {
         <div className="fixed inset-0 bg-foreground/40 flex items-center justify-center z-50 p-4 animate-fade-in">
           <div className="card-neigh w-full max-w-sm animate-fade-up">
             <div className="flex items-center gap-2 mb-2">
-              <h3 className="text-lg font-bold font-display">Explain yourself</h3>
+              <h3 className="text-lg font-bold">Explain yourself</h3>
               <img src="/horse-head.png" alt="Horse" className="w-6 h-6 object-contain" />
             </div>
             <p className="text-sm text-muted-foreground mb-4">

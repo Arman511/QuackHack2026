@@ -26,8 +26,8 @@ const LoginPage = () => {
             alt="Horse"
             className="w-16 h-16 mx-auto mb-4 object-contain"
           />
-          <h1 className="text-2xl font-bold font-display leading-tight">
-            Neigh-ver Go Broke
+          <h1 className="text-2xl font-bold leading-tight">
+            Neigh-ver Go Broke!!
           </h1>
           <p className="text-muted-foreground mt-2 text-sm">Stop horsing around with your money.</p>
         </div>
@@ -105,7 +105,11 @@ const LoginPage = () => {
           onClick={() => setIsLogin(!isLogin)}
           className="w-full text-center text-sm text-muted-foreground mt-4 hover:text-foreground transition-colors"
         >
-          {isLogin ? "Don't have an account? Sign up" : "Already have an account? Login"}
+          {isLogin ? (
+            <>Don't have an account? <span className="font-bold">Sign up</span></>
+          ) : (
+            <>Already have an account? <span className="font-bold">Login</span></>
+          )}
         </button>
       </div>
     </div>

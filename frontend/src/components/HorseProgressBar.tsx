@@ -21,7 +21,7 @@ const HorseProgressBar = ({ totalSteps }: HorseProgressBarProps) => {
           className="h-full rounded-full transition-all duration-700 ease-out relative overflow-hidden"
           style={{
             width: `${progress}%`,
-            background: "linear-gradient(to bottom, #10b981 0%, #059669 100%)",
+            background: "linear-gradient(to bottom, hsl(25, 50%, 45%) 0%, hsl(20, 45%, 35%) 100%)",
           }}
         >
           {/* Subtle track texture overlay */}
