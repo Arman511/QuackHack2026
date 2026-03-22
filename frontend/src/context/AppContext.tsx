@@ -17,7 +17,7 @@ import {
   Notification,
 } from "@/data/mockData";
 import { login, register, me, logout as apiLogout } from "@/api/auth";
-import { listAccounts, listMyTransactions } from "@/api/bank";
+import { listAccounts, listMyTransactionPunishments, listMyTransactions } from "@/api/bank";
 import {
   createPossibleImpulse,
   getAllImpulses,
@@ -33,6 +33,7 @@ import type {
   UserMePublic,
   BankAccountPublic,
   TransactionHydratedPublic,
+  TransactionPunishmentPublic,
 } from "@/api/types";
 
 interface BankDetails {
@@ -186,9 +187,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const impulseCategoriesRef = useRef<string[]>(state.impulseCategories);
   const pendingRealRemovalTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
-  const pendingPossibleRemovalTimersRef = useRef<
-    Record<string, ReturnType<typeof setTimeout>>
-  >({});
+  const pendingPossibleRemovalTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   useEffect(() => {
     impulseCategoriesRef.current = state.impulseCategories;
@@ -504,6 +503,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       update({
         bankAccounts: accounts,
         totalSaved: totalSavedCalculated,
+        goals: state.goals.map((goal) => ({ ...goal, saved: totalSavedCalculated })),
         bankAccountsLoading: false,
       });
     } catch (error) {
@@ -514,7 +514,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         bankAccountsError: errorMessage,
       });
     }
-  }, [calculateTotalSavedFromAccounts]);
+  }, [calculateTotalSavedFromAccounts, state.goals]);
 
   const refreshBankData = async () => {
     await fetchBankAccounts();
@@ -551,17 +551,32 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     [generateHorseMessage],
   );
 
+  const transformApiPunishment = useCallback(
+    (apiPunishment: TransactionPunishmentPublic): Punishment => ({
+      id: apiPunishment.id.toString(),
+      date: apiPunishment.timestamp.split("T")[0],
+      transactionId: `tax-${apiPunishment.id}`,
+      transactionDesc: `Neigh-Tax: £${(apiPunishment.tax_amount / 100).toFixed(2)} collected`,
+      transactionAmount: apiPunishment.tax_amount / 100,
+      punishment: "Automatic tax transfer to your savings goal",
+    }),
+    [],
+  );
+
   const fetchTransactions = useCallback(async () => {
     try {
       update({ realTransactionsLoading: true, realTransactionsError: null });
-      const [transactionsResponse, accountsResponse] = await Promise.all([
+      const [transactionsResponse, accountsResponse, punishmentsResponse] = await Promise.all([
         listMyTransactions(),
         listAccounts(),
+        listMyTransactionPunishments(),
       ]);
 
       const apiTransactions = transactionsResponse;
       const accounts = accountsResponse ?? [];
+      const apiPunishments = punishmentsResponse ?? [];
       const transformedTransactions = apiTransactions.map(transformApiTransaction);
+      const transformedPunishments = apiPunishments.map(transformApiPunishment);
 
       // Calculate totals from real data
       const impulseTotal = transformedTransactions
@@ -575,8 +590,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         realTransactions: transformedTransactions,
         realTransactionsLoading: false,
         bankAccounts: accounts,
+        punishments: transformedPunishments,
         impulseSpent: impulseTotal,
         totalSaved: totalSavedCalculated,
+        goals: state.goals.map((goal) => ({ ...goal, saved: totalSavedCalculated })),
         // Update transactions array for backward compatibility
         transactions: transformedTransactions,
       });
@@ -588,7 +605,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         realTransactionsError: errorMessage,
       });
     }
-  }, [calculateTotalSavedFromAccounts, transformApiTransaction]);
+  }, [
+    calculateTotalSavedFromAccounts,
+    state.goals,
+    transformApiPunishment,
+    transformApiTransaction,
+  ]);
 
   const refreshTransactionData = async () => {
     await fetchTransactions();
@@ -886,9 +908,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           const allImpulses = allImpulsesResponse ?? [];
           const currentBundle = currentBundleResponse ?? { impulses: [], possible: [] };
 
-          const isRealImpulse = allImpulses.some(
-            (zone) => zone.name.toLowerCase() === categoryKey,
-          );
+          const isRealImpulse = allImpulses.some((zone) => zone.name.toLowerCase() === categoryKey);
 
           if (isRealImpulse) {
             await syncRealImpulses(newCategories);
@@ -917,9 +937,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         const allImpulses = allImpulsesResponse ?? [];
         const currentBundle = currentBundleResponse ?? { impulses: [], possible: [] };
 
-        const isRealImpulse = allImpulses.some(
-          (zone) => zone.name.toLowerCase() === categoryKey,
-        );
+        const isRealImpulse = allImpulses.some((zone) => zone.name.toLowerCase() === categoryKey);
 
         if (isRealImpulse) {
           const existingTimer = pendingRealRemovalTimersRef.current[categoryKey];

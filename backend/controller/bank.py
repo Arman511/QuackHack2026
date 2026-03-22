@@ -14,6 +14,7 @@ from backend.models import (
     TransactionCreate,
     TransactionWebhookCreate,
     TransactionHydratedPublic,
+    TransactionPunishmentPublic,
     TransactionPublic,
 )
 from backend.services.bank_service import (
@@ -24,6 +25,7 @@ from backend.services.bank_service import (
     create_webhook_transaction,
     create_user_transaction,
     list_user_transactions_hydrated,
+    list_user_transaction_punishments,
     list_my_accounts,
     search_user_transactions_by_date,
     setup_bank_accounts_for_user,
@@ -86,6 +88,19 @@ def list_my_transactions(
     """List the authenticated user's transactions with impulse labels."""
     logger.debug("Listing hydrated transactions for user_id=%s", current_user.id)
     return list_user_transactions_hydrated(db, current_user=current_user)
+
+
+@router.get(
+    "/transactions/punishments/me",
+    response_model=list[TransactionPunishmentPublic],
+)
+def list_my_transaction_punishments(
+    db: db_dependency,
+    current_user: current_user_dependency,
+):
+    """List Neigh-Tax punishment records for the authenticated user."""
+    logger.debug("Listing transaction punishments for user_id=%s", current_user.id)
+    return list_user_transaction_punishments(db, current_user=current_user)
 
 
 @router.get("/transactions/search", response_model=PaginatedTransactionSearchResponse)

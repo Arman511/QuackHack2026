@@ -8,6 +8,7 @@ import type {
   SetupBankAccountsRequest,
   TransactionCreate,
   TransactionHydratedPublic,
+  TransactionPunishmentPublic,
   TransactionPublic,
   TransactionWebhookCreate,
 } from "@/api/types";
@@ -31,6 +32,9 @@ export const createTransactionFromWebhook = (body: TransactionWebhookCreate) =>
 
 export const listMyTransactions = () =>
   apiRequest<TransactionHydratedPublic[]>("/api/bank/transactions/me");
+
+export const listMyTransactionPunishments = () =>
+  apiRequest<TransactionPunishmentPublic[]>("/api/bank/transactions/punishments/me");
 
 export const searchMyTransactions = (
   start: string | Date,

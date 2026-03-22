@@ -59,6 +59,12 @@
       "description": "Ensure seeded admin user has ADMIN,USER roles",
       "sqlite": "010_set_default_admin_roles.sqlite.sql",
       "postgresql": "010_set_default_admin_roles.postgresql.sql"
+    },
+    {
+      "id": "011_add_transaction_punishments_table",
+      "description": "Create transaction punishment records for collected Neigh-Tax events",
+      "sqlite": "011_add_transaction_punishments_table.sqlite.sql",
+      "postgresql": "011_add_transaction_punishments_table.postgresql.sql"
     }
   ]
 }
