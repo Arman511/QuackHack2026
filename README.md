@@ -1,85 +1,81 @@
-# QuackHack2026
+# 🐴 Neigh-ver Go Broker
 
-Full-stack app with:
+**The mane way to manage your stable of finances.**
 
-- Python backend using uv
-- Frontend managed with pnpm
-- Optional Docker workflows via Makefile
+**Quackathon 2026** | Team: Arman, Charis, Himani, Lemar
 
-## Prerequisites
+> _"From 'I should not impulse buy' to 'I will be shamed into financial stability.'"_
 
-- Python 3.14+
-- uv
-- Node.js 20+
-- pnpm
-- docker
+---
 
-## Backend Setup (uv)
+## 📸 Screenshots
 
-Install backend dependencies and create a virtual environment:
+![Dashboard](.assets/dashboard.png)
+![Onboarding](.assets/onboarding.png)
+![Notifications](.assets/notifications.png)
+![Profile](.assets/profile.png)
 
-```bash
-uv sync
-```
+---
 
-Run the backend locally:
+## 🌟 The Pitch
 
-```bash
-uv run main.py
-```
+### 🎯 Target Audience
 
-Backend will run on http://localhost:8000.
+**The "Impulse Stallions":** Students and young professionals who find traditional banking apps too dry and easy to ignore. It's for those who need more than a bar chart to stop spending—they need a digital nudge (or a kick).
 
-## Frontend Setup (pnpm)
+### ✅ The Goal
 
-Install frontend dependencies:
+To transform financial management from a passive chore into an active, engaging, and slightly humorous experience that prevents "sugar cube" spending before it happens.
 
-```bash
-pnpm --dir frontend install
-```
+### 💡 The Solution
 
-Run frontend locally:
+A full-stack financial dashboard that uses **behavioral shaming** and **real-time automation**. By integrating mobile webhooks via MacroDroid, the app doesn't just wait for you to check your balance; it reaches out and nags you the moment you enter a "danger zone" in your budget.
 
-```bash
-pnpm --dir frontend dev
-```
+## 🛠 Quickstart (Under 5 Steps)
 
-## Common Make Targets
+1. Install **Make** and **Docker**.
+2. Run `make local`.
+3. Open `http://localhost:8000`.
 
-Run formatter:
+---
 
-```bash
-make format
-```
+## 🚢 Production Deployment
 
-Run lint checks:
+1. Make sure to have **Docker** and **Make** installed.
+2. Copy the `.env.example` to `.env` changing the `SECRET_KEY` to something random.
+3. Change the `MACRODROID_TRIGGER_BASE_URL` and `MACRODROID_OVERSPEND_TRIGGER_SLUGS` to your settings.
+4. Change the `DB_DIALECT` to `postgres` and update the DB settings to be valid.
+5. Change the proxy settings in the `docker-compose.yml`.
+6. Run `make serve`.
+7. Change reverse proxy settings to point to the container, making sure they are both on the same docker network.
+8. Point your DNS to your reverse proxy.
 
-```bash
-make lint
-```
+---
 
-Run tests:
+## 💻 Manual Setup
+
+### Backend (uv)
 
 ```bash
-make test
+uv sync            # Groom the dependencies
+uv run main.py     # Start the stable
 ```
 
-Run Docker stack:
+### Frontend (pnpm)
 
 ```bash
-make serve
+pnpm install       # Brush the dependencies
+pnpm dev           # Start the show
 ```
 
-Run local Docker stack:
+---
 
-```bash
-make local
-```
+## 🧰 Common Commands
 
-## Git Hooks
-
-Install repository hooks so format checks run before commit:
-
-```bash
-make install-hooks
-```
+| Task            | Command       |
+| :-------------- | :------------ |
+| **Format Code** | `make format` |
+| **Lint Check**  | `make lint`   |
+| **Run Tests**   | `make test`   |
+| **Local Stack** | `make local`  |
+| **Prod Stack**  | `make serve`  |
