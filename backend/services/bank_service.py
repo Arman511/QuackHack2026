@@ -1,4 +1,5 @@
 import logging
+import random
 from datetime import datetime, timedelta
 from urllib.request import urlopen
 
@@ -36,7 +37,7 @@ from backend.repositories.impulse_zone_repository import ImpulseZoneRepository
 from backend.repositories.transaction_repository import TransactionRepository
 from backend.repositories.user_metadata_repository import UserMetadataRepository
 from backend.utils.config import (
-    MACRODROID_OVERSPEND_TRIGGER_SLUG,
+    MACRODROID_OVERSPEND_TRIGGER_SLUGS,
     MACRODROID_TRIGGER_BASE_URL,
 )
 
@@ -659,9 +660,26 @@ def _month_window(now: datetime) -> tuple[datetime, datetime]:
     return start, end
 
 
-def _build_macrodroid_trigger_url() -> str:
+def _macrodroid_trigger_slugs() -> list[str]:
+    if not MACRODROID_OVERSPEND_TRIGGER_SLUGS:
+        return []
+    return [
+        slug.strip().strip("/")
+        for slug in MACRODROID_OVERSPEND_TRIGGER_SLUGS.split(",")
+        if slug.strip().strip("/")
+    ]
+
+
+def _pick_macrodroid_trigger_slug() -> str:
+    slugs = _macrodroid_trigger_slugs()
+    if not slugs:
+        raise ValueError("MacroDroid trigger URL is not configured")
+    return random.choice(slugs)
+
+
+def _build_macrodroid_trigger_url(slug: str) -> str:
     base = MACRODROID_TRIGGER_BASE_URL.rstrip("/")
-    slug = MACRODROID_OVERSPEND_TRIGGER_SLUG.strip("/")
+    slug = slug.strip("/")
     if not base or not slug:
         raise ValueError("MacroDroid trigger URL is not configured")
     return f"{base}/{slug}"
@@ -700,7 +718,8 @@ def _maybe_trigger_over_budget_macro(
     )
     previous_total = total - transaction_amount
     if previous_total <= limit_value < total:
-        url = _build_macrodroid_trigger_url()
+        slug = _pick_macrodroid_trigger_slug()
+        url = _build_macrodroid_trigger_url(slug)
         _trigger_over_budget_macro(url)
 
 

@@ -358,14 +358,9 @@ def test_build_macrodroid_trigger_url_strips_slashes(monkeypatch) -> None:
         "MACRODROID_TRIGGER_BASE_URL",
         "https://trigger.example.com/base/",
     )
-    monkeypatch.setattr(
-        bank_service,
-        "MACRODROID_OVERSPEND_TRIGGER_SLUG",
-        "/horse/",
-    )
 
     assert (
-        bank_service._build_macrodroid_trigger_url()
+        bank_service._build_macrodroid_trigger_url("/horse/")
         == "https://trigger.example.com/base/horse"
     )
 
@@ -418,13 +413,14 @@ def test_maybe_trigger_over_budget_macro_calls_urlopen_on_crossing(
     monkeypatch.setattr(bank_service, "urlopen", fake_urlopen)
     monkeypatch.setattr(
         bank_service,
-        "MACRODROID_TRIGGER_BASE_URL",
-        "https://trigger.example.com",
+        "MACRODROID_OVERSPEND_TRIGGER_SLUGS",
+        "hobbyHorsing,purchaseAlert,horseNoise",
     )
+    monkeypatch.setattr(bank_service.random, "choice", lambda values: values[1])
     monkeypatch.setattr(
         bank_service,
-        "MACRODROID_OVERSPEND_TRIGGER_SLUG",
-        "horse",
+        "MACRODROID_TRIGGER_BASE_URL",
+        "https://trigger.example.com",
     )
 
     bank_service._maybe_trigger_over_budget_macro(
@@ -435,7 +431,7 @@ def test_maybe_trigger_over_budget_macro_calls_urlopen_on_crossing(
     )
 
     assert calls == {
-        "url": "https://trigger.example.com/horse",
+        "url": "https://trigger.example.com/purchaseAlert",
         "timeout": 5,
     }
 
