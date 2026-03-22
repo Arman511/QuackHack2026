@@ -27,7 +27,7 @@ const ProfileTab = () => {
     if (user) {
       fetchBankAccounts();
     }
-  }, [user]);
+  }, [user, fetchBankAccounts]);
 
   // Parse full name into first and last name
   const fullName = user?.full_name || "";

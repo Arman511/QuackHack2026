@@ -24,7 +24,7 @@ const DashboardTab = () => {
     if (user) {
       fetchTransactions();
     }
-  }, [user]);
+  }, [user, fetchTransactions]);
 
   // Use real transactions if available, otherwise fallback to mock data
   const displayTransactions = realTransactions.length > 0 ? realTransactions : transactions;
@@ -44,7 +44,7 @@ const DashboardTab = () => {
       days.push({ date: dateStr, total, txs: dayTxs });
     }
     return days;
-  }, [impulseTransactions, displayTransactions]);
+  }, [impulseTransactions]);
 
   const maxSpend = Math.max(...heatmapDays.map((d) => d.total), 1);
 
