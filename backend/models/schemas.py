@@ -234,6 +234,10 @@ class UserGoalSetRequest(BaseModel):
     tax_percentage: int | None = None
 
 
+class UserTaxPercentagePatchRequest(BaseModel):
+    tax_percentage: int = Field(ge=0)
+
+
 class UserLimitStatusPublic(BaseModel):
     current_month_expenditure: int
     impulse_limit: int | None = None

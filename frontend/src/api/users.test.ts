@@ -15,6 +15,7 @@ import {
   deleteUser,
   updateMyProfile,
   setMyGoal,
+  patchMyTaxPercentage,
   getMyLimitStatus,
   getMyPossibleImpulses,
   getUser,
@@ -40,7 +41,7 @@ describe("users API", () => {
   });
 
   it("setMyGoal calls POST /api/users/me/goal", async () => {
-    const body = { goal: 500 } as Parameters<typeof setMyGoal>[0];
+    const body = { goal: "Save for holiday" } as Parameters<typeof setMyGoal>[0];
     await setMyGoal(body);
     expect(mockApiRequest).toHaveBeenCalledWith(
       "/api/users/me/goal",
@@ -51,6 +52,15 @@ describe("users API", () => {
   it("getMyLimitStatus calls GET /api/users/me/is-passed-limit", async () => {
     await getMyLimitStatus();
     expect(mockApiRequest).toHaveBeenCalledWith("/api/users/me/is-passed-limit");
+  });
+
+  it("patchMyTaxPercentage calls PATCH /api/users/me/tax-percentage", async () => {
+    const body = { tax_percentage: 200 };
+    await patchMyTaxPercentage(body);
+    expect(mockApiRequest).toHaveBeenCalledWith(
+      "/api/users/me/tax-percentage",
+      expect.objectContaining({ method: "PATCH", body }),
+    );
   });
 
   it("getMyPossibleImpulses calls GET /api/users/me/possible-impulses", async () => {

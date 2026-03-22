@@ -44,6 +44,7 @@ from backend.models.schemas import (
     UserPublic,
     UserRead,
     UserRegisterRequest,
+    UserTaxPercentagePatchRequest,
     UserUpdate,
 )
 
@@ -88,6 +89,7 @@ __all__ = [
     "UserImpulsesBundlePublic",
     "UserImpulseSetRequest",
     "UserRegisterRequest",
+    "UserTaxPercentagePatchRequest",
     "UserLoginRequest",
     "TokenPayload",
     "RefreshTokensCompatRequest",

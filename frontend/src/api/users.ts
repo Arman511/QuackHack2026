@@ -7,6 +7,7 @@ import type {
   UserLimitStatusPublic,
   UserMetadataPublic,
   UserRead,
+  UserTaxPercentagePatchRequest,
   UserUpdate,
 } from "@/api/types";
 
@@ -19,6 +20,12 @@ export const updateMyProfile = (body: UserUpdate) =>
 export const setMyGoal = (body: UserGoalSetRequest) =>
   apiRequest<UserMetadataPublic>("/api/users/me/goal", {
     method: "POST",
+    body,
+  });
+
+export const patchMyTaxPercentage = (body: UserTaxPercentagePatchRequest) =>
+  apiRequest<UserMetadataPublic>("/api/users/me/tax-percentage", {
+    method: "PATCH",
     body,
   });
 
