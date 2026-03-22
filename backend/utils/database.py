@@ -9,8 +9,12 @@ from backend.utils.config import (
     DATABASE_URL,
     DB_DIALECT,
     DB_HOST,
+    DB_MAX_OVERFLOW,
     DB_NAME,
     DB_PASSWORD,
+    DB_POOL_RECYCLE,
+    DB_POOL_SIZE,
+    DB_POOL_TIMEOUT,
     DB_PORT,
     DB_USER,
     SQLITE_DB_PATH,
@@ -51,6 +55,23 @@ engine_kwargs = {}
 if URL_DATABASE.startswith("sqlite"):
     engine_kwargs["connect_args"] = {"check_same_thread": False}
     logger.debug("Configured sqlite engine with check_same_thread=False")
+
+engine_kwargs.update(
+    {
+        "pool_pre_ping": True,
+        "pool_size": DB_POOL_SIZE,
+        "max_overflow": DB_MAX_OVERFLOW,
+        "pool_timeout": DB_POOL_TIMEOUT,
+        "pool_recycle": DB_POOL_RECYCLE,
+    }
+)
+logger.info(
+    "Database pool configured size=%s overflow=%s timeout=%ss recycle=%ss",
+    DB_POOL_SIZE,
+    DB_MAX_OVERFLOW,
+    DB_POOL_TIMEOUT,
+    DB_POOL_RECYCLE,
+)
 
 engine = create_engine(URL_DATABASE, **engine_kwargs)
 logger.info("Database engine initialized")
