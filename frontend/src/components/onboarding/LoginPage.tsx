@@ -139,7 +139,9 @@ const LoginPage = () => {
             <>
               <div className="grid grid-cols-2 gap-3 animate-fade-up">
                 <div>
-                  <label htmlFor="firstName" className="text-sm font-medium mb-1.5 block">First Name</label>
+                  <label htmlFor="firstName" className="text-sm font-medium mb-1.5 block">
+                    First Name
+                  </label>
                   <input
                     id="firstName"
                     type="text"
@@ -151,7 +153,9 @@ const LoginPage = () => {
                   />
                 </div>
                 <div>
-                  <label htmlFor="lastName" className="text-sm font-medium mb-1.5 block">Last Name</label>
+                  <label htmlFor="lastName" className="text-sm font-medium mb-1.5 block">
+                    Last Name
+                  </label>
                   <input
                     id="lastName"
                     type="text"
