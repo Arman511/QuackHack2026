@@ -1078,7 +1078,7 @@ def _maybe_trigger_over_budget_macro(
         previous_total,
         total,
         limit_value,
-        is_past_limit
+        is_past_limit,
     )
     if is_past_limit:
         slug = _pick_macrodroid_trigger_slug()
