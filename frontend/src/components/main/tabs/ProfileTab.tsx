@@ -1,10 +1,15 @@
 import { useApp } from "@/hooks/useApp";
 import { Button } from "@/components/ui/button";
-import { Check, AlertCircle, Loader2 } from "lucide-react";
-import { useEffect } from "react";
+import { Check, AlertCircle, Loader2, Plus, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { impulseCategories } from "@/data/mockData";
 
-const ProfileTab = () => {
+interface ProfileTabProps {
+  logout: () => void;
+}
+
+const ProfileTab = ({ logout }: ProfileTabProps) => {
   const {
     email,
     user,
@@ -19,8 +24,107 @@ const ProfileTab = () => {
     horseNeighAlertsEnabled,
     toggleNotifications,
     toggleHorseNeighAlerts,
-    logout,
+    // Impulse category management
+    impulseCategories: selectedImpulses,
+    toggleImpulseCategory,
+    addCustomCategory,
   } = useApp();
+
+  const [customImpulseInput, setCustomImpulseInput] = useState("");
+  const [isUpdatingImpulses, setIsUpdatingImpulses] = useState(false);
+
+  // Function to get category-specific icons (same as in ImpulseZonesPage)
+  const getCategoryIcon = (category: string): string | null => {
+    const lowerCategory = category.toLowerCase();
+
+    if (
+      lowerCategory.includes("steam") ||
+      lowerCategory.includes("video game") ||
+      lowerCategory.includes("gaming")
+    ) {
+      return "/controller.png";
+    }
+    // Coffee gets its own icon
+    if (lowerCategory.includes("coffee")) {
+      return "/coffee.png";
+    }
+    // Food/takeaway/delivery use carrot icon
+    if (
+      lowerCategory.includes("food") ||
+      lowerCategory.includes("takeaway") ||
+      lowerCategory.includes("delivery")
+    ) {
+      return "/carrot.png";
+    }
+    if (lowerCategory.includes("hobby horsing") || lowerCategory.includes("hobby horse")) {
+      return "/hobby-horse.png";
+    }
+    // Add clothes icon
+    if (
+      lowerCategory.includes("clothes") ||
+      lowerCategory.includes("clothing") ||
+      lowerCategory.includes("fashion") ||
+      lowerCategory.includes("apparel")
+    ) {
+      return "/clothes.png";
+    }
+    // Add books icon
+    if (
+      lowerCategory.includes("book") ||
+      lowerCategory.includes("reading") ||
+      lowerCategory.includes("kindle") ||
+      lowerCategory.includes("audible")
+    ) {
+      return "/books.png";
+    }
+    // Add makeup/beauty icon
+    if (
+      lowerCategory.includes("makeup") ||
+      lowerCategory.includes("beauty") ||
+      lowerCategory.includes("cosmetic") ||
+      lowerCategory.includes("skincare") ||
+      lowerCategory.includes("sephora")
+    ) {
+      return "/makeup.png";
+    }
+    // Add shopping icon (keep existing shopping logic but use new icon)
+    if (
+      lowerCategory.includes("amazon") ||
+      lowerCategory.includes("shopping") ||
+      lowerCategory.includes("gadgets") ||
+      lowerCategory.includes("online shopping") ||
+      lowerCategory.includes("retail")
+    ) {
+      return "/shopping.png";
+    }
+
+    return null; // No specific icon, will use default horse
+  };
+
+  const handleToggleImpulse = async (category: string) => {
+    try {
+      setIsUpdatingImpulses(true);
+      await toggleImpulseCategory(category);
+    } catch (error) {
+      console.error("Failed to update impulse category:", error);
+    } finally {
+      setIsUpdatingImpulses(false);
+    }
+  };
+
+  const handleAddCustomImpulse = async () => {
+    if (customImpulseInput.trim() && !selectedImpulses.includes(customImpulseInput.trim())) {
+      try {
+        setIsUpdatingImpulses(true);
+        await addCustomCategory(customImpulseInput.trim());
+        setCustomImpulseInput("");
+      } catch (error) {
+        console.error("Failed to add custom impulse category:", error);
+      } finally {
+        setIsUpdatingImpulses(false);
+      }
+    }
+  };
 
   // Fetch bank accounts when component mounts
   useEffect(() => {
@@ -59,13 +163,18 @@ const ProfileTab = () => {
 
   return (
     <div className="p-4 space-y-5">
-      <div className="flex items-center gap-2">
-        <img
-          src="/profile.png"
-          alt="Profile"
-          className="w-10 h-10 object-contain animate-fade-up"
-        />
-        <h1 className="text-lg font-bold animate-fade-up">Profile</h1>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <img
+            src="/profile.png"
+            alt="Profile"
+            className="w-10 h-10 object-contain animate-fade-up"
+          />
+          <h1 className="text-lg font-bold animate-fade-up">Profile</h1>
+        </div>
+        <Button variant="outline" size="sm" onClick={logout}>
+          Log Out
+        </Button>
       </div>
 
       {/* Profile Info */}
@@ -208,13 +317,87 @@ const ProfileTab = () => {
         </div>
       </div>
 
-      <Button
-        onClick={logout}
-        className="w-full active:scale-[0.97] flex items-center gap-2 justify-center"
-      >
-        <span>Log Out</span>
-        <img src="/blonde-horse-head.png" alt="Horse" className="w-5 h-5 object-contain" />
-      </Button>
+      {/* Impulse Categories */}
+      <div className="card-neigh animate-fade-up" style={{ animationDelay: "350ms" }}>
+        <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-3">
+          Impulse Categories
+        </p>
+
+        {/* Selected impulse categories */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {impulseCategories.map((cat) => (
+            <button
+              key={cat}
+              className="bubble-tag animate-fade-up flex items-center gap-1.5"
+              data-selected={selectedImpulses.includes(cat)}
+              onClick={() => handleToggleImpulse(cat)}
+              disabled={isUpdatingImpulses}
+            >
+              {(() => {
+                const icon = getCategoryIcon(cat);
+                return icon ? (
+                  <img src={icon} alt={`${cat} icon`} className="w-6 h-6 object-contain" />
+                ) : (
+                  <img src="/horse-head.png" alt="Horse" className="w-6 h-6 object-contain" />
+                );
+              })()}
+              {cat}
+            </button>
+          ))}
+
+          {/* Custom categories not in the default list */}
+          {selectedImpulses
+            .filter((c) => !impulseCategories.includes(c))
+            .map((cat) => (
+              <button
+                key={cat}
+                className="bubble-tag flex items-center gap-1.5"
+                data-selected="true"
+                onClick={() => handleToggleImpulse(cat)}
+                disabled={isUpdatingImpulses}
+              >
+                {(() => {
+                  const icon = getCategoryIcon(cat);
+                  return icon ? (
+                    <img src={icon} alt={`${cat} icon`} className="w-6 h-6 object-contain" />
+                  ) : (
+                    <img src="/horse-head.png" alt="Horse" className="w-6 h-6 object-contain" />
+                  );
+                })()}
+                {cat}
+              </button>
+            ))}
+        </div>
+
+        {/* Add custom impulse category */}
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={customImpulseInput}
+            onChange={(e) => setCustomImpulseInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleAddCustomImpulse()}
+            placeholder="Add custom impulse category..."
+            disabled={isUpdatingImpulses}
+            className="flex-1 h-10 px-4 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+          />
+          <Button
+            size="icon"
+            variant="outline"
+            onClick={handleAddCustomImpulse}
+            disabled={isUpdatingImpulses || !customImpulseInput.trim()}
+            className="active:scale-[0.95]"
+          >
+            {isUpdatingImpulses ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus size={16} />}
+          </Button>
+        </div>
+
+        {isUpdatingImpulses && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            <span>Updating impulse categories...</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

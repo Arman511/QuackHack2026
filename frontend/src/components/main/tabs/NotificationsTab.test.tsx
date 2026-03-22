@@ -32,7 +32,7 @@ const renderTab = async () => {
   await act(async () => {
     result = render(
       <AppProvider>
-        <NotificationsTab />
+        <NotificationsTab logout={vi.fn()} />
       </AppProvider>,
     );
   });

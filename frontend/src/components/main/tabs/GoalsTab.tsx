@@ -2,32 +2,23 @@ import { useState } from "react";
 import { useApp } from "@/hooks/useApp";
 import { Button } from "@/components/ui/button";
 import { Target } from "lucide-react";
-import { patchMyTaxPercentage } from "@/api/users";
 
-const GoalsTab = () => {
-  const { goals, updateGoal, neighTaxPercent, setNeighTaxPercent } = useApp();
+interface GoalsTabProps {
+  logout: () => void;
+}
+
+const GoalsTab = ({ logout }: GoalsTabProps) => {
+  const { goals, updateGoal, neighTaxPercent, updateTaxPercentage } = useApp();
   const [justifyModal, setJustifyModal] = useState<string | null>(null);
   const [justification, setJustification] = useState("");
   const [pendingTax, setPendingTax] = useState<number | null>(null);
-  const [isSavingTax, setIsSavingTax] = useState(false);
-
-  const persistTaxPercentage = async (nextTax: number, previousTax: number) => {
-    try {
-      setIsSavingTax(true);
-      await patchMyTaxPercentage({ tax_percentage: nextTax });
-    } catch (error) {
-      console.error("Failed to patch tax percentage:", error);
-      setNeighTaxPercent(previousTax);
-    } finally {
-      setIsSavingTax(false);
-    }
-  };
+  const [isUpdatingTax, setIsUpdatingTax] = useState(false);
 
   const getIcon = (iconName: string) => {
     const iconMap: Record<string, string> = {
       travel: "/travel.png",
       shield: "/sheild.png", // Note: filename is "sheild" not "shield"
-      shopping: "/shopping.png",
+      shopping: "/clothes.png", // Changed from shopping.png to clothes.png
       house: "/house.png",
       debt: "/debt.png",
       target: "/target.png", // Add target image for custom goals
@@ -57,33 +48,54 @@ const GoalsTab = () => {
     );
   };
 
-  const handleTaxChange = (newTax: number) => {
+  const handleTaxChange = async (newTax: number) => {
     if (newTax < neighTaxPercent) {
       setPendingTax(newTax);
       setJustifyModal("tax");
     } else {
-      const previousTax = neighTaxPercent;
-      setNeighTaxPercent(newTax);
-      void persistTaxPercentage(newTax, previousTax);
+      try {
+        setIsUpdatingTax(true);
+        await updateTaxPercentage(newTax);
+      } catch (error) {
+        console.error("Failed to update tax percentage:", error);
+        // Could show error message to user here
+      } finally {
+        setIsUpdatingTax(false);
+      }
     }
   };
 
-  const submitJustification = () => {
+  const submitJustification = async () => {
     if (justification.trim() && pendingTax !== null) {
-      const previousTax = neighTaxPercent;
-      setNeighTaxPercent(pendingTax);
-      setJustifyModal(null);
-      setJustification("");
-      setPendingTax(null);
-      void persistTaxPercentage(pendingTax, previousTax);
+      try {
+        setIsUpdatingTax(true);
+        await updateTaxPercentage(pendingTax);
+        setJustifyModal(null);
+        setJustification("");
+        setPendingTax(null);
+      } catch (error) {
+        console.error("Failed to update tax percentage:", error);
+        // Could show error message to user here
+      } finally {
+        setIsUpdatingTax(false);
+      }
     }
   };
 
   return (
     <div className="p-4 space-y-5">
-      <div className="flex items-center gap-2">
-        <img src="/target.png" alt="Target" className="w-10 h-10 object-contain animate-fade-up" />
-        <h1 className="text-lg font-bold animate-fade-up">Savings Goals</h1>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <img
+            src="/target.png"
+            alt="Target"
+            className="w-10 h-10 object-contain animate-fade-up"
+          />
+          <h1 className="text-lg font-bold animate-fade-up">Savings Goals</h1>
+        </div>
+        <Button variant="outline" size="sm" onClick={logout}>
+          Log Out
+        </Button>
       </div>
 
       <div className="space-y-3">
@@ -133,14 +145,14 @@ const GoalsTab = () => {
             <button
               key={pct}
               onClick={() => handleTaxChange(pct)}
-              disabled={isSavingTax}
-              className={`py-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.96] border ${
+              disabled={isUpdatingTax}
+              className={`py-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.96] border disabled:opacity-50 ${
                 neighTaxPercent === pct
                   ? "bg-primary text-primary-foreground border-primary"
                   : "bg-secondary text-secondary-foreground border-border"
               }`}
             >
-              {pct}%
+              {isUpdatingTax ? "..." : `${pct}%`}
             </button>
           ))}
         </div>
@@ -176,10 +188,10 @@ const GoalsTab = () => {
               </Button>
               <Button
                 onClick={submitJustification}
-                disabled={!justification.trim() || isSavingTax}
+                disabled={!justification.trim() || isUpdatingTax}
                 className="flex-1 active:scale-[0.97]"
               >
-                Submit
+                {isUpdatingTax ? "Updating..." : "Submit"}
               </Button>
             </div>
           </div>

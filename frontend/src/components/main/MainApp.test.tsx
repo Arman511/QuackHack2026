@@ -58,7 +58,7 @@ describe("MainApp", () => {
   it("renders Dashboard tab content by default", async () => {
     await renderApp();
     expect(screen.getByText("Neigh-ver Go Broke!")).toBeInTheDocument();
-    expect(screen.getByText("Savings Vault")).toBeInTheDocument();
+    expect(screen.getByText("Money Locked Away")).toBeInTheDocument();
   });
 
   it("renders bottom navigation with 4 tabs", async () => {
@@ -103,6 +103,6 @@ describe("MainApp", () => {
     await renderApp();
     fireEvent.click(screen.getByText("Goals"));
     fireEvent.click(screen.getByText("Dashboard"));
-    expect(screen.getByText("Savings Vault")).toBeInTheDocument();
+    expect(screen.getByText("Money Locked Away")).toBeInTheDocument();
   });
 });

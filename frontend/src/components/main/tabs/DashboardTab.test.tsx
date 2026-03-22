@@ -31,7 +31,7 @@ const renderTab = async () => {
   await act(async () => {
     result = render(
       <AppProvider>
-        <DashboardTab />
+        <DashboardTab logout={vi.fn()} />
       </AppProvider>,
     );
   });
@@ -44,9 +44,9 @@ describe("DashboardTab", () => {
     expect(screen.getByText("Neigh-ver Go Broke!")).toBeInTheDocument();
   });
 
-  it("renders Savings Vault section", async () => {
+  it("renders Money Locked Away section", async () => {
     await renderTab();
-    expect(screen.getByText("Savings Vault")).toBeInTheDocument();
+    expect(screen.getByText("Money Locked Away")).toBeInTheDocument();
   });
 
   it("shows total saved amount", async () => {
@@ -54,9 +54,9 @@ describe("DashboardTab", () => {
     expect(screen.getByText("£240")).toBeInTheDocument();
   });
 
-  it("renders Impulse Budget section", async () => {
+  it("renders Impulse Budget Spent section", async () => {
     await renderTab();
-    expect(screen.getByText("Impulse Budget")).toBeInTheDocument();
+    expect(screen.getByText("Impulse Budget Spent")).toBeInTheDocument();
   });
 
   it("shows budget figures £45 / £100", async () => {
@@ -64,14 +64,14 @@ describe("DashboardTab", () => {
     expect(screen.getByText("£45 / £100")).toBeInTheDocument();
   });
 
-  it("renders Recent Impulse Buys section", async () => {
+  it("renders Poor Financial Choices section", async () => {
     await renderTab();
-    expect(screen.getByText("Recent Impulse Buys")).toBeInTheDocument();
+    expect(screen.getByText("Poor Financial Choices")).toBeInTheDocument();
   });
 
-  it("renders Training Sessions section", async () => {
+  it("renders Name and Shame section", async () => {
     await renderTab();
-    expect(screen.getByText("Training Sessions")).toBeInTheDocument();
+    expect(screen.getByText("Name and Shame")).toBeInTheDocument();
   });
 
   it("renders Spending Heatmap", async () => {
@@ -79,8 +79,8 @@ describe("DashboardTab", () => {
     expect(screen.getByText("Impulse Spending Heatmap")).toBeInTheDocument();
   });
 
-  it("shows 'saved so far' label", async () => {
+  it("shows 'Because you cannot be trusted yourself.' message", async () => {
     await renderTab();
-    expect(screen.getByText("saved so far")).toBeInTheDocument();
+    expect(screen.getByText("Because you cannot be trusted yourself.")).toBeInTheDocument();
   });
 });
