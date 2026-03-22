@@ -38,6 +38,7 @@ from backend.utils.dependencies import (
     admin_user_dependency,
     db_dependency,
 )
+
 router = APIRouter(prefix="/auth", tags=["auth"])
 logger = logging.getLogger(__name__)
 

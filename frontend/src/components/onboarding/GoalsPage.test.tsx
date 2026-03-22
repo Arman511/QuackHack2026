@@ -68,12 +68,12 @@ describe("GoalsPage", () => {
     expect(screen.getByRole("button", { name: /Continue/i })).not.toBeDisabled();
   });
 
-  it("selected preset gets ring-2 class", async () => {
+  it("selected preset gets selected styling", async () => {
     await renderPage();
     const travelBtn = screen.getByText("Travel").closest("button")!;
-    expect(travelBtn).not.toHaveClass("ring-2");
+    expect(travelBtn.style.border).toBe("");
     fireEvent.click(travelBtn);
-    expect(travelBtn).toHaveClass("ring-2");
+    expect(travelBtn.style.border).toBe("2px solid rgb(160, 103, 58)");
   });
 
   it("selecting a different preset deselects the previous one", async () => {
@@ -81,19 +81,19 @@ describe("GoalsPage", () => {
     const travelBtn = screen.getByText("Travel").closest("button")!;
     const shoppingBtn = screen.getByText("Shopping").closest("button")!;
     fireEvent.click(travelBtn);
-    expect(travelBtn).toHaveClass("ring-2");
+    expect(travelBtn.style.border).toBe("2px solid rgb(160, 103, 58)");
     fireEvent.click(shoppingBtn);
-    expect(travelBtn).not.toHaveClass("ring-2");
-    expect(shoppingBtn).toHaveClass("ring-2");
+    expect(travelBtn.style.border).toBe("");
+    expect(shoppingBtn.style.border).toBe("2px solid rgb(160, 103, 58)");
   });
 
   it("clicking the same preset removes it", async () => {
     await renderPage();
     const travelBtn = screen.getByText("Travel").closest("button")!;
     fireEvent.click(travelBtn);
-    expect(travelBtn).toHaveClass("ring-2");
+    expect(travelBtn.style.border).toBe("2px solid rgb(160, 103, 58)");
     fireEvent.click(travelBtn);
-    expect(travelBtn).not.toHaveClass("ring-2");
+    expect(travelBtn.style.border).toBe("");
   });
 
   it("shows custom goal form when Custom Goal is clicked", async () => {
