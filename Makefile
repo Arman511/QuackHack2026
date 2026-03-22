@@ -118,7 +118,7 @@ endif
 front-cover:
 ifeq ($(HAS_FRONTEND_PACKAGE),yes)
 ifeq ($(HAS_FRONTEND_TEST_SCRIPT),yes)
-	pnpm --dir frontend test -- --coverage
+	pnpm --dir frontend exec vitest run --coverage
 else
 	@echo "No frontend tests yet (frontend/package.json test script not found)."
 endif

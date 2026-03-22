@@ -1,3 +1,3 @@
-import { toast } from "sonner";
+import { toast as sonnerToast } from "sonner";
 
-export { toast };
+export const toast = sonnerToast;
