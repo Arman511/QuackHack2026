@@ -1,6 +1,6 @@
 import logging
 import random
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from urllib.request import urlopen
 
 from fastapi import HTTPException, status
@@ -217,69 +217,85 @@ def create_webhook_transaction(
             detail="Insufficient funds in the source account for this transaction",
         )
 
-    transaction = TransactionRepository(db).create_transaction(
-        user_id=source_account.user_id,
-        source_account_id=source_account.id,
-        amount=payload.amount,
-        timestamp=payload.timestamp,
-        merchant=payload.merchant,
-        impulse_zone_id=payload.impulse_zone_id,
-        possible_impulse_zone_id=payload.possible_impulse_zone_id,
-    )
-    logger.info(
-        "Webhook transaction created transaction_id=%s",
-        _id_for_log(transaction),
-    )
+    # Use a savepoint to ensure all multi-insert operations are atomic
+    savepoint = db.begin_nested()
+    try:
+        transaction = TransactionRepository(db).create_transaction(
+            user_id=source_account.user_id,
+            source_account_id=source_account.id,
+            amount=payload.amount,
+            timestamp=payload.timestamp,
+            merchant=payload.merchant,
+            impulse_zone_id=payload.impulse_zone_id,
+            possible_impulse_zone_id=payload.possible_impulse_zone_id,
+        )
+        logger.info(
+            "Webhook transaction created transaction_id=%s",
+            _id_for_log(transaction),
+        )
 
-    # Deduct transaction amount from source account
-    new_source_balance = source_account.amount - payload.amount
-    account_repo.update_amount(source_account.id, new_source_balance)
-    logger.info(
-        "Deducted transaction amount from source account account_id=%s new_balance=%s",
-        source_account.id,
-        new_source_balance,
-    )
+        # Deduct transaction amount from source account
+        new_source_balance = source_account.amount - payload.amount
+        account_repo.update_amount(source_account.id, new_source_balance)
+        logger.info(
+            "Deducted transaction amount from source account account_id=%s new_balance=%s",
+            source_account.id,
+            new_source_balance,
+        )
 
-    # If user has money remaining, calculate and deduct tax (based on transaction amount) to goal savings account
-    if new_source_balance > 0:
-        metadata = UserMetadataRepository(db).get_by_user_id(source_account.user_id)
-        if metadata and metadata.tax_percentage and metadata.bank_account_id:
-            # Tax is calculated as percentage of transaction amount
-            tax_to_collect = int((payload.amount * metadata.tax_percentage) / 100)
-            # But take only what's available in the remaining balance
-            tax_amount = min(tax_to_collect, new_source_balance)
-            if tax_amount > 0:
-                # Deduct tax from source account
-                tax_deducted_balance = new_source_balance - tax_amount
-                account_repo.update_amount(source_account.id, tax_deducted_balance)
-                logger.info(
-                    "Deducted tax from source account account_id=%s tax_amount=%s new_balance=%s",
-                    source_account.id,
-                    tax_amount,
-                    tax_deducted_balance,
-                )
-
-                # Add tax to goal savings account
-                goal_account = account_repo.get_by_id(metadata.bank_account_id)
-                if goal_account:
-                    new_goal_balance = goal_account.amount + tax_amount
-                    account_repo.update_amount(goal_account.id, new_goal_balance)
+        # If user has money remaining, calculate and deduct tax (based on transaction amount) to goal savings account
+        if new_source_balance > 0:
+            metadata = UserMetadataRepository(db).get_by_user_id(source_account.user_id)
+            if metadata and metadata.tax_percentage and metadata.bank_account_id:
+                # Tax is calculated as percentage of transaction amount
+                tax_to_collect = int((payload.amount * metadata.tax_percentage) / 100)
+                # But take only what's available in the remaining balance
+                tax_amount = min(tax_to_collect, new_source_balance)
+                if tax_amount > 0:
+                    # Deduct tax from source account
+                    tax_deducted_balance = new_source_balance - tax_amount
+                    account_repo.update_amount(source_account.id, tax_deducted_balance)
                     logger.info(
-                        "Added tax to goal savings account account_id=%s tax_amount=%s new_balance=%s",
-                        goal_account.id,
+                        "Deducted tax from source account account_id=%s tax_amount=%s new_balance=%s",
+                        source_account.id,
                         tax_amount,
-                        new_goal_balance,
+                        tax_deducted_balance,
                     )
-                TransactionPunishmentRepository(db).create_tax_collection(
-                    user_id=source_account.user_id,
-                    tax_amount=tax_amount,
-                    timestamp=payload.timestamp,
-                )
-                logger.info(
-                    "Recorded webhook transaction punishment user_id=%s tax_amount=%s",
-                    source_account.user_id,
-                    tax_amount,
-                )
+
+                    # Add tax to goal savings account
+                    goal_account = account_repo.get_by_id(metadata.bank_account_id)
+                    if goal_account:
+                        new_goal_balance = goal_account.amount + tax_amount
+                        account_repo.update_amount(goal_account.id, new_goal_balance)
+                        logger.info(
+                            "Added tax to goal savings account account_id=%s tax_amount=%s new_balance=%s",
+                            goal_account.id,
+                            tax_amount,
+                            new_goal_balance,
+                        )
+                    TransactionPunishmentRepository(db).create_tax_collection(
+                        user_id=source_account.user_id,
+                        tax_amount=tax_amount,
+                        timestamp=payload.timestamp,
+                    )
+                    logger.info(
+                        "Recorded webhook transaction punishment user_id=%s tax_amount=%s",
+                        source_account.user_id,
+                        tax_amount,
+                    )
+
+        savepoint.commit()
+    except Exception as e:
+        savepoint.rollback()
+        logger.error(
+            "Webhook transaction failed and rolled back actor_user_id=%s error=%s",
+            current_user.id,
+            str(e),
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Transaction processing failed and was rolled back",
+        ) from e
 
     _maybe_trigger_over_budget_macro(
         db,
@@ -1028,7 +1044,7 @@ def _maybe_trigger_over_budget_macro(
     if limit_value is None:
         return
 
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     start, end = _month_window(now)
     if transaction_timestamp < start or transaction_timestamp > end:
         return
@@ -1049,7 +1065,7 @@ def _maybe_trigger_over_budget_macro(
 def get_user_limit_status(
     db: Session, *, current_user: UserDB
 ) -> UserLimitStatusPublic:
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     start, end = _month_window(now)
 
     txn_repo = TransactionRepository(db)
