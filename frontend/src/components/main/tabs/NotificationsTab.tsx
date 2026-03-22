@@ -35,7 +35,11 @@ const getNotificationIcon = (
 
   if (notification.type === "punishment") {
     // Horse neigh related punishments
-    if (content.includes("neigh") || content.includes("nfc tap")) {
+    if (
+      content.includes("neigh") ||
+      content.includes("nfc tap") ||
+      content.includes("horse noise")
+    ) {
       return () => <img src="/neigh.png" alt="Neigh" className="w-14 h-14 object-contain" />;
     }
     // Hobby horsing related punishments
