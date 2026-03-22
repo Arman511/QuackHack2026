@@ -9,6 +9,7 @@ from backend.models.orm import (
     UserORM,
 )
 from backend.models.schemas import (
+    AddMoneyRequest,
     BankAccountCreate,
     BankAccountPublic,
     CreateBankAccountsRequest,
@@ -65,6 +66,7 @@ __all__ = [
     "UserCreate",
     "UserUpdate",
     "UserAdminPatch",
+    "AddMoneyRequest",
     "BankAccountCreate",
     "BankAccountPublic",
     "CreateBankAccountsRequest",

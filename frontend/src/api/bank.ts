@@ -1,5 +1,6 @@
 import { apiRequest } from "@/api/http";
 import type {
+  AddMoneyRequest,
   BankAccountPublic,
   CreateBankAccountsRequest,
   CreateBankAccountsResponse,
@@ -56,6 +57,12 @@ export const createBankAccounts = (body: CreateBankAccountsRequest) =>
 
 export const setupBankAccounts = (body: SetupBankAccountsRequest) =>
   apiRequest<CreateBankAccountsResponse>("/api/bank/accounts/setup", {
+    method: "POST",
+    body,
+  });
+
+export const addMoney = (body: AddMoneyRequest) =>
+  apiRequest<BankAccountPublic>("/api/bank/accounts/add-money", {
     method: "POST",
     body,
   });

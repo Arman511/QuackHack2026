@@ -4,6 +4,7 @@ import logging
 from fastapi import APIRouter, Query
 
 from backend.models import (
+    AddMoneyRequest,
     BankAccountPublic,
     CreateBankAccountsRequest,
     CreateBankAccountsResponse,
@@ -16,6 +17,7 @@ from backend.models import (
     TransactionPublic,
 )
 from backend.services.bank_service import (
+    add_money_to_account,
     admin_search_transactions_by_date,
     admin_transaction_summary,
     create_bank_accounts_for_user,
@@ -148,6 +150,22 @@ def setup_bank_accounts(
         current_user=current_user,
         payload=payload,
     )
+
+
+@router.post("/accounts/add-money", response_model=BankAccountPublic)
+def add_money(
+    payload: AddMoneyRequest,
+    db: db_dependency,
+    current_user: current_user_dependency,
+):
+    """Add money to a bank account identified by sort code and account number."""
+    logger.info(
+        "Add money request actor_user_id=%s account_number=%s amount=%s",
+        current_user.id,
+        payload.account_number,
+        payload.amount,
+    )
+    return add_money_to_account(db, current_user=current_user, payload=payload)
 
 
 @router.get("/admin/summary", response_model=list[TransactionPublic])

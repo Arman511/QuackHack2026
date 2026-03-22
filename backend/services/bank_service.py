@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from backend.models import (
     AccountTypeEnum,
+    AddMoneyRequest,
     BankAccountPublic,
     CreateBankAccountsRequest,
     CreateBankAccountsResponse,
@@ -29,6 +30,7 @@ from backend.models import (
     SetupBankAccountsRequest,
     PaginatedTransactionSearchResponse,
     TransactionSearchItemPublic,
+    UserTypeEnum,
 )
 from backend.repositories.bank_account_repository import BankAccountRepository
 from backend.repositories.impulse_zone_repository import ImpulseZoneRepository
@@ -137,6 +139,59 @@ def create_webhook_transaction(
         _id_for_log(transaction),
     )
     return transaction
+
+
+def add_money_to_account(
+    db: Session,
+    *,
+    current_user: UserDB,
+    payload: AddMoneyRequest,
+) -> BankAccountPublic:
+    logger.info(
+        "Adding money for actor_user_id=%s account_number=%s amount=%s",
+        current_user.id,
+        payload.account_number,
+        payload.amount,
+    )
+    account_repo = BankAccountRepository(db)
+    target_account = account_repo.get_by_account_number_and_sort_code(
+        account_number=payload.account_number,
+        sort_code=payload.sort_code,
+    )
+
+    if target_account is None:
+        logger.warning(
+            "Add money failed account lookup miss account_number=%s",
+            payload.account_number,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Bank account not found for provided account number and sort code",
+        )
+
+    is_admin = UserTypeEnum.ADMIN in current_user.roles
+    if target_account.user_id != current_user.id and not is_admin:
+        logger.warning(
+            "Add money denied actor_user_id=%s owner_user_id=%s",
+            current_user.id,
+            target_account.user_id,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Bank account does not belong to the authenticated user",
+        )
+
+    updated = account_repo.update_amount(
+        target_account.id,
+        target_account.amount + payload.amount,
+    )
+    logger.info(
+        "Add money succeeded account_id=%s user_id=%s new_amount=%s",
+        updated.id,
+        updated.user_id,
+        updated.amount,
+    )
+    return updated
 
 
 def list_user_transactions_hydrated(
