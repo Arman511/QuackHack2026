@@ -182,6 +182,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const update = (partial: Partial<AppState>) => setState((prev) => ({ ...prev, ...partial }));
 
+  const calculateTotalSavedFromAccounts = useCallback((accounts: BankAccountPublic[]): number => {
+    const totalSavingsInPence = accounts
+      .filter((account) => account.type === "SAVING")
+      .reduce((sum, account) => sum + account.amount, 0);
+
+    return totalSavingsInPence / 100;
+  }, []);
+
   const defaultImpulseBudget = 100;
   const defaultTaxPercent = 100;
 
@@ -466,9 +474,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     try {
       update({ bankAccountsLoading: true, bankAccountsError: null });
       const accounts = await listAccounts();
+      const totalSavedCalculated = calculateTotalSavedFromAccounts(accounts);
 
       update({
         bankAccounts: accounts,
+        totalSaved: totalSavedCalculated,
         bankAccountsLoading: false,
       });
     } catch (error) {
@@ -479,7 +489,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         bankAccountsError: errorMessage,
       });
     }
-  }, []);
+  }, [calculateTotalSavedFromAccounts]);
 
   const refreshBankData = async () => {
     await fetchBankAccounts();
@@ -519,7 +529,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const fetchTransactions = useCallback(async () => {
     try {
       update({ realTransactionsLoading: true, realTransactionsError: null });
-      const apiTransactions = await listMyTransactions();
+      const [transactionsResponse, accountsResponse] = await Promise.all([
+        listMyTransactions(),
+        listAccounts(),
+      ]);
+
+      const apiTransactions = transactionsResponse;
+      const accounts = accountsResponse ?? [];
       const transformedTransactions = apiTransactions.map(transformApiTransaction);
 
       // Calculate totals from real data
@@ -527,14 +543,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         .filter((tx) => tx.isImpulse)
         .reduce((sum, tx) => sum + tx.amount, 0);
 
-      // Calculate total saved based on neigh-tax from impulse spending
-      // This is a simplified calculation - in reality you'd want to track actual transfers to savings
-      const savedFromImpulses = impulseTotal * (state.neighTaxPercent / 100);
-      const totalSavedCalculated = savedFromImpulses + 240; // 240 is base savings
+      // Money locked away is the sum of all savings account balances.
+      const totalSavedCalculated = calculateTotalSavedFromAccounts(accounts);
 
       update({
         realTransactions: transformedTransactions,
         realTransactionsLoading: false,
+        bankAccounts: accounts,
         impulseSpent: impulseTotal,
         totalSaved: totalSavedCalculated,
         // Update transactions array for backward compatibility
@@ -548,7 +563,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         realTransactionsError: errorMessage,
       });
     }
-  }, [transformApiTransaction]);
+  }, [calculateTotalSavedFromAccounts, transformApiTransaction]);
 
   const refreshTransactionData = async () => {
     await fetchTransactions();

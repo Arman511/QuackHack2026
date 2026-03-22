@@ -62,6 +62,12 @@ describe("GoalsTab", () => {
     expect(screen.getByText("Savings Goals")).toBeInTheDocument();
   });
 
+  it("renders total saved card", async () => {
+    await renderTab();
+    expect(screen.getByText("Total Saved")).toBeInTheDocument();
+    expect(screen.getByText("£240.00")).toBeInTheDocument();
+  });
+
   it("renders Neigh-Tax Rate section", async () => {
     await renderTab();
     expect(screen.getByText("Current Neigh-Tax Rate")).toBeInTheDocument();

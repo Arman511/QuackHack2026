@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => ({
     },
     proxy: {
       "/api": {
-        target: "http://localhost:8000",
+        target: "https://nay.armandev.co.uk",
         changeOrigin: true,
         secure: false,
       },

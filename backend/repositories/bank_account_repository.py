@@ -157,8 +157,8 @@ class BankAccountRepository:
     ) -> tuple[BankAccountPublic, BankAccountPublic]:
         """Create CURRENT and SAVING accounts for a user using explicit details."""
         logger.info("Creating explicit accounts for user_id=%s", user_id)
-        current_initial_amount = int(round(random.triangular(0, 3000, 200)))
-        saving_initial_amount = int(round(random.triangular(0, 6000, 500)))
+        current_initial_amount = 1000
+        saving_initial_amount = 0
 
         current_account = self.create_account(
             user_id=user_id,
