@@ -91,8 +91,9 @@ const GoalsPage = () => {
               style={{
                 animationDelay: `${i * 60}ms`,
                 ...(isAdded && {
-                  border: "2px solid #d97706",
-                  backgroundColor: "#fef3c7",
+                  border: "2px solid #a0673a",
+                  backgroundColor: "#f0e7dc",
+                  boxShadow: "0 4px 12px rgba(160, 103, 58, 0.2)",
                   borderRadius: "1rem",
                 }),
               }}
@@ -110,8 +111,9 @@ const GoalsPage = () => {
               onClick={() => removeGoal(g.id)}
               className="card-neigh text-center py-2 shadow-lg transform scale-105 animate-fade-up transition-all duration-200"
               style={{
-                border: "2px solid #d97706",
-                backgroundColor: "#fef3c7",
+                border: "2px solid #a0673a",
+                backgroundColor: "#f0e7dc",
+                boxShadow: "0 4px 12px rgba(160, 103, 58, 0.2)",
                 borderRadius: "1rem",
               }}
             >
