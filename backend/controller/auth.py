@@ -34,7 +34,10 @@ from backend.services.auth_service import (
     verify_password,
 )
 from backend.services.bank_service import get_user_me_payload
-
+from backend.utils.dependencies import (
+    admin_user_dependency,
+    db_dependency,
+)
 router = APIRouter(prefix="/auth", tags=["auth"])
 logger = logging.getLogger(__name__)
 
@@ -215,12 +218,10 @@ def me(
 
 @router.get("/users", response_model=list[str])
 def list_usernames(
-    response: Response,
     db: db_dependency,
-    access_token: str | None = Cookie(default=None, alias=JWT_ACCESS_COOKIE_NAME),
+    _: admin_user_dependency,
 ):
     """List usernames for authenticated sessions validated via access cookie."""
-    _require_access_token_payload(response, access_token, db)
     usernames = UserRepository(db).list_usernames()
     logger.info("Listed usernames count=%s", len(usernames))
     return usernames

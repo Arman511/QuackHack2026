@@ -1,5 +1,6 @@
 import { apiRequest } from "@/api/http";
 import type {
+  DeletedResponse,
   PossibleImpulseZonePublic,
   UserAdminPatch,
   UserGoalSetRequest,
@@ -33,4 +34,9 @@ export const patchUserAsAdmin = (userId: number, body: UserAdminPatch) =>
   apiRequest<UserRead>(`/api/users/${userId}`, {
     method: "PATCH",
     body,
+  });
+
+export const deleteUser = (userId: number) =>
+  apiRequest<DeletedResponse>(`/api/users/${userId}`, {
+    method: "DELETE",
   });

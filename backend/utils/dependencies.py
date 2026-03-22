@@ -9,7 +9,7 @@ from backend.models import UserDB
 from backend.repositories.token_denylist_repository import TokenDenylistRepository
 from backend.repositories.user_repository import UserRepository
 from backend.services.auth_service import decode_token
-from backend.utils.config import JWT_ACCESS_COOKIE_NAME
+from backend.utils.config import JWT_ACCESS_COOKIE_NAME, JWT_REFRESH_COOKIE_NAME
 from backend.utils.database import SessionLocal
 
 logger = logging.getLogger(__name__)
