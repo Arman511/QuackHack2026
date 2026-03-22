@@ -26,6 +26,22 @@ vi.mock("@/api/http", () => ({
   refreshAccessToken: vi.fn().mockResolvedValue(null),
 }));
 
+vi.mock("@/api/bank", () => ({
+  listAccounts: vi.fn().mockResolvedValue([]),
+  listMyTransactions: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock("@/api/impulses", () => ({
+  createPossibleImpulse: vi.fn().mockResolvedValue({}),
+  getAllImpulses: vi.fn().mockResolvedValue([]),
+  getMyImpulses: vi.fn().mockResolvedValue({ impulses: [], possible: [] }),
+  replaceMyImpulses: vi.fn().mockResolvedValue({}),
+}));
+
+vi.mock("@/api/users", () => ({
+  setMyGoal: vi.fn().mockResolvedValue({}),
+}));
+
 const renderApp = async () => {
   let result: ReturnType<typeof render>;
   await act(async () => {
@@ -76,8 +92,11 @@ describe("MainApp", () => {
   it("shows unread notification badge when notifications exist", async () => {
     await renderApp();
     // mockNotifications has 6 items by default
-    const badge = screen.getByText("6");
-    expect(badge).toBeInTheDocument();
+    const badges = screen.getAllByText("6");
+    const notificationBadge = badges.find(
+      (badge) => badge.className.includes("bg-impulse") && badge.className.includes("rounded-full"),
+    );
+    expect(notificationBadge).toBeInTheDocument();
   });
 
   it("switches back to Dashboard tab", async () => {
