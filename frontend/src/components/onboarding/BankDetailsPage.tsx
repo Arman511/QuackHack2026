@@ -27,15 +27,11 @@ const formSchema = z.object({
     .max(8, "Sort code must be 6-8 characters"),
 
   // Checking account details
-  checkingAccountNumber: z
-    .string()
-    .regex(/^\d{8}$/, "Account number must be exactly 8 digits"),
+  checkingAccountNumber: z.string().regex(/^\d{8}$/, "Account number must be exactly 8 digits"),
   checkingAccountName: z.string().min(1, "Account name is required"),
 
   // Savings account details
-  savingsAccountNumber: z
-    .string()
-    .regex(/^\d{8}$/, "Account number must be exactly 8 digits"),
+  savingsAccountNumber: z.string().regex(/^\d{8}$/, "Account number must be exactly 8 digits"),
   savingsAccountName: z.string().min(1, "Account name is required"),
 });
 

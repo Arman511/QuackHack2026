@@ -69,9 +69,9 @@ describe("DashboardTab", () => {
     expect(screen.getByText("Recent Impulse Buys")).toBeInTheDocument();
   });
 
-  it("renders Punishment History section", async () => {
+  it("renders Training Sessions section", async () => {
     await renderTab();
-    expect(screen.getByText("Punishment History")).toBeInTheDocument();
+    expect(screen.getByText("Training Sessions")).toBeInTheDocument();
   });
 
   it("renders Spending Heatmap", async () => {
