@@ -334,19 +334,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Transaction functions
-  const transformApiTransaction = (apiTx: TransactionHydratedPublic): Transaction => ({
-    id: apiTx.id.toString(),
-    date: apiTx.timestamp.split("T")[0],
-    description: apiTx.merchant,
-    amount: apiTx.amount / 100, // Convert from cents to pounds
-    category: apiTx.impulse_zone_name || "Other",
-    isImpulse: !!apiTx.impulse_zone_id,
-    horseMessage: apiTx.impulse_zone_id
-      ? generateHorseMessage(apiTx.merchant, apiTx.amount / 100)
-      : "",
-  });
-
-  const generateHorseMessage = (merchant: string, amount: number): string => {
+  const generateHorseMessage = useCallback((merchant: string, amount: number): string => {
     const messages = [
       `Neighhh! That ${merchant} purchase made your wallet lighter!`,
       `Whoa there cowboy! ${merchant} just galloped away with £${amount}!`,
@@ -355,7 +343,22 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       `That ${merchant} purchase wasn't very stable financial behavior!`,
     ];
     return messages[Math.floor(Math.random() * messages.length)];
-  };
+  }, []);
+
+  const transformApiTransaction = useCallback(
+    (apiTx: TransactionHydratedPublic): Transaction => ({
+      id: apiTx.id.toString(),
+      date: apiTx.timestamp.split("T")[0],
+      description: apiTx.merchant,
+      amount: apiTx.amount / 100, // Convert from cents to pounds
+      category: apiTx.impulse_zone_name || "Other",
+      isImpulse: !!apiTx.impulse_zone_id,
+      horseMessage: apiTx.impulse_zone_id
+        ? generateHorseMessage(apiTx.merchant, apiTx.amount / 100)
+        : "",
+    }),
+    [generateHorseMessage],
+  );
 
   const fetchTransactions = useCallback(async () => {
     try {
@@ -383,7 +386,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         realTransactionsError: errorMessage,
       });
     }
-  }, []);
+  }, [transformApiTransaction]);
 
   const refreshTransactionData = async () => {
     await fetchTransactions();
