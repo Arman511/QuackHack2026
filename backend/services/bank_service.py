@@ -414,6 +414,57 @@ def create_possible_impulse_zone(
         ) from exc
 
 
+def delete_user_possible_impulse_zone(
+    db: Session,
+    *,
+    current_user: UserDB,
+    zone_id: int,
+) -> dict[str, bool]:
+    repo = ImpulseZoneRepository(db)
+    zone = repo.get_possible_impulse_zone_by_id(zone_id)
+    if zone is None:
+        logger.warning(
+            "User possible impulse delete not found user_id=%s zone_id=%s",
+            current_user.id,
+            zone_id,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Possible impulse zone not found",
+        )
+
+    if zone.user_id != current_user.id:
+        logger.warning(
+            "User possible impulse delete denied user_id=%s zone_id=%s owner_id=%s",
+            current_user.id,
+            zone_id,
+            zone.user_id,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Possible impulse zone does not belong to the authenticated user",
+        )
+
+    deleted = repo.delete_possible_impulse_zone(zone_id)
+    if not deleted:
+        logger.warning(
+            "User possible impulse delete failed user_id=%s zone_id=%s",
+            current_user.id,
+            zone_id,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Possible impulse zone not found",
+        )
+
+    logger.info(
+        "User deleted possible impulse user_id=%s zone_id=%s",
+        current_user.id,
+        zone_id,
+    )
+    return {"deleted": True}
+
+
 def admin_create_impulse_zone(
     db: Session,
     *,
