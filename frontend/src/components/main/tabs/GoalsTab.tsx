@@ -2,41 +2,94 @@ import { useState } from "react";
 import { useApp } from "@/hooks/useApp";
 import { Button } from "@/components/ui/button";
 import { Target } from "lucide-react";
+import { patchMyTaxPercentage } from "@/api/users";
 
 const GoalsTab = () => {
   const { goals, updateGoal, neighTaxPercent, setNeighTaxPercent } = useApp();
   const [justifyModal, setJustifyModal] = useState<string | null>(null);
   const [justification, setJustification] = useState("");
   const [pendingTax, setPendingTax] = useState<number | null>(null);
+  const [isSavingTax, setIsSavingTax] = useState(false);
+
+  const persistTaxPercentage = async (nextTax: number, previousTax: number) => {
+    try {
+      setIsSavingTax(true);
+      await patchMyTaxPercentage({ tax_percentage: nextTax });
+    } catch (error) {
+      console.error("Failed to patch tax percentage:", error);
+      setNeighTaxPercent(previousTax);
+    } finally {
+      setIsSavingTax(false);
+    }
+  };
+
+  const getIcon = (iconName: string) => {
+    const iconMap: Record<string, string> = {
+      travel: "/travel.png",
+      shield: "/sheild.png", // Note: filename is "sheild" not "shield"
+      shopping: "/shopping.png",
+      house: "/house.png",
+      debt: "/debt.png",
+      target: "/target.png", // Add target image for custom goals
+    };
+
+    const iconPath = iconMap[iconName];
+
+    if (!iconPath) {
+      // Fallback to target image for unknown icons
+      return ({ className, size }: { className?: string; size?: number }) => (
+        <img
+          src="/target.png"
+          alt="Target"
+          className={className}
+          style={{ width: size, height: size }}
+        />
+      );
+    }
+
+    return ({ className, size }: { className?: string; size?: number }) => (
+      <img
+        src={iconPath}
+        alt={iconName}
+        className={className}
+        style={{ width: size, height: size }}
+      />
+    );
+  };
 
   const handleTaxChange = (newTax: number) => {
     if (newTax < neighTaxPercent) {
       setPendingTax(newTax);
       setJustifyModal("tax");
     } else {
+      const previousTax = neighTaxPercent;
       setNeighTaxPercent(newTax);
+      void persistTaxPercentage(newTax, previousTax);
     }
   };
 
   const submitJustification = () => {
     if (justification.trim() && pendingTax !== null) {
+      const previousTax = neighTaxPercent;
       setNeighTaxPercent(pendingTax);
       setJustifyModal(null);
       setJustification("");
       setPendingTax(null);
+      void persistTaxPercentage(pendingTax, previousTax);
     }
   };
 
   return (
     <div className="p-4 space-y-5">
       <div className="flex items-center gap-2">
+        <img src="/target.png" alt="Target" className="w-10 h-10 object-contain animate-fade-up" />
         <h1 className="text-lg font-bold animate-fade-up">Savings Goals</h1>
-        <Target size={20} className="text-muted-foreground animate-fade-up" />
       </div>
 
       <div className="space-y-3">
         {goals.map((goal, i) => {
           const percent = Math.min((goal.saved / goal.target) * 100, 100);
+          const IconComponent = getIcon(goal.icon);
           return (
             <div
               key={goal.id}
@@ -44,7 +97,9 @@ const GoalsTab = () => {
               style={{ animationDelay: `${i * 80}ms` }}
             >
               <div className="flex items-center gap-3 mb-3">
-                <span className="text-2xl">{goal.icon}</span>
+                <div className="w-12 h-12 flex-shrink-0">
+                  <IconComponent className="w-full h-full object-contain" size={48} />
+                </div>
                 <div className="flex-1">
                   <p className="text-sm font-medium">{goal.name}</p>
                   <p className="text-xs text-muted-foreground tabular-nums">
@@ -78,6 +133,7 @@ const GoalsTab = () => {
             <button
               key={pct}
               onClick={() => handleTaxChange(pct)}
+              disabled={isSavingTax}
               className={`py-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.96] border ${
                 neighTaxPercent === pct
                   ? "bg-primary text-primary-foreground border-primary"
@@ -120,7 +176,7 @@ const GoalsTab = () => {
               </Button>
               <Button
                 onClick={submitJustification}
-                disabled={!justification.trim()}
+                disabled={!justification.trim() || isSavingTax}
                 className="flex-1 active:scale-[0.97]"
               >
                 Submit

@@ -9,6 +9,7 @@ from backend.models.orm import (
     UserORM,
 )
 from backend.models.schemas import (
+    AddMoneyRequest,
     BankAccountCreate,
     BankAccountPublic,
     CreateBankAccountsRequest,
@@ -44,6 +45,7 @@ from backend.models.schemas import (
     UserPublic,
     UserRead,
     UserRegisterRequest,
+    UserTaxPercentagePatchRequest,
     UserUpdate,
 )
 
@@ -64,6 +66,7 @@ __all__ = [
     "UserCreate",
     "UserUpdate",
     "UserAdminPatch",
+    "AddMoneyRequest",
     "BankAccountCreate",
     "BankAccountPublic",
     "CreateBankAccountsRequest",
@@ -88,6 +91,7 @@ __all__ = [
     "UserImpulsesBundlePublic",
     "UserImpulseSetRequest",
     "UserRegisterRequest",
+    "UserTaxPercentagePatchRequest",
     "UserLoginRequest",
     "TokenPayload",
     "RefreshTokensCompatRequest",

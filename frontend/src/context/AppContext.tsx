@@ -201,14 +201,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     update({
       goals: goalName
         ? [
-          {
-            id: `server-goal-${userData.id}`,
-            name: goalName,
-            target: 1000,
-            saved: 0,
-            icon: "target",
-          },
-        ]
+            {
+              id: `server-goal-${userData.id}`,
+              name: goalName,
+              target: 1000,
+              saved: 0,
+              icon: "target",
+            },
+          ]
         : [],
       impulseBudget: userData.impulse_limit ?? defaultImpulseBudget,
       neighTaxPercent: userData.tax_percentage ?? defaultTaxPercent,
@@ -236,7 +236,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const currentBundle = currentBundleResponse ?? { impulses: [], possible: [] };
 
     const selectedByLowerName = new Set(
-      snapshot.impulseCategories.map((name) => name.trim()).filter(Boolean).map((name) => name.toLowerCase()),
+      snapshot.impulseCategories
+        .map((name) => name.trim())
+        .filter(Boolean)
+        .map((name) => name.toLowerCase()),
     );
     const realImpulseIds = allImpulses
       .filter((zone) => selectedByLowerName.has(zone.name.toLowerCase()))
@@ -492,10 +495,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         .filter((tx) => tx.isImpulse)
         .reduce((sum, tx) => sum + tx.amount, 0);
 
+      // Calculate total saved based on neigh-tax from impulse spending
+      // This is a simplified calculation - in reality you'd want to track actual transfers to savings
+      const savedFromImpulses = impulseTotal * (state.neighTaxPercent / 100);
+      const totalSavedCalculated = savedFromImpulses + 240; // 240 is base savings
+
       update({
         realTransactions: transformedTransactions,
         realTransactionsLoading: false,
         impulseSpent: impulseTotal,
+        totalSaved: totalSavedCalculated,
         // Update transactions array for backward compatibility
         transactions: transformedTransactions,
       });

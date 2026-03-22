@@ -9,12 +9,14 @@ from sqlalchemy.orm import Session
 
 from backend.models import (
     AccountTypeEnum,
+    AddMoneyRequest,
     BankProviderEnum,
     CreateBankAccountsRequest,
     SetupBankAccountDetails,
     SetupBankAccountsRequest,
     TransactionDateRangeQuery,
     UserDB,
+    UserTypeEnum,
 )
 from backend.services import bank_service
 
@@ -352,208 +354,209 @@ def test_create_bank_accounts_for_user_rejects_duplicate_account_identifiers(
     )
 
 
-def test_build_macrodroid_trigger_url_strips_slashes(monkeypatch) -> None:
+def test_add_money_to_account_rejects_missing_account(monkeypatch) -> None:
+    payload = AddMoneyRequest(sort_code="112233", account_number="12345678", amount=100)
+
+    class FakeBankAccountRepository:
+        def __init__(self, db):
+            pass
+
+        def get_by_account_number_and_sort_code(self, *, account_number, sort_code):
+            return None
+
     monkeypatch.setattr(
         bank_service,
-        "MACRODROID_TRIGGER_BASE_URL",
-        "https://trigger.example.com/base/",
+        "BankAccountRepository",
+        FakeBankAccountRepository,
     )
 
+    with pytest.raises(HTTPException) as exc_info:
+        bank_service.add_money_to_account(
+            db=cast(Session, object()),
+            current_user=cast(
+                UserDB,
+                SimpleNamespace(id=42, roles=[UserTypeEnum.USER]),
+            ),
+            payload=payload,
+        )
+
+    assert exc_info.value.status_code == 404
     assert (
-        bank_service._build_macrodroid_trigger_url("/horse/")
-        == "https://trigger.example.com/base/horse"
+        exc_info.value.detail
+        == "Bank account not found for provided account number and sort code"
     )
 
 
-def test_maybe_trigger_over_budget_macro_calls_urlopen_on_crossing(
-    monkeypatch,
-) -> None:
-    calls = {}
+def test_add_money_to_account_rejects_non_owner_for_non_admin(monkeypatch) -> None:
+    payload = AddMoneyRequest(sort_code="112233", account_number="12345678", amount=80)
 
-    class FakeUserMetadataRepository:
+    class FakeBankAccountRepository:
         def __init__(self, db):
             pass
 
-        def get_by_user_id(self, user_id):
-            return SimpleNamespace(impulse_limit=100)
+        def get_by_account_number_and_sort_code(self, *, account_number, sort_code):
+            return SimpleNamespace(id=7, user_id=11, amount=120)
 
-    class FakeTransactionRepository:
-        def __init__(self, db):
-            pass
-
-        def get_user_total_by_date_range(self, user_id, start, end):
-            return 120
-
-    class FakeResponse:
-        def getcode(self):
-            return 200
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, exc_type, exc, tb):
-            return False
-
-    def fake_urlopen(url, timeout):
-        calls["url"] = url
-        calls["timeout"] = timeout
-        return FakeResponse()
-
-    month_start = datetime(2026, 1, 1, 0, 0, 0)
-    month_end = datetime(2026, 1, 31, 23, 59, 59)
-    monkeypatch.setattr(
-        bank_service, "UserMetadataRepository", FakeUserMetadataRepository
-    )
-    monkeypatch.setattr(
-        bank_service, "TransactionRepository", FakeTransactionRepository
-    )
-    monkeypatch.setattr(
-        bank_service, "_month_window", lambda now: (month_start, month_end)
-    )
-    monkeypatch.setattr(bank_service, "urlopen", fake_urlopen)
     monkeypatch.setattr(
         bank_service,
-        "MACRODROID_OVERSPEND_TRIGGER_SLUGS",
-        "hobbyHorsing,purchaseAlert,horseNoise",
+        "BankAccountRepository",
+        FakeBankAccountRepository,
     )
-    monkeypatch.setattr(bank_service.random, "choice", lambda values: values[1])
+
+    with pytest.raises(HTTPException) as exc_info:
+        bank_service.add_money_to_account(
+            db=cast(Session, object()),
+            current_user=cast(
+                UserDB,
+                SimpleNamespace(id=42, roles=[UserTypeEnum.USER]),
+            ),
+            payload=payload,
+        )
+
+    assert exc_info.value.status_code == 403
+    assert (
+        exc_info.value.detail
+        == "Bank account does not belong to the authenticated user"
+    )
+
+
+def test_add_money_to_account_allows_admin_to_update_other_user_account(
+    monkeypatch,
+) -> None:
+    payload = AddMoneyRequest(sort_code="112233", account_number="12345678", amount=80)
+    calls = {}
+
+    class FakeBankAccountRepository:
+        def __init__(self, db):
+            calls["db"] = db
+
+        def get_by_account_number_and_sort_code(self, *, account_number, sort_code):
+            calls["lookup"] = {
+                "account_number": account_number,
+                "sort_code": sort_code,
+            }
+            return SimpleNamespace(id=7, user_id=11, amount=120)
+
+        def update_amount(self, account_id, new_amount):
+            calls["update"] = {"account_id": account_id, "new_amount": new_amount}
+            return SimpleNamespace(
+                id=account_id,
+                user_id=11,
+                bank_account_id="acct-7",
+                account_number="12345678",
+                sort_code="112233",
+                name="REV-O-TROT Current Account",
+                provider=BankProviderEnum.REV_O_TROT,
+                type=AccountTypeEnum.CURRENT,
+                amount=new_amount,
+                created_at=datetime(2026, 1, 1, 12, 0, 0),
+                updated_at=datetime(2026, 1, 1, 12, 0, 0),
+            )
+
+    marker_db = cast(Session, object())
     monkeypatch.setattr(
         bank_service,
-        "MACRODROID_TRIGGER_BASE_URL",
-        "https://trigger.example.com",
+        "BankAccountRepository",
+        FakeBankAccountRepository,
     )
 
-    bank_service._maybe_trigger_over_budget_macro(
-        db=cast(Session, object()),
-        user_id=7,
-        transaction_amount=30,
-        transaction_timestamp=datetime(2026, 1, 15, 12, 0, 0),
+    result = bank_service.add_money_to_account(
+        db=marker_db,
+        current_user=cast(
+            UserDB,
+            SimpleNamespace(id=1, roles=[UserTypeEnum.ADMIN]),
+        ),
+        payload=payload,
     )
 
-    assert calls == {
-        "url": "https://trigger.example.com/purchaseAlert",
-        "timeout": 5,
-    }
+    assert calls["db"] is marker_db
+    assert calls["lookup"] == {"account_number": "12345678", "sort_code": "112233"}
+    assert calls["update"] == {"account_id": 7, "new_amount": 200}
+    assert result.amount == 200
 
 
-def test_maybe_trigger_over_budget_macro_skips_when_already_over(
-    monkeypatch,
-) -> None:
+def test_delete_user_possible_impulse_zone_rejects_missing(monkeypatch) -> None:
+    class FakeImpulseZoneRepository:
+        def __init__(self, db):
+            pass
+
+        def get_possible_impulse_zone_by_id(self, zone_id):
+            return None
+
+    monkeypatch.setattr(
+        bank_service,
+        "ImpulseZoneRepository",
+        FakeImpulseZoneRepository,
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        bank_service.delete_user_possible_impulse_zone(
+            db=cast(Session, object()),
+            current_user=cast(UserDB, SimpleNamespace(id=21)),
+            zone_id=9,
+        )
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Possible impulse zone not found"
+
+
+def test_delete_user_possible_impulse_zone_rejects_other_owner(monkeypatch) -> None:
+    class FakeImpulseZoneRepository:
+        def __init__(self, db):
+            pass
+
+        def get_possible_impulse_zone_by_id(self, zone_id):
+            return SimpleNamespace(id=zone_id, user_id=99)
+
+    monkeypatch.setattr(
+        bank_service,
+        "ImpulseZoneRepository",
+        FakeImpulseZoneRepository,
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        bank_service.delete_user_possible_impulse_zone(
+            db=cast(Session, object()),
+            current_user=cast(UserDB, SimpleNamespace(id=21)),
+            zone_id=9,
+        )
+
+    assert exc_info.value.status_code == 403
+    assert (
+        exc_info.value.detail
+        == "Possible impulse zone does not belong to the authenticated user"
+    )
+
+
+def test_delete_user_possible_impulse_zone_deletes_owned_zone(monkeypatch) -> None:
     calls = {}
 
-    class FakeUserMetadataRepository:
+    class FakeImpulseZoneRepository:
         def __init__(self, db):
-            pass
+            calls["db"] = db
 
-        def get_by_user_id(self, user_id):
-            return SimpleNamespace(impulse_limit=100)
+        def get_possible_impulse_zone_by_id(self, zone_id):
+            calls["looked_up_zone_id"] = zone_id
+            return SimpleNamespace(id=zone_id, user_id=21)
 
-    class FakeTransactionRepository:
-        def __init__(self, db):
-            pass
+        def delete_possible_impulse_zone(self, zone_id):
+            calls["deleted_zone_id"] = zone_id
+            return True
 
-        def get_user_total_by_date_range(self, user_id, start, end):
-            return 130
-
-    def fake_urlopen(url, timeout):
-        calls["called"] = True
-        return None
-
-    month_start = datetime(2026, 1, 1, 0, 0, 0)
-    month_end = datetime(2026, 1, 31, 23, 59, 59)
+    marker_db = cast(Session, object())
     monkeypatch.setattr(
-        bank_service, "UserMetadataRepository", FakeUserMetadataRepository
-    )
-    monkeypatch.setattr(
-        bank_service, "TransactionRepository", FakeTransactionRepository
-    )
-    monkeypatch.setattr(
-        bank_service, "_month_window", lambda now: (month_start, month_end)
-    )
-    monkeypatch.setattr(bank_service, "urlopen", fake_urlopen)
-
-    bank_service._maybe_trigger_over_budget_macro(
-        db=cast(Session, object()),
-        user_id=7,
-        transaction_amount=10,
-        transaction_timestamp=datetime(2026, 1, 15, 12, 0, 0),
+        bank_service,
+        "ImpulseZoneRepository",
+        FakeImpulseZoneRepository,
     )
 
-    assert calls == {}
-
-
-def test_maybe_trigger_over_budget_macro_skips_when_outside_month(
-    monkeypatch,
-) -> None:
-    calls = {}
-
-    class FakeUserMetadataRepository:
-        def __init__(self, db):
-            pass
-
-        def get_by_user_id(self, user_id):
-            return SimpleNamespace(impulse_limit=100)
-
-    class FakeTransactionRepository:
-        def __init__(self, db):
-            pass
-
-        def get_user_total_by_date_range(self, user_id, start, end):
-            return 120
-
-    def fake_urlopen(url, timeout):
-        calls["called"] = True
-        return None
-
-    month_start = datetime(2026, 2, 1, 0, 0, 0)
-    month_end = datetime(2026, 2, 28, 23, 59, 59)
-    monkeypatch.setattr(
-        bank_service, "UserMetadataRepository", FakeUserMetadataRepository
-    )
-    monkeypatch.setattr(
-        bank_service, "TransactionRepository", FakeTransactionRepository
-    )
-    monkeypatch.setattr(
-        bank_service, "_month_window", lambda now: (month_start, month_end)
-    )
-    monkeypatch.setattr(bank_service, "urlopen", fake_urlopen)
-
-    bank_service._maybe_trigger_over_budget_macro(
-        db=cast(Session, object()),
-        user_id=7,
-        transaction_amount=30,
-        transaction_timestamp=datetime(2026, 1, 15, 12, 0, 0),
+    result = bank_service.delete_user_possible_impulse_zone(
+        db=marker_db,
+        current_user=cast(UserDB, SimpleNamespace(id=21)),
+        zone_id=12,
     )
 
-    assert calls == {}
-
-
-def test_maybe_trigger_over_budget_macro_skips_without_limit(
-    monkeypatch,
-) -> None:
-    calls = {}
-
-    class FakeUserMetadataRepository:
-        def __init__(self, db):
-            pass
-
-        def get_by_user_id(self, user_id):
-            return SimpleNamespace(impulse_limit=None)
-
-    def fake_urlopen(url, timeout):
-        calls["called"] = True
-        return None
-
-    monkeypatch.setattr(
-        bank_service, "UserMetadataRepository", FakeUserMetadataRepository
-    )
-    monkeypatch.setattr(bank_service, "urlopen", fake_urlopen)
-
-    bank_service._maybe_trigger_over_budget_macro(
-        db=cast(Session, object()),
-        user_id=7,
-        transaction_amount=30,
-        transaction_timestamp=datetime(2026, 1, 15, 12, 0, 0),
-    )
-
-    assert calls == {}
+    assert result == {"deleted": True}
+    assert calls["db"] is marker_db
+    assert calls["looked_up_zone_id"] == 12
+    assert calls["deleted_zone_id"] == 12

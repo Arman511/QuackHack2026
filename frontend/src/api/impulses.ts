@@ -26,6 +26,11 @@ export const createPossibleImpulse = (body: ImpulseZoneCreate) =>
     body,
   });
 
+export const removeMyPossibleImpulse = (zoneId: number) =>
+  apiRequest<EmptyResponse>(`/api/impulses/possible/${zoneId}`, {
+    method: "DELETE",
+  });
+
 export const adminGetImpulses = () => apiRequest<ImpulseZonePublic[]>("/api/impulses/admin/real");
 
 export const adminCreateImpulse = (body: ImpulseZoneCreate) =>
