@@ -5,6 +5,7 @@ import React, {
   ReactNode,
   useEffect,
   useCallback,
+  useRef,
 } from "react";
 import {
   mockTransactions,
@@ -21,6 +22,7 @@ import {
   createPossibleImpulse,
   getAllImpulses,
   getMyImpulses,
+  removeMyPossibleImpulse,
   replaceMyImpulses,
 } from "@/api/impulses";
 import { setMyGoal } from "@/api/users";
@@ -140,6 +142,8 @@ interface AppContextType extends AppState {
 const AppContext = createContext<AppContextType | null>(null);
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
+  const IMPULSE_DESELECT_DELETE_DELAY_MS = 5000;
+
   const [state, setState] = useState<AppState>({
     // Authentication state
     isAuthenticated: false,
@@ -179,6 +183,27 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     notificationsEnabled: true,
     horseNeighAlertsEnabled: true,
   });
+
+  const impulseCategoriesRef = useRef<string[]>(state.impulseCategories);
+  const pendingRealRemovalTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const pendingPossibleRemovalTimersRef = useRef<
+    Record<string, ReturnType<typeof setTimeout>>
+  >({});
+
+  useEffect(() => {
+    impulseCategoriesRef.current = state.impulseCategories;
+  }, [state.impulseCategories]);
+
+  useEffect(() => {
+    return () => {
+      Object.values(pendingRealRemovalTimersRef.current).forEach((timerId) => {
+        clearTimeout(timerId);
+      });
+      Object.values(pendingPossibleRemovalTimersRef.current).forEach((timerId) => {
+        clearTimeout(timerId);
+      });
+    };
+  }, []);
 
   const update = (partial: Partial<AppState>) => setState((prev) => ({ ...prev, ...partial }));
 
@@ -740,6 +765,22 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
+  const syncRealImpulses = useCallback(async (categories: string[]) => {
+    const allImpulses = (await getAllImpulses()) ?? [];
+    const selectedByLowerName = new Set(
+      categories
+        .map((name) => name.trim())
+        .filter(Boolean)
+        .map((name) => name.toLowerCase()),
+    );
+
+    const realImpulseIds = allImpulses
+      .filter((zone) => selectedByLowerName.has(zone.name.toLowerCase()))
+      .map((zone) => zone.id);
+
+    await replaceMyImpulses({ impulse_ids: realImpulseIds });
+  }, []);
+
   // Real-time API-integrated impulse category functions
   const toggleImpulseCategoryWithApi = useCallback(
     async (category: string) => {
@@ -805,25 +846,136 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     connectBank: (b) => update({ connectedBank: b }),
     saveBankDetails: (details) => update({ bankDetails: details }),
     toggleImpulseCategory: async (c) => {
-      // Update local state immediately for responsive UI
-      setState((prev) => ({
-        ...prev,
-        impulseCategories: prev.impulseCategories.includes(c)
-          ? prev.impulseCategories.filter((x) => x !== c)
-          : [...prev.impulseCategories, c],
-      }));
+      const category = c.trim();
+      if (!category) {
+        return;
+      }
 
-      // If user is authenticated, persist changes immediately
-      if (state.isAuthenticated) {
-        try {
-          const newCategories = state.impulseCategories.includes(c)
-            ? state.impulseCategories.filter((x) => x !== c)
-            : [...state.impulseCategories, c];
-          await updateImpulseCategories(newCategories);
-        } catch (error) {
-          console.error("Failed to persist impulse category change:", error);
-          // Could revert local state here if needed
+      const categoryKey = category.toLowerCase();
+      const wasSelected = state.impulseCategories.includes(category);
+      const newCategories = wasSelected
+        ? state.impulseCategories.filter((x) => x !== category)
+        : [...state.impulseCategories, category];
+
+      // Update local state immediately for responsive UI.
+      update({ impulseCategories: newCategories });
+
+      if (!state.isAuthenticated) {
+        return;
+      }
+
+      if (!wasSelected) {
+        // Re-enable: cancel any pending deletions.
+        const pendingRealTimer = pendingRealRemovalTimersRef.current[categoryKey];
+        if (pendingRealTimer) {
+          clearTimeout(pendingRealTimer);
+          delete pendingRealRemovalTimersRef.current[categoryKey];
         }
+
+        const pendingPossibleTimer = pendingPossibleRemovalTimersRef.current[categoryKey];
+        if (pendingPossibleTimer) {
+          clearTimeout(pendingPossibleTimer);
+          delete pendingPossibleRemovalTimersRef.current[categoryKey];
+        }
+
+        try {
+          const [allImpulsesResponse, currentBundleResponse] = await Promise.all([
+            getAllImpulses(),
+            getMyImpulses(),
+          ]);
+          const allImpulses = allImpulsesResponse ?? [];
+          const currentBundle = currentBundleResponse ?? { impulses: [], possible: [] };
+
+          const isRealImpulse = allImpulses.some(
+            (zone) => zone.name.toLowerCase() === categoryKey,
+          );
+
+          if (isRealImpulse) {
+            await syncRealImpulses(newCategories);
+            return;
+          }
+
+          const possibleExists = currentBundle.possible.some(
+            (zone) => zone.name.toLowerCase() === categoryKey,
+          );
+
+          if (!possibleExists) {
+            await createPossibleImpulse({ name: category });
+          }
+        } catch (error) {
+          console.error("Failed to persist impulse category re-enable:", error);
+        }
+
+        return;
+      }
+
+      try {
+        const [allImpulsesResponse, currentBundleResponse] = await Promise.all([
+          getAllImpulses(),
+          getMyImpulses(),
+        ]);
+        const allImpulses = allImpulsesResponse ?? [];
+        const currentBundle = currentBundleResponse ?? { impulses: [], possible: [] };
+
+        const isRealImpulse = allImpulses.some(
+          (zone) => zone.name.toLowerCase() === categoryKey,
+        );
+
+        if (isRealImpulse) {
+          const existingTimer = pendingRealRemovalTimersRef.current[categoryKey];
+          if (existingTimer) {
+            clearTimeout(existingTimer);
+          }
+
+          pendingRealRemovalTimersRef.current[categoryKey] = setTimeout(async () => {
+            delete pendingRealRemovalTimersRef.current[categoryKey];
+
+            const latestCategories = impulseCategoriesRef.current;
+            const wasReenabled = latestCategories.includes(category);
+            if (wasReenabled) {
+              return;
+            }
+
+            try {
+              await syncRealImpulses(latestCategories);
+            } catch (error) {
+              console.error("Failed to remove real impulse category:", error);
+            }
+          }, IMPULSE_DESELECT_DELETE_DELAY_MS);
+
+          return;
+        }
+
+        const possibleZone = currentBundle.possible.find(
+          (zone) => zone.name.toLowerCase() === categoryKey,
+        );
+
+        if (!possibleZone) {
+          return;
+        }
+
+        const existingTimer = pendingPossibleRemovalTimersRef.current[categoryKey];
+        if (existingTimer) {
+          clearTimeout(existingTimer);
+        }
+
+        pendingPossibleRemovalTimersRef.current[categoryKey] = setTimeout(async () => {
+          delete pendingPossibleRemovalTimersRef.current[categoryKey];
+
+          const latestCategories = impulseCategoriesRef.current;
+          const wasReenabled = latestCategories.includes(category);
+          if (wasReenabled) {
+            return;
+          }
+
+          try {
+            await removeMyPossibleImpulse(possibleZone.id);
+          } catch (error) {
+            console.error("Failed to remove possible impulse category:", error);
+          }
+        }, IMPULSE_DESELECT_DELETE_DELAY_MS);
+      } catch (error) {
+        console.error("Failed to schedule impulse category removal:", error);
       }
     },
     addCustomCategory: async (c) => {
