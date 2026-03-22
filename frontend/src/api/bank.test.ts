@@ -37,9 +37,12 @@ describe("bank API", () => {
   });
 
   it("createTransaction calls POST /api/bank/transactions", async () => {
-    const body = { amount: 10, description: "test", date: "2026-01-01" } as Parameters<
-      typeof createTransaction
-    >[0];
+    const body: Parameters<typeof createTransaction>[0] = {
+      source_account_id: 1,
+      amount: 10,
+      timestamp: "2026-01-01T00:00:00Z",
+      merchant: "test",
+    };
     await createTransaction(body);
     expect(mockApiRequest).toHaveBeenCalledWith(
       "/api/bank/transactions",
@@ -60,7 +63,13 @@ describe("bank API", () => {
   });
 
   it("createBankAccounts calls POST /api/bank/accounts/create", async () => {
-    const body = { accounts: [] } as Parameters<typeof createBankAccounts>[0];
+    const body: Parameters<typeof createBankAccounts>[0] = {
+      provider: "REV-O-TROT",
+      type: "CURRENT",
+      account_number: "12345678",
+      sort_code: "112233",
+      amount: 100,
+    };
     await createBankAccounts(body);
     expect(mockApiRequest).toHaveBeenCalledWith(
       "/api/bank/accounts/create",

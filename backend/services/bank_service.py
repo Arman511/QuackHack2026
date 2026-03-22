@@ -844,7 +844,7 @@ def get_user_limit_status(
     )
 
     limit_value = metadata.impulse_limit if metadata else None
-    passed = bool(limit_value is not None and total > limit_value)
+    passed = bool(limit_value is not None and total > limit_value*100)
     result = UserLimitStatusPublic(
         current_month_expenditure=total,
         impulse_limit=limit_value,
