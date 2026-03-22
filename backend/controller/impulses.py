@@ -2,6 +2,7 @@ from fastapi import APIRouter
 import logging
 
 from backend.models import (
+    DeletedResponse,
     ImpulseZoneCreate,
     ImpulseZonePublic,
     ImpulseZoneUpdate,
@@ -21,6 +22,7 @@ from backend.services.bank_service import (
     admin_update_impulse_zone,
     admin_update_possible_impulse_zone,
     create_possible_impulse_zone,
+    delete_user_possible_impulse_zone,
     get_user_impulses_bundle,
     list_all_impulse_zones,
     set_user_impulses,
@@ -86,6 +88,25 @@ def create_possible_impulse(
         db,
         current_user=current_user,
         payload=payload,
+    )
+
+
+@router.delete("/possible/{zone_id}", response_model=DeletedResponse)
+def remove_my_possible_impulse(
+    zone_id: int,
+    db: db_dependency,
+    current_user: current_user_dependency,
+):
+    """Delete a user-owned possible impulse suggestion."""
+    logger.info(
+        "Deleting user possible impulse user_id=%s zone_id=%s",
+        current_user.id,
+        zone_id,
+    )
+    return delete_user_possible_impulse_zone(
+        db,
+        current_user=current_user,
+        zone_id=zone_id,
     )
 
 

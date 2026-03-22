@@ -350,3 +350,90 @@ def test_create_bank_accounts_for_user_rejects_duplicate_account_identifiers(
         exc_info.value.detail
         == "Bank account with this account number and sort code already exists"
     )
+
+
+def test_delete_user_possible_impulse_zone_rejects_missing(monkeypatch) -> None:
+    class FakeImpulseZoneRepository:
+        def __init__(self, db):
+            pass
+
+        def get_possible_impulse_zone_by_id(self, zone_id):
+            return None
+
+    monkeypatch.setattr(
+        bank_service,
+        "ImpulseZoneRepository",
+        FakeImpulseZoneRepository,
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        bank_service.delete_user_possible_impulse_zone(
+            db=cast(Session, object()),
+            current_user=cast(UserDB, SimpleNamespace(id=21)),
+            zone_id=9,
+        )
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Possible impulse zone not found"
+
+
+def test_delete_user_possible_impulse_zone_rejects_other_owner(monkeypatch) -> None:
+    class FakeImpulseZoneRepository:
+        def __init__(self, db):
+            pass
+
+        def get_possible_impulse_zone_by_id(self, zone_id):
+            return SimpleNamespace(id=zone_id, user_id=99)
+
+    monkeypatch.setattr(
+        bank_service,
+        "ImpulseZoneRepository",
+        FakeImpulseZoneRepository,
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        bank_service.delete_user_possible_impulse_zone(
+            db=cast(Session, object()),
+            current_user=cast(UserDB, SimpleNamespace(id=21)),
+            zone_id=9,
+        )
+
+    assert exc_info.value.status_code == 403
+    assert (
+        exc_info.value.detail
+        == "Possible impulse zone does not belong to the authenticated user"
+    )
+
+
+def test_delete_user_possible_impulse_zone_deletes_owned_zone(monkeypatch) -> None:
+    calls = {}
+
+    class FakeImpulseZoneRepository:
+        def __init__(self, db):
+            calls["db"] = db
+
+        def get_possible_impulse_zone_by_id(self, zone_id):
+            calls["looked_up_zone_id"] = zone_id
+            return SimpleNamespace(id=zone_id, user_id=21)
+
+        def delete_possible_impulse_zone(self, zone_id):
+            calls["deleted_zone_id"] = zone_id
+            return True
+
+    marker_db = cast(Session, object())
+    monkeypatch.setattr(
+        bank_service,
+        "ImpulseZoneRepository",
+        FakeImpulseZoneRepository,
+    )
+
+    result = bank_service.delete_user_possible_impulse_zone(
+        db=marker_db,
+        current_user=cast(UserDB, SimpleNamespace(id=21)),
+        zone_id=12,
+    )
+
+    assert result == {"deleted": True}
+    assert calls["db"] is marker_db
+    assert calls["looked_up_zone_id"] == 12
+    assert calls["deleted_zone_id"] == 12
