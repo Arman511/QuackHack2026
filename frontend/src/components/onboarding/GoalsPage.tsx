@@ -86,11 +86,16 @@ const GoalsPage = () => {
               key={preset.name}
               onClick={() => handlePreset(preset)}
               className={`card-neigh text-center py-2 animate-fade-up transition-all duration-200 ${
-                isAdded
-                  ? "ring-2 ring-primary bg-primary/5 shadow-lg shadow-primary/20"
-                  : "hover:shadow-md"
+                isAdded ? "shadow-lg transform scale-105" : "hover:shadow-md hover:scale-[1.02]"
               }`}
-              style={{ animationDelay: `${i * 60}ms` }}
+              style={{
+                animationDelay: `${i * 60}ms`,
+                ...(isAdded && {
+                  border: "2px solid #d97706",
+                  backgroundColor: "#fef3c7",
+                  borderRadius: "1rem",
+                }),
+              }}
             >
               <IconComponent className="mx-auto mb-2" size={64} />
               <span className="text-sm font-medium">{preset.name}</span>
@@ -103,7 +108,12 @@ const GoalsPage = () => {
             <button
               key={g.id}
               onClick={() => removeGoal(g.id)}
-              className="card-neigh text-center py-2 ring-2 ring-primary bg-primary/5 shadow-lg shadow-primary/20 animate-fade-up transition-all duration-200"
+              className="card-neigh text-center py-2 shadow-lg transform scale-105 animate-fade-up transition-all duration-200"
+              style={{
+                border: "2px solid #d97706",
+                backgroundColor: "#fef3c7",
+                borderRadius: "1rem",
+              }}
             >
               <Target size={64} className="mx-auto mb-2 text-muted-foreground" />
               <span className="text-sm font-medium">{g.name}</span>
@@ -111,7 +121,7 @@ const GoalsPage = () => {
           ))}
         <button
           onClick={() => setShowCustom(true)}
-          className="card-neigh text-center py-2 border-dashed transition-all duration-200 hover:shadow-md"
+          className="card-neigh text-center py-2 border-dashed transition-all duration-200 hover:shadow-md hover:scale-[1.02]"
         >
           <Plus size={48} className="mx-auto mb-1 text-muted-foreground" />
           <span className="text-sm text-muted-foreground">Custom Goal</span>
