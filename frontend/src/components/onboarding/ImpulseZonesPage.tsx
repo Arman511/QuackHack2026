@@ -15,16 +15,29 @@ const getCategoryIcon = (category: string): string | null => {
   ) {
     return "/controller.png";
   }
+  // Coffee gets its own icon
+  if (lowerCategory.includes("coffee")) {
+    return "/coffee.png";
+  }
+  // Food/takeaway/delivery use carrot icon
   if (
-    lowerCategory.includes("coffee") ||
     lowerCategory.includes("food") ||
     lowerCategory.includes("takeaway") ||
     lowerCategory.includes("delivery")
   ) {
-    return "/coffee.png"; // Updated to use specific coffee icon
+    return "/carrot.png";
   }
   if (lowerCategory.includes("hobby horsing") || lowerCategory.includes("hobby horse")) {
     return "/hobby-horse.png";
+  }
+  // Add clothes icon
+  if (
+    lowerCategory.includes("clothes") ||
+    lowerCategory.includes("clothing") ||
+    lowerCategory.includes("fashion") ||
+    lowerCategory.includes("apparel")
+  ) {
+    return "/clothes.png";
   }
   // Add books icon
   if (
@@ -53,7 +66,7 @@ const getCategoryIcon = (category: string): string | null => {
     lowerCategory.includes("online shopping") ||
     lowerCategory.includes("retail")
   ) {
-    return "/shopping.png"; // Updated to use specific shopping icon
+    return "/shopping.png";
   }
 
   return null; // No specific icon, will use default horse
