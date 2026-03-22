@@ -3,6 +3,7 @@ import { useMemo, useEffect } from "react";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { formatPounds } from "@/utils/currency";
 
 interface DashboardTabProps {
   logout: () => void;
@@ -162,7 +163,7 @@ const DashboardTab = ({ logout }: DashboardTabProps) => {
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-xl font-bold text-impulse">£{totalSaved}</span>
+            <span className="text-xl font-bold text-impulse">£{formatPounds(totalSaved)}</span>
           </div>
         </div>
         <p className="text-xs text-muted-foreground mb-1">
@@ -175,7 +176,7 @@ const DashboardTab = ({ logout }: DashboardTabProps) => {
         <div className="flex justify-between items-center mb-3">
           <span className="text-sm font-medium">Impulse Budget Spent</span>
           <span className="text-sm font-bold tabular-nums">
-            £{impulseSpent} / £{impulseBudget}
+            £{formatPounds(impulseSpent)} / £{impulseBudget}
           </span>
         </div>
         <div className="w-full h-3 bg-secondary rounded-full overflow-hidden">
