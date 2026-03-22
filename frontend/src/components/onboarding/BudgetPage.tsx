@@ -31,9 +31,9 @@ const BudgetPage = () => {
           step={10}
           value={impulseBudget}
           onChange={(e) => setImpulseBudget(Number(e.target.value))}
-          className="w-full h-3 bg-secondary rounded-lg appearance-none cursor-pointer slider"
+          className="w-full h-3 rounded-lg appearance-none cursor-pointer slider"
           style={{
-            background: `linear-gradient(to right, hsl(var(--primary)) 0%, hsl(var(--primary)) ${(impulseBudget / 500) * 100}%, hsl(var(--secondary)) ${(impulseBudget / 500) * 100}%, hsl(var(--secondary)) 100%)`,
+            background: `linear-gradient(to right, #a0673a 0%, #a0673a ${(impulseBudget / 500) * 100}%, #e8ddd2 ${(impulseBudget / 500) * 100}%, #e8ddd2 100%)`,
           }}
         />
         <div className="flex justify-between text-xs text-muted-foreground">
