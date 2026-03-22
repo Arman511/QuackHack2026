@@ -1065,6 +1065,13 @@ def _maybe_trigger_over_budget_macro(
     )
 
     previous_total = total - transaction_amount
+    logger.info(
+        "Checking over-budget macro trigger user_id=%s previous_total=%s new_total=%s limit=%s",
+        user_id,
+        previous_total,
+        total,
+        limit_value,
+    )
     if previous_total <= limit_value < total:
         slug = _pick_macrodroid_trigger_slug()
         url = _build_macrodroid_trigger_url(slug)
