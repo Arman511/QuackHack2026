@@ -146,6 +146,18 @@ export interface AddMoneyRequest {
   amount: number;
 }
 
+export interface TransferBetweenAccountsRequest {
+  source_account_id: number;
+  destination_account_id: number;
+  amount: number;
+}
+
+export interface TransferBetweenAccountsResponse {
+  source_account: BankAccountPublic;
+  destination_account: BankAccountPublic;
+  transferred_amount: number;
+}
+
 export interface CreateBankAccountsResponse {
   current: BankAccountPublic;
   saving: BankAccountPublic;

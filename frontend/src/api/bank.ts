@@ -6,6 +6,8 @@ import type {
   CreateBankAccountsResponse,
   PaginatedTransactionSearchResponse,
   SetupBankAccountsRequest,
+  TransferBetweenAccountsRequest,
+  TransferBetweenAccountsResponse,
   TransactionCreate,
   TransactionHydratedPublic,
   TransactionPunishmentPublic,
@@ -67,6 +69,12 @@ export const setupBankAccounts = (body: SetupBankAccountsRequest) =>
 
 export const addMoney = (body: AddMoneyRequest) =>
   apiRequest<BankAccountPublic>("/api/bank/accounts/add-money", {
+    method: "POST",
+    body,
+  });
+
+export const transferBetweenAccounts = (body: TransferBetweenAccountsRequest) =>
+  apiRequest<TransferBetweenAccountsResponse>("/api/bank/accounts/transfer", {
     method: "POST",
     body,
   });
