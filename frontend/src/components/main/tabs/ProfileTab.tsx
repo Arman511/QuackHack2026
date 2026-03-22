@@ -1,6 +1,6 @@
 import { useApp } from "@/hooks/useApp";
 import { Button } from "@/components/ui/button";
-import { User, Check, AlertCircle, Loader2 } from "lucide-react";
+import { Check, AlertCircle, Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -60,8 +60,12 @@ const ProfileTab = () => {
   return (
     <div className="p-4 space-y-5">
       <div className="flex items-center gap-2">
+        <img
+          src="/profile.png"
+          alt="Profile"
+          className="w-10 h-10 object-contain animate-fade-up"
+        />
         <h1 className="text-lg font-bold animate-fade-up">Profile</h1>
-        <User size={20} className="text-muted-foreground animate-fade-up" />
       </div>
 
       {/* Profile Info */}

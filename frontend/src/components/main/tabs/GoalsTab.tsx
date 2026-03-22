@@ -64,8 +64,8 @@ const GoalsTab = () => {
   return (
     <div className="p-4 space-y-5">
       <div className="flex items-center gap-2">
+        <img src="/target.png" alt="Target" className="w-10 h-10 object-contain animate-fade-up" />
         <h1 className="text-lg font-bold animate-fade-up">Savings Goals</h1>
-        <img src="/target.png" alt="Target" className="w-5 h-5 object-contain animate-fade-up" />
       </div>
 
       <div className="space-y-3">

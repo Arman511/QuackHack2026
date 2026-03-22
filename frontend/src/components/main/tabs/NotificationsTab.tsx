@@ -63,12 +63,12 @@ const NotificationsTab = () => {
   return (
     <div className="p-4 space-y-5">
       <div className="flex items-center gap-2">
-        <h1 className="text-lg font-bold animate-fade-up">Notifications</h1>
         <img
           src="/notification.png"
           alt="Notifications"
           className="w-10 h-10 object-contain animate-fade-up"
         />
+        <h1 className="text-lg font-bold animate-fade-up">Notifications</h1>
       </div>
 
       <div className="space-y-3">
