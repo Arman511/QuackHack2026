@@ -1,5 +1,5 @@
 import { useApp } from "@/hooks/useApp";
-import { Skull, Vault, Megaphone } from "lucide-react";
+import { Skull, Megaphone } from "lucide-react";
 import { Notification } from "@/data/mockData";
 
 const typeColors: Record<string, string> = {
@@ -50,7 +50,7 @@ const getNotificationIcon = (
 
   // Default icons for other types
   const typeIcons: Record<string, React.ComponentType<{ size?: number }>> = {
-    savings: Vault,
+    savings: () => <img src="/coin.png" alt="Coin" className="w-14 h-14 object-contain" />,
     info: Megaphone,
   };
 
@@ -88,6 +88,7 @@ const NotificationsTab = () => {
                   // Check if it's one of our custom image components
                   if (
                     n.type === "impulse" ||
+                    n.type === "savings" ||
                     (n.type === "punishment" &&
                       (n.message.toLowerCase().includes("neigh") ||
                         n.message.toLowerCase().includes("nfc tap") ||

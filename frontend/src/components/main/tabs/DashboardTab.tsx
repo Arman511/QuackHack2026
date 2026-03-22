@@ -1,6 +1,6 @@
 import { useApp } from "@/hooks/useApp";
 import { useMemo, useEffect } from "react";
-import { Vault, AlertTriangle, Loader2, AlertCircle } from "lucide-react";
+import { AlertTriangle, Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
@@ -125,7 +125,7 @@ const DashboardTab = () => {
           <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
             Savings Vault
           </p>
-          <Vault size={16} className="text-muted-foreground" />
+          <img src="/coin.png" alt="Coin" className="w-4 h-4 object-contain" />
         </div>
         <div className="relative w-24 h-24 mx-auto mb-3">
           <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">

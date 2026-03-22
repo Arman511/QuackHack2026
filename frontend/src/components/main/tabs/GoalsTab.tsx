@@ -9,6 +9,40 @@ const GoalsTab = () => {
   const [justification, setJustification] = useState("");
   const [pendingTax, setPendingTax] = useState<number | null>(null);
 
+  const getIcon = (iconName: string) => {
+    const iconMap: Record<string, string> = {
+      travel: "/travel.png",
+      shield: "/sheild.png", // Note: filename is "sheild" not "shield"
+      shopping: "/shopping.png",
+      house: "/house.png",
+      debt: "/debt.png",
+      target: "/target.png", // Add target image for custom goals
+    };
+
+    const iconPath = iconMap[iconName];
+
+    if (!iconPath) {
+      // Fallback to target image for unknown icons
+      return ({ className, size }: { className?: string; size?: number }) => (
+        <img
+          src="/target.png"
+          alt="Target"
+          className={className}
+          style={{ width: size, height: size }}
+        />
+      );
+    }
+
+    return ({ className, size }: { className?: string; size?: number }) => (
+      <img
+        src={iconPath}
+        alt={iconName}
+        className={className}
+        style={{ width: size, height: size }}
+      />
+    );
+  };
+
   const handleTaxChange = (newTax: number) => {
     if (newTax < neighTaxPercent) {
       setPendingTax(newTax);
@@ -31,12 +65,13 @@ const GoalsTab = () => {
     <div className="p-4 space-y-5">
       <div className="flex items-center gap-2">
         <h1 className="text-lg font-bold animate-fade-up">Savings Goals</h1>
-        <Target size={20} className="text-muted-foreground animate-fade-up" />
+        <img src="/target.png" alt="Target" className="w-5 h-5 object-contain animate-fade-up" />
       </div>
 
       <div className="space-y-3">
         {goals.map((goal, i) => {
           const percent = Math.min((goal.saved / goal.target) * 100, 100);
+          const IconComponent = getIcon(goal.icon);
           return (
             <div
               key={goal.id}
@@ -44,7 +79,9 @@ const GoalsTab = () => {
               style={{ animationDelay: `${i * 80}ms` }}
             >
               <div className="flex items-center gap-3 mb-3">
-                <span className="text-2xl">{goal.icon}</span>
+                <div className="w-12 h-12 flex-shrink-0">
+                  <IconComponent className="w-full h-full object-contain" size={48} />
+                </div>
                 <div className="flex-1">
                   <p className="text-sm font-medium">{goal.name}</p>
                   <p className="text-xs text-muted-foreground tabular-nums">
