@@ -350,3 +350,214 @@ def test_create_bank_accounts_for_user_rejects_duplicate_account_identifiers(
         exc_info.value.detail
         == "Bank account with this account number and sort code already exists"
     )
+
+
+def test_build_macrodroid_trigger_url_strips_slashes(monkeypatch) -> None:
+    monkeypatch.setattr(
+        bank_service,
+        "MACRODROID_TRIGGER_BASE_URL",
+        "https://trigger.example.com/base/",
+    )
+    monkeypatch.setattr(
+        bank_service,
+        "MACRODROID_OVERSPEND_TRIGGER_SLUG",
+        "/horse/",
+    )
+
+    assert (
+        bank_service._build_macrodroid_trigger_url()
+        == "https://trigger.example.com/base/horse"
+    )
+
+
+def test_maybe_trigger_over_budget_macro_calls_urlopen_on_crossing(
+    monkeypatch,
+) -> None:
+    calls = {}
+
+    class FakeUserMetadataRepository:
+        def __init__(self, db):
+            pass
+
+        def get_by_user_id(self, user_id):
+            return SimpleNamespace(impulse_limit=100)
+
+    class FakeTransactionRepository:
+        def __init__(self, db):
+            pass
+
+        def get_user_total_by_date_range(self, user_id, start, end):
+            return 120
+
+    class FakeResponse:
+        def getcode(self):
+            return 200
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+    def fake_urlopen(url, timeout):
+        calls["url"] = url
+        calls["timeout"] = timeout
+        return FakeResponse()
+
+    month_start = datetime(2026, 1, 1, 0, 0, 0)
+    month_end = datetime(2026, 1, 31, 23, 59, 59)
+    monkeypatch.setattr(
+        bank_service, "UserMetadataRepository", FakeUserMetadataRepository
+    )
+    monkeypatch.setattr(
+        bank_service, "TransactionRepository", FakeTransactionRepository
+    )
+    monkeypatch.setattr(
+        bank_service, "_month_window", lambda now: (month_start, month_end)
+    )
+    monkeypatch.setattr(bank_service, "urlopen", fake_urlopen)
+    monkeypatch.setattr(
+        bank_service,
+        "MACRODROID_TRIGGER_BASE_URL",
+        "https://trigger.example.com",
+    )
+    monkeypatch.setattr(
+        bank_service,
+        "MACRODROID_OVERSPEND_TRIGGER_SLUG",
+        "horse",
+    )
+
+    bank_service._maybe_trigger_over_budget_macro(
+        db=cast(Session, object()),
+        user_id=7,
+        transaction_amount=30,
+        transaction_timestamp=datetime(2026, 1, 15, 12, 0, 0),
+    )
+
+    assert calls == {
+        "url": "https://trigger.example.com/horse",
+        "timeout": 5,
+    }
+
+
+def test_maybe_trigger_over_budget_macro_skips_when_already_over(
+    monkeypatch,
+) -> None:
+    calls = {}
+
+    class FakeUserMetadataRepository:
+        def __init__(self, db):
+            pass
+
+        def get_by_user_id(self, user_id):
+            return SimpleNamespace(impulse_limit=100)
+
+    class FakeTransactionRepository:
+        def __init__(self, db):
+            pass
+
+        def get_user_total_by_date_range(self, user_id, start, end):
+            return 130
+
+    def fake_urlopen(url, timeout):
+        calls["called"] = True
+        return None
+
+    month_start = datetime(2026, 1, 1, 0, 0, 0)
+    month_end = datetime(2026, 1, 31, 23, 59, 59)
+    monkeypatch.setattr(
+        bank_service, "UserMetadataRepository", FakeUserMetadataRepository
+    )
+    monkeypatch.setattr(
+        bank_service, "TransactionRepository", FakeTransactionRepository
+    )
+    monkeypatch.setattr(
+        bank_service, "_month_window", lambda now: (month_start, month_end)
+    )
+    monkeypatch.setattr(bank_service, "urlopen", fake_urlopen)
+
+    bank_service._maybe_trigger_over_budget_macro(
+        db=cast(Session, object()),
+        user_id=7,
+        transaction_amount=10,
+        transaction_timestamp=datetime(2026, 1, 15, 12, 0, 0),
+    )
+
+    assert calls == {}
+
+
+def test_maybe_trigger_over_budget_macro_skips_when_outside_month(
+    monkeypatch,
+) -> None:
+    calls = {}
+
+    class FakeUserMetadataRepository:
+        def __init__(self, db):
+            pass
+
+        def get_by_user_id(self, user_id):
+            return SimpleNamespace(impulse_limit=100)
+
+    class FakeTransactionRepository:
+        def __init__(self, db):
+            pass
+
+        def get_user_total_by_date_range(self, user_id, start, end):
+            return 120
+
+    def fake_urlopen(url, timeout):
+        calls["called"] = True
+        return None
+
+    month_start = datetime(2026, 2, 1, 0, 0, 0)
+    month_end = datetime(2026, 2, 28, 23, 59, 59)
+    monkeypatch.setattr(
+        bank_service, "UserMetadataRepository", FakeUserMetadataRepository
+    )
+    monkeypatch.setattr(
+        bank_service, "TransactionRepository", FakeTransactionRepository
+    )
+    monkeypatch.setattr(
+        bank_service, "_month_window", lambda now: (month_start, month_end)
+    )
+    monkeypatch.setattr(bank_service, "urlopen", fake_urlopen)
+
+    bank_service._maybe_trigger_over_budget_macro(
+        db=cast(Session, object()),
+        user_id=7,
+        transaction_amount=30,
+        transaction_timestamp=datetime(2026, 1, 15, 12, 0, 0),
+    )
+
+    assert calls == {}
+
+
+def test_maybe_trigger_over_budget_macro_skips_without_limit(
+    monkeypatch,
+) -> None:
+    calls = {}
+
+    class FakeUserMetadataRepository:
+        def __init__(self, db):
+            pass
+
+        def get_by_user_id(self, user_id):
+            return SimpleNamespace(impulse_limit=None)
+
+    def fake_urlopen(url, timeout):
+        calls["called"] = True
+        return None
+
+    monkeypatch.setattr(
+        bank_service, "UserMetadataRepository", FakeUserMetadataRepository
+    )
+    monkeypatch.setattr(bank_service, "urlopen", fake_urlopen)
+
+    bank_service._maybe_trigger_over_budget_macro(
+        db=cast(Session, object()),
+        user_id=7,
+        transaction_amount=30,
+        transaction_timestamp=datetime(2026, 1, 15, 12, 0, 0),
+    )
+
+    assert calls == {}

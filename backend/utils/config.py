@@ -29,3 +29,12 @@ JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 JWT_ACCESS_COOKIE_NAME = os.getenv("JWT_ACCESS_COOKIE_NAME", "access_token")
 JWT_REFRESH_COOKIE_NAME = os.getenv("JWT_REFRESH_COOKIE_NAME", "refresh_token")
 JWT_COOKIE_SECURE = os.getenv("JWT_COOKIE_SECURE", "false").lower() == "true"
+
+MACRODROID_TRIGGER_BASE_URL = os.getenv(
+    "MACRODROID_TRIGGER_BASE_URL",
+    "https://trigger.macrodroid.com/c67086c5-db14-47d4-b2e3-b60732b3f58d",
+)
+MACRODROID_OVERSPEND_TRIGGER_SLUG = os.getenv(
+    "MACRODROID_OVERSPEND_TRIGGER_SLUG",
+    "horse",
+)

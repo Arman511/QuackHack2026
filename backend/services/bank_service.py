@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timedelta
+from urllib.request import urlopen
 
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
@@ -34,6 +35,10 @@ from backend.repositories.bank_account_repository import BankAccountRepository
 from backend.repositories.impulse_zone_repository import ImpulseZoneRepository
 from backend.repositories.transaction_repository import TransactionRepository
 from backend.repositories.user_metadata_repository import UserMetadataRepository
+from backend.utils.config import (
+    MACRODROID_OVERSPEND_TRIGGER_SLUG,
+    MACRODROID_TRIGGER_BASE_URL,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +89,12 @@ def create_user_transaction(
         possible_impulse_zone_id=payload.possible_impulse_zone_id,
     )
     logger.info("Transaction created transaction_id=%s", _id_for_log(transaction))
+    _maybe_trigger_over_budget_macro(
+        db,
+        user_id=current_user.id,
+        transaction_amount=payload.amount,
+        transaction_timestamp=payload.timestamp,
+    )
     return transaction
 
 
@@ -135,6 +146,12 @@ def create_webhook_transaction(
     logger.info(
         "Webhook transaction created transaction_id=%s",
         _id_for_log(transaction),
+    )
+    _maybe_trigger_over_budget_macro(
+        db,
+        user_id=source_account.user_id,
+        transaction_amount=payload.amount,
+        transaction_timestamp=payload.timestamp,
     )
     return transaction
 
@@ -640,6 +657,51 @@ def _month_window(now: datetime) -> tuple[datetime, datetime]:
         next_month = start.replace(month=start.month + 1)
     end = next_month - timedelta(microseconds=1)
     return start, end
+
+
+def _build_macrodroid_trigger_url() -> str:
+    base = MACRODROID_TRIGGER_BASE_URL.rstrip("/")
+    slug = MACRODROID_OVERSPEND_TRIGGER_SLUG.strip("/")
+    if not base or not slug:
+        raise ValueError("MacroDroid trigger URL is not configured")
+    return f"{base}/{slug}"
+
+
+def _trigger_over_budget_macro(url: str) -> None:
+    logger.info("Triggering MacroDroid over-budget url=%s", url)
+    with urlopen(url, timeout=5) as response:
+        logger.info(
+            "MacroDroid over-budget trigger response status=%s",
+            response.getcode(),
+        )
+
+
+def _maybe_trigger_over_budget_macro(
+    db: Session,
+    *,
+    user_id: int,
+    transaction_amount: int,
+    transaction_timestamp: datetime,
+) -> None:
+    metadata = UserMetadataRepository(db).get_by_user_id(user_id)
+    limit_value = metadata.impulse_limit if metadata else None
+    if limit_value is None:
+        return
+
+    now = datetime.now()
+    start, end = _month_window(now)
+    if transaction_timestamp < start or transaction_timestamp > end:
+        return
+
+    total = TransactionRepository(db).get_user_total_by_date_range(
+        user_id=user_id,
+        start=start,
+        end=end,
+    )
+    previous_total = total - transaction_amount
+    if previous_total <= limit_value < total:
+        url = _build_macrodroid_trigger_url()
+        _trigger_over_budget_macro(url)
 
 
 def get_user_limit_status(
