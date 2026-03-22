@@ -24,7 +24,6 @@ const ProfileTab = ({ logout }: ProfileTabProps) => {
     horseNeighAlertsEnabled,
     toggleNotifications,
     toggleHorseNeighAlerts,
-    logout,
     // Impulse category management
     impulseCategories: selectedImpulses,
     toggleImpulseCategory,
@@ -399,15 +398,6 @@ const ProfileTab = ({ logout }: ProfileTabProps) => {
           </div>
         )}
       </div>
-
-      <Button
-        onClick={logout}
-        className="w-full active:scale-[0.97] flex items-center gap-2 justify-center animate-fade-up"
-        style={{ animationDelay: "400ms" }}
-      >
-        <span>Log Out</span>
-        <img src="/blonde-horse-head.png" alt="Horse" className="w-5 h-5 object-contain" />
-      </Button>
     </div>
   );
 };

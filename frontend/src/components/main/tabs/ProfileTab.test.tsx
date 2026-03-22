@@ -108,12 +108,19 @@ describe("ProfileTab", () => {
   });
 
   it("calls logout when Log Out button clicked", async () => {
-    vi.mocked(apiLogout).mockResolvedValue({});
-    await renderTab();
+    const mockLogout = vi.fn();
+    let result: ReturnType<typeof render>;
+    await act(async () => {
+      result = render(
+        <AppProvider>
+          <ProfileTab logout={mockLogout} />
+        </AppProvider>,
+      );
+    });
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: /Log Out/i }));
     });
-    expect(apiLogout).toHaveBeenCalled();
+    expect(mockLogout).toHaveBeenCalled();
   });
 
   it("toggles notifications when toggle is clicked", async () => {
