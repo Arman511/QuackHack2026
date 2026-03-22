@@ -1,6 +1,11 @@
 import { useApp } from "@/hooks/useApp";
-import { Skull, Vault, Megaphone } from "lucide-react";
+import { Skull, Megaphone } from "lucide-react";
 import { Notification } from "@/data/mockData";
+import { Button } from "@/components/ui/button";
+
+interface NotificationsTabProps {
+  logout: () => void;
+}
 
 const typeColors: Record<string, string> = {
   impulse: "bg-impulse/10 text-impulse",
@@ -16,6 +21,10 @@ const getNotificationIcon = (
   const content = `${notification.title} ${notification.message}`.toLowerCase();
 
   if (notification.type === "impulse") {
+    // Budget warning specific
+    if (content.includes("budget warning") || content.includes("budget")) {
+      return () => <img src="/coin.png" alt="Coin" className="w-14 h-14 object-contain" />;
+    }
     // Gaming/Steam related
     if (content.includes("steam") || content.includes("video game") || content.includes("gaming")) {
       return () => <img src="/controller.png" alt="Gaming" className="w-14 h-14 object-contain" />;
@@ -35,7 +44,11 @@ const getNotificationIcon = (
 
   if (notification.type === "punishment") {
     // Horse neigh related punishments
-    if (content.includes("neigh") || content.includes("nfc tap")) {
+    if (
+      content.includes("neigh") ||
+      content.includes("nfc tap") ||
+      content.includes("horse noise")
+    ) {
       return () => <img src="/neigh.png" alt="Neigh" className="w-14 h-14 object-contain" />;
     }
     // Hobby horsing related punishments
@@ -50,25 +63,30 @@ const getNotificationIcon = (
 
   // Default icons for other types
   const typeIcons: Record<string, React.ComponentType<{ size?: number }>> = {
-    savings: Vault,
+    savings: () => <img src="/coin.png" alt="Coin" className="w-14 h-14 object-contain" />,
     info: Megaphone,
   };
 
   return typeIcons[notification.type] || Megaphone;
 };
 
-const NotificationsTab = () => {
+const NotificationsTab = ({ logout }: NotificationsTabProps) => {
   const { notifications } = useApp();
 
   return (
     <div className="p-4 space-y-5">
-      <div className="flex items-center gap-2">
-        <h1 className="text-lg font-bold animate-fade-up">Notifications</h1>
-        <img
-          src="/notification.png"
-          alt="Notifications"
-          className="w-10 h-10 object-contain animate-fade-up"
-        />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <img
+            src="/notification.png"
+            alt="Notifications"
+            className="w-10 h-10 object-contain animate-fade-up"
+          />
+          <h1 className="text-lg font-bold animate-fade-up">Notifications</h1>
+        </div>
+        <Button variant="outline" size="sm" onClick={logout}>
+          Log Out
+        </Button>
       </div>
 
       <div className="space-y-3">
@@ -88,6 +106,7 @@ const NotificationsTab = () => {
                   // Check if it's one of our custom image components
                   if (
                     n.type === "impulse" ||
+                    n.type === "savings" ||
                     (n.type === "punishment" &&
                       (n.message.toLowerCase().includes("neigh") ||
                         n.message.toLowerCase().includes("nfc tap") ||

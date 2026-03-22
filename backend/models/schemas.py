@@ -93,6 +93,12 @@ class SetupBankAccountsRequest(BaseModel):
     saving: SetupBankAccountDetails
 
 
+class AddMoneyRequest(BaseModel):
+    sort_code: str
+    account_number: str
+    amount: int = Field(gt=0)
+
+
 class BankAccountPublic(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -232,6 +238,10 @@ class UserGoalSetRequest(BaseModel):
     bank_account_id: int | None = None
     impulse_limit: int | None = None
     tax_percentage: int | None = None
+
+
+class UserTaxPercentagePatchRequest(BaseModel):
+    tax_percentage: int = Field(ge=0)
 
 
 class UserLimitStatusPublic(BaseModel):

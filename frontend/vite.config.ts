@@ -14,6 +14,8 @@ export default defineConfig(({ mode }) => ({
     proxy: {
       "/api": {
         target: "http://localhost:8000",
+        changeOrigin: true,
+        secure: false,
       },
       "/external": {
         target: "https://revolite-hackathon.vercel.app",

@@ -1,5 +1,7 @@
 import logging
+import random
 from datetime import datetime, timedelta
+from urllib.request import urlopen
 
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
@@ -7,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from backend.models import (
     AccountTypeEnum,
+    AddMoneyRequest,
     BankAccountPublic,
     CreateBankAccountsRequest,
     CreateBankAccountsResponse,
@@ -29,11 +32,16 @@ from backend.models import (
     SetupBankAccountsRequest,
     PaginatedTransactionSearchResponse,
     TransactionSearchItemPublic,
+    UserTypeEnum,
 )
 from backend.repositories.bank_account_repository import BankAccountRepository
 from backend.repositories.impulse_zone_repository import ImpulseZoneRepository
 from backend.repositories.transaction_repository import TransactionRepository
 from backend.repositories.user_metadata_repository import UserMetadataRepository
+from backend.utils.config import (
+    MACRODROID_OVERSPEND_TRIGGER_SLUGS,
+    MACRODROID_TRIGGER_BASE_URL,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +92,12 @@ def create_user_transaction(
         possible_impulse_zone_id=payload.possible_impulse_zone_id,
     )
     logger.info("Transaction created transaction_id=%s", _id_for_log(transaction))
+    _maybe_trigger_over_budget_macro(
+        db,
+        user_id=current_user.id,
+        transaction_amount=payload.amount,
+        transaction_timestamp=payload.timestamp,
+    )
     return transaction
 
 
@@ -136,7 +150,66 @@ def create_webhook_transaction(
         "Webhook transaction created transaction_id=%s",
         _id_for_log(transaction),
     )
+    _maybe_trigger_over_budget_macro(
+        db,
+        user_id=source_account.user_id,
+        transaction_amount=payload.amount,
+        transaction_timestamp=payload.timestamp,
+    )
     return transaction
+
+
+def add_money_to_account(
+    db: Session,
+    *,
+    current_user: UserDB,
+    payload: AddMoneyRequest,
+) -> BankAccountPublic:
+    logger.info(
+        "Adding money for actor_user_id=%s account_number=%s amount=%s",
+        current_user.id,
+        payload.account_number,
+        payload.amount,
+    )
+    account_repo = BankAccountRepository(db)
+    target_account = account_repo.get_by_account_number_and_sort_code(
+        account_number=payload.account_number,
+        sort_code=payload.sort_code,
+    )
+
+    if target_account is None:
+        logger.warning(
+            "Add money failed account lookup miss account_number=%s",
+            payload.account_number,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Bank account not found for provided account number and sort code",
+        )
+
+    is_admin = UserTypeEnum.ADMIN in current_user.roles
+    if target_account.user_id != current_user.id and not is_admin:
+        logger.warning(
+            "Add money denied actor_user_id=%s owner_user_id=%s",
+            current_user.id,
+            target_account.user_id,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Bank account does not belong to the authenticated user",
+        )
+
+    updated = account_repo.update_amount(
+        target_account.id,
+        target_account.amount + payload.amount,
+    )
+    logger.info(
+        "Add money succeeded account_id=%s user_id=%s new_amount=%s",
+        updated.id,
+        updated.user_id,
+        updated.amount,
+    )
+    return updated
 
 
 def list_user_transactions_hydrated(
@@ -414,6 +487,57 @@ def create_possible_impulse_zone(
         ) from exc
 
 
+def delete_user_possible_impulse_zone(
+    db: Session,
+    *,
+    current_user: UserDB,
+    zone_id: int,
+) -> dict[str, bool]:
+    repo = ImpulseZoneRepository(db)
+    zone = repo.get_possible_impulse_zone_by_id(zone_id)
+    if zone is None:
+        logger.warning(
+            "User possible impulse delete not found user_id=%s zone_id=%s",
+            current_user.id,
+            zone_id,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Possible impulse zone not found",
+        )
+
+    if zone.user_id != current_user.id:
+        logger.warning(
+            "User possible impulse delete denied user_id=%s zone_id=%s owner_id=%s",
+            current_user.id,
+            zone_id,
+            zone.user_id,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Possible impulse zone does not belong to the authenticated user",
+        )
+
+    deleted = repo.delete_possible_impulse_zone(zone_id)
+    if not deleted:
+        logger.warning(
+            "User possible impulse delete failed user_id=%s zone_id=%s",
+            current_user.id,
+            zone_id,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Possible impulse zone not found",
+        )
+
+    logger.info(
+        "User deleted possible impulse user_id=%s zone_id=%s",
+        current_user.id,
+        zone_id,
+    )
+    return {"deleted": True}
+
+
 def admin_create_impulse_zone(
     db: Session,
     *,
@@ -640,6 +764,69 @@ def _month_window(now: datetime) -> tuple[datetime, datetime]:
         next_month = start.replace(month=start.month + 1)
     end = next_month - timedelta(microseconds=1)
     return start, end
+
+
+def _macrodroid_trigger_slugs() -> list[str]:
+    if not MACRODROID_OVERSPEND_TRIGGER_SLUGS:
+        return []
+    return [
+        slug.strip().strip("/")
+        for slug in MACRODROID_OVERSPEND_TRIGGER_SLUGS.split(",")
+        if slug.strip().strip("/")
+    ]
+
+
+def _pick_macrodroid_trigger_slug() -> str:
+    slugs = _macrodroid_trigger_slugs()
+    if not slugs:
+        raise ValueError("MacroDroid trigger URL is not configured")
+    return random.choice(slugs)
+
+
+def _build_macrodroid_trigger_url(slug: str) -> str:
+    base = MACRODROID_TRIGGER_BASE_URL.rstrip("/")
+    slug = slug.strip("/")
+    if not base or not slug:
+        raise ValueError("MacroDroid trigger URL is not configured")
+    return f"{base}/{slug}"
+
+
+def _trigger_over_budget_macro(url: str) -> None:
+    logger.info("Triggering MacroDroid over-budget url=%s", url)
+    with urlopen(url, timeout=5) as response:
+        logger.info(
+            "MacroDroid over-budget trigger response status=%s",
+            response.getcode(),
+        )
+
+
+def _maybe_trigger_over_budget_macro(
+    db: Session,
+    *,
+    user_id: int,
+    transaction_amount: int,
+    transaction_timestamp: datetime,
+) -> None:
+    metadata = UserMetadataRepository(db).get_by_user_id(user_id)
+    limit_value = metadata.impulse_limit if metadata else None
+    if limit_value is None:
+        return
+
+    now = datetime.now()
+    start, end = _month_window(now)
+    if transaction_timestamp < start or transaction_timestamp > end:
+        return
+
+    total = TransactionRepository(db).get_user_total_by_date_range(
+        user_id=user_id,
+        start=start,
+        end=end,
+    )
+    previous_total = total - transaction_amount
+    if previous_total <= limit_value < total:
+        slug = _pick_macrodroid_trigger_slug()
+        url = _build_macrodroid_trigger_url(slug)
+        _trigger_over_budget_macro(url)
 
 
 def get_user_limit_status(

@@ -77,6 +77,10 @@ export interface UserGoalSetRequest {
   tax_percentage?: number | null;
 }
 
+export interface UserTaxPercentagePatchRequest {
+  tax_percentage: number;
+}
+
 export interface UserMetadataPublic {
   id: number;
   user_id: number;
@@ -134,6 +138,12 @@ export interface SetupBankAccountsRequest {
   provider: BankProviderEnum;
   current: SetupBankAccountDetails;
   saving: SetupBankAccountDetails;
+}
+
+export interface AddMoneyRequest {
+  sort_code: string;
+  account_number: string;
+  amount: number;
 }
 
 export interface CreateBankAccountsResponse {

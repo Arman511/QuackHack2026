@@ -15,8 +15,12 @@ const getCategoryIcon = (category: string): string | null => {
   ) {
     return "/controller.png";
   }
+  // Coffee gets its own icon
+  if (lowerCategory.includes("coffee")) {
+    return "/coffee.png";
+  }
+  // Food/takeaway/delivery use carrot icon
   if (
-    lowerCategory.includes("coffee") ||
     lowerCategory.includes("food") ||
     lowerCategory.includes("takeaway") ||
     lowerCategory.includes("delivery")
@@ -26,13 +30,43 @@ const getCategoryIcon = (category: string): string | null => {
   if (lowerCategory.includes("hobby horsing") || lowerCategory.includes("hobby horse")) {
     return "/hobby-horse.png";
   }
-  // Add coin for shopping/money related categories
+  // Add clothes icon
+  if (
+    lowerCategory.includes("clothes") ||
+    lowerCategory.includes("clothing") ||
+    lowerCategory.includes("fashion") ||
+    lowerCategory.includes("apparel")
+  ) {
+    return "/clothes.png";
+  }
+  // Add books icon
+  if (
+    lowerCategory.includes("book") ||
+    lowerCategory.includes("reading") ||
+    lowerCategory.includes("kindle") ||
+    lowerCategory.includes("audible")
+  ) {
+    return "/books.png";
+  }
+  // Add makeup/beauty icon
+  if (
+    lowerCategory.includes("makeup") ||
+    lowerCategory.includes("beauty") ||
+    lowerCategory.includes("cosmetic") ||
+    lowerCategory.includes("skincare") ||
+    lowerCategory.includes("sephora")
+  ) {
+    return "/makeup.png";
+  }
+  // Add shopping icon (keep existing shopping logic but use new icon)
   if (
     lowerCategory.includes("amazon") ||
     lowerCategory.includes("shopping") ||
-    lowerCategory.includes("gadgets")
+    lowerCategory.includes("gadgets") ||
+    lowerCategory.includes("online shopping") ||
+    lowerCategory.includes("retail")
   ) {
-    return "/coin.png";
+    return "/shopping.png";
   }
 
   return null; // No specific icon, will use default horse
@@ -47,9 +81,9 @@ const ImpulseZonesPage = () => {
   } = useApp();
   const [customInput, setCustomInput] = useState("");
 
-  const addCustom = () => {
+  const addCustom = async () => {
     if (customInput.trim() && !selected.includes(customInput.trim())) {
-      addCustomCategory(customInput.trim());
+      await addCustomCategory(customInput.trim());
       setCustomInput("");
     }
   };
@@ -70,7 +104,7 @@ const ImpulseZonesPage = () => {
             key={cat}
             className="bubble-tag animate-fade-up flex items-center gap-1.5"
             data-selected={selected.includes(cat)}
-            onClick={() => toggleImpulseCategory(cat)}
+            onClick={async () => await toggleImpulseCategory(cat)}
             style={{ animationDelay: `${i * 50}ms` }}
           >
             {(() => {
@@ -91,7 +125,7 @@ const ImpulseZonesPage = () => {
               key={cat}
               className="bubble-tag flex items-center gap-1.5"
               data-selected="true"
-              onClick={() => toggleImpulseCategory(cat)}
+              onClick={async () => await toggleImpulseCategory(cat)}
             >
               {(() => {
                 const icon = getCategoryIcon(cat);

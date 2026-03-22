@@ -9,12 +9,14 @@ from sqlalchemy.orm import Session
 
 from backend.models import (
     AccountTypeEnum,
+    AddMoneyRequest,
     BankProviderEnum,
     CreateBankAccountsRequest,
     SetupBankAccountDetails,
     SetupBankAccountsRequest,
     TransactionDateRangeQuery,
     UserDB,
+    UserTypeEnum,
 )
 from backend.services import bank_service
 
@@ -350,3 +352,211 @@ def test_create_bank_accounts_for_user_rejects_duplicate_account_identifiers(
         exc_info.value.detail
         == "Bank account with this account number and sort code already exists"
     )
+
+
+def test_add_money_to_account_rejects_missing_account(monkeypatch) -> None:
+    payload = AddMoneyRequest(sort_code="112233", account_number="12345678", amount=100)
+
+    class FakeBankAccountRepository:
+        def __init__(self, db):
+            pass
+
+        def get_by_account_number_and_sort_code(self, *, account_number, sort_code):
+            return None
+
+    monkeypatch.setattr(
+        bank_service,
+        "BankAccountRepository",
+        FakeBankAccountRepository,
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        bank_service.add_money_to_account(
+            db=cast(Session, object()),
+            current_user=cast(
+                UserDB,
+                SimpleNamespace(id=42, roles=[UserTypeEnum.USER]),
+            ),
+            payload=payload,
+        )
+
+    assert exc_info.value.status_code == 404
+    assert (
+        exc_info.value.detail
+        == "Bank account not found for provided account number and sort code"
+    )
+
+
+def test_add_money_to_account_rejects_non_owner_for_non_admin(monkeypatch) -> None:
+    payload = AddMoneyRequest(sort_code="112233", account_number="12345678", amount=80)
+
+    class FakeBankAccountRepository:
+        def __init__(self, db):
+            pass
+
+        def get_by_account_number_and_sort_code(self, *, account_number, sort_code):
+            return SimpleNamespace(id=7, user_id=11, amount=120)
+
+    monkeypatch.setattr(
+        bank_service,
+        "BankAccountRepository",
+        FakeBankAccountRepository,
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        bank_service.add_money_to_account(
+            db=cast(Session, object()),
+            current_user=cast(
+                UserDB,
+                SimpleNamespace(id=42, roles=[UserTypeEnum.USER]),
+            ),
+            payload=payload,
+        )
+
+    assert exc_info.value.status_code == 403
+    assert (
+        exc_info.value.detail
+        == "Bank account does not belong to the authenticated user"
+    )
+
+
+def test_add_money_to_account_allows_admin_to_update_other_user_account(
+    monkeypatch,
+) -> None:
+    payload = AddMoneyRequest(sort_code="112233", account_number="12345678", amount=80)
+    calls = {}
+
+    class FakeBankAccountRepository:
+        def __init__(self, db):
+            calls["db"] = db
+
+        def get_by_account_number_and_sort_code(self, *, account_number, sort_code):
+            calls["lookup"] = {
+                "account_number": account_number,
+                "sort_code": sort_code,
+            }
+            return SimpleNamespace(id=7, user_id=11, amount=120)
+
+        def update_amount(self, account_id, new_amount):
+            calls["update"] = {"account_id": account_id, "new_amount": new_amount}
+            return SimpleNamespace(
+                id=account_id,
+                user_id=11,
+                bank_account_id="acct-7",
+                account_number="12345678",
+                sort_code="112233",
+                name="REV-O-TROT Current Account",
+                provider=BankProviderEnum.REV_O_TROT,
+                type=AccountTypeEnum.CURRENT,
+                amount=new_amount,
+                created_at=datetime(2026, 1, 1, 12, 0, 0),
+                updated_at=datetime(2026, 1, 1, 12, 0, 0),
+            )
+
+    marker_db = cast(Session, object())
+    monkeypatch.setattr(
+        bank_service,
+        "BankAccountRepository",
+        FakeBankAccountRepository,
+    )
+
+    result = bank_service.add_money_to_account(
+        db=marker_db,
+        current_user=cast(
+            UserDB,
+            SimpleNamespace(id=1, roles=[UserTypeEnum.ADMIN]),
+        ),
+        payload=payload,
+    )
+
+    assert calls["db"] is marker_db
+    assert calls["lookup"] == {"account_number": "12345678", "sort_code": "112233"}
+    assert calls["update"] == {"account_id": 7, "new_amount": 200}
+    assert result.amount == 200
+
+
+def test_delete_user_possible_impulse_zone_rejects_missing(monkeypatch) -> None:
+    class FakeImpulseZoneRepository:
+        def __init__(self, db):
+            pass
+
+        def get_possible_impulse_zone_by_id(self, zone_id):
+            return None
+
+    monkeypatch.setattr(
+        bank_service,
+        "ImpulseZoneRepository",
+        FakeImpulseZoneRepository,
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        bank_service.delete_user_possible_impulse_zone(
+            db=cast(Session, object()),
+            current_user=cast(UserDB, SimpleNamespace(id=21)),
+            zone_id=9,
+        )
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Possible impulse zone not found"
+
+
+def test_delete_user_possible_impulse_zone_rejects_other_owner(monkeypatch) -> None:
+    class FakeImpulseZoneRepository:
+        def __init__(self, db):
+            pass
+
+        def get_possible_impulse_zone_by_id(self, zone_id):
+            return SimpleNamespace(id=zone_id, user_id=99)
+
+    monkeypatch.setattr(
+        bank_service,
+        "ImpulseZoneRepository",
+        FakeImpulseZoneRepository,
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        bank_service.delete_user_possible_impulse_zone(
+            db=cast(Session, object()),
+            current_user=cast(UserDB, SimpleNamespace(id=21)),
+            zone_id=9,
+        )
+
+    assert exc_info.value.status_code == 403
+    assert (
+        exc_info.value.detail
+        == "Possible impulse zone does not belong to the authenticated user"
+    )
+
+
+def test_delete_user_possible_impulse_zone_deletes_owned_zone(monkeypatch) -> None:
+    calls = {}
+
+    class FakeImpulseZoneRepository:
+        def __init__(self, db):
+            calls["db"] = db
+
+        def get_possible_impulse_zone_by_id(self, zone_id):
+            calls["looked_up_zone_id"] = zone_id
+            return SimpleNamespace(id=zone_id, user_id=21)
+
+        def delete_possible_impulse_zone(self, zone_id):
+            calls["deleted_zone_id"] = zone_id
+            return True
+
+    marker_db = cast(Session, object())
+    monkeypatch.setattr(
+        bank_service,
+        "ImpulseZoneRepository",
+        FakeImpulseZoneRepository,
+    )
+
+    result = bank_service.delete_user_possible_impulse_zone(
+        db=marker_db,
+        current_user=cast(UserDB, SimpleNamespace(id=21)),
+        zone_id=12,
+    )
+
+    assert result == {"deleted": True}
+    assert calls["db"] is marker_db
+    assert calls["looked_up_zone_id"] == 12
+    assert calls["deleted_zone_id"] == 12

@@ -15,7 +15,11 @@ endif
 HAS_FRONTEND_PACKAGE := $(if $(wildcard frontend/package.json),yes,no)
 HAS_FRONTEND_NODE_MODULES := $(if $(wildcard frontend/node_modules),yes,no)
 HAS_TESTS_DIR := $(if $(wildcard tests),yes,no)
+ifeq ($(OS),Windows_NT)
 HAS_FRONTEND_TEST_SCRIPT := $(shell python -c "import json, pathlib; p = pathlib.Path('frontend/package.json'); print('yes' if p.exists() and 'test' in json.loads(p.read_text()).get('scripts', {}) else 'no')" 2>$(NULL_DEVICE))
+else
+HAS_FRONTEND_TEST_SCRIPT := $(shell python3 -c "import json, pathlib; p = pathlib.Path('frontend/package.json'); print('yes' if p.exists() and 'test' in json.loads(p.read_text()).get('scripts', {}) else 'no')" 2>$(NULL_DEVICE))
+endif
 
 .PHONY: install serve serve-local local build format lint test back-cover front-cover cover down down-local install-hooks
 

@@ -21,15 +21,10 @@ const MainApp = () => {
   return (
     <div className="min-h-screen pb-20">
       <div className="max-w-lg mx-auto">
-        <div className="p-4 pb-0 flex justify-end">
-          <Button variant="outline" size="sm" onClick={logout}>
-            Log Out
-          </Button>
-        </div>
-        {activeTab === "dashboard" && <DashboardTab />}
-        {activeTab === "goals" && <GoalsTab />}
-        {activeTab === "notifications" && <NotificationsTab />}
-        {activeTab === "profile" && <ProfileTab />}
+        {activeTab === "dashboard" && <DashboardTab logout={logout} />}
+        {activeTab === "goals" && <GoalsTab logout={logout} />}
+        {activeTab === "notifications" && <NotificationsTab logout={logout} />}
+        {activeTab === "profile" && <ProfileTab logout={logout} />}
       </div>
 
       <nav className="bottom-nav">
@@ -41,11 +36,7 @@ const MainApp = () => {
             onClick={() => setActiveTab(tab.key)}
           >
             <span className="text-lg relative">
-              <img
-                src={`/${tab.icon}.png`}
-                alt={tab.label}
-                className="w-10 h-10 object-contain"
-              />
+              <img src={`/${tab.icon}.png`} alt={tab.label} className="w-10 h-10 object-contain" />
               {tab.key === "notifications" && unread > 0 && (
                 <span className="absolute -top-1 -right-2 w-4 h-4 bg-impulse text-[10px] font-bold text-primary-foreground rounded-full flex items-center justify-center">
                   {unread > 9 ? "9+" : unread}

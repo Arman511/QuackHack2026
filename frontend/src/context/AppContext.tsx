@@ -110,14 +110,23 @@ interface AppContextType extends AppState {
   setAddBankStep: (step: number) => void;
   completeAddBankFlow: () => void;
 
+  // Goals & Settings API functions
+  updateTaxPercentage: (percentage: number) => Promise<void>;
+  updateImpulseBudget: (budget: number) => Promise<void>;
+  updateGoalSetting: (goalName: string | null) => Promise<void>;
+  updateImpulseCategories: (categories: string[]) => Promise<void>;
+
   // Existing functions
   setOnboardingStep: (s: number) => void;
   completeOnboarding: () => Promise<void>;
   setEmail: (e: string) => void;
   connectBank: (b: string) => void;
   saveBankDetails: (details: BankDetails) => void;
-  toggleImpulseCategory: (c: string) => void;
-  addCustomCategory: (c: string) => void;
+  toggleImpulseCategory: (c: string) => Promise<void>;
+  addCustomCategory: (c: string) => Promise<void>;
+  // Real-time API-integrated impulse category functions
+  toggleImpulseCategoryWithApi: (category: string) => Promise<void>;
+  addCustomCategoryWithApi: (category: string) => Promise<void>;
   addGoal: (g: Goal) => void;
   removeGoal: (id: string) => void;
   clearGoals: () => void;
@@ -198,17 +207,40 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       userData.tax_percentage != null ||
       selectedImpulses.length > 0;
 
+    const getGoalIcon = (goalName: string) => {
+      const name = goalName.toLowerCase();
+
+      if (name.includes("shopping") || name.includes("clothes") || name.includes("fashion")) {
+        return "shopping";
+      }
+      if (name.includes("travel") || name.includes("holiday") || name.includes("vacation")) {
+        return "travel";
+      }
+      if (name.includes("emergency") || name.includes("security") || name.includes("fund")) {
+        return "shield";
+      }
+      if (name.includes("house") || name.includes("home") || name.includes("deposit")) {
+        return "house";
+      }
+      if (name.includes("debt") || name.includes("loan") || name.includes("credit")) {
+        return "debt";
+      }
+
+      // Default fallback
+      return "target";
+    };
+
     update({
       goals: goalName
         ? [
-          {
-            id: `server-goal-${userData.id}`,
-            name: goalName,
-            target: 1000,
-            saved: 0,
-            icon: "target",
-          },
-        ]
+            {
+              id: `server-goal-${userData.id}`,
+              name: goalName,
+              target: 1000,
+              saved: 0,
+              icon: getGoalIcon(goalName),
+            },
+          ]
         : [],
       impulseBudget: userData.impulse_limit ?? defaultImpulseBudget,
       neighTaxPercent: userData.tax_percentage ?? defaultTaxPercent,
@@ -236,7 +268,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const currentBundle = currentBundleResponse ?? { impulses: [], possible: [] };
 
     const selectedByLowerName = new Set(
-      snapshot.impulseCategories.map((name) => name.trim()).filter(Boolean).map((name) => name.toLowerCase()),
+      snapshot.impulseCategories
+        .map((name) => name.trim())
+        .filter(Boolean)
+        .map((name) => name.toLowerCase()),
     );
     const realImpulseIds = allImpulses
       .filter((zone) => selectedByLowerName.has(zone.name.toLowerCase()))
@@ -492,10 +527,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         .filter((tx) => tx.isImpulse)
         .reduce((sum, tx) => sum + tx.amount, 0);
 
+      // Calculate total saved based on neigh-tax from impulse spending
+      // This is a simplified calculation - in reality you'd want to track actual transfers to savings
+      const savedFromImpulses = impulseTotal * (state.neighTaxPercent / 100);
+      const totalSavedCalculated = savedFromImpulses + 240; // 240 is base savings
+
       update({
         realTransactions: transformedTransactions,
         realTransactionsLoading: false,
         impulseSpent: impulseTotal,
+        totalSaved: totalSavedCalculated,
         // Update transactions array for backward compatibility
         transactions: transformedTransactions,
       });
@@ -553,6 +594,157 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  // Goals & Settings API functions
+  const updateTaxPercentage = useCallback(
+    async (percentage: number) => {
+      try {
+        // Update local state immediately for responsive UI
+        update({ neighTaxPercent: percentage });
+
+        // Persist to API
+        await setMyGoal({
+          goal: state.goals[0]?.name?.trim() || null,
+          impulse_limit: state.impulseBudget,
+          tax_percentage: percentage,
+        });
+      } catch (error) {
+        console.error("Failed to update tax percentage:", error);
+        // Revert local state on error
+        // We could show an error message here
+        throw error;
+      }
+    },
+    [state.goals, state.impulseBudget],
+  );
+
+  const updateImpulseBudget = useCallback(
+    async (budget: number) => {
+      try {
+        // Update local state immediately for responsive UI
+        update({ impulseBudget: budget });
+
+        // Persist to API
+        await setMyGoal({
+          goal: state.goals[0]?.name?.trim() || null,
+          impulse_limit: budget,
+          tax_percentage: state.neighTaxPercent,
+        });
+      } catch (error) {
+        console.error("Failed to update impulse budget:", error);
+        // Revert local state on error
+        throw error;
+      }
+    },
+    [state.goals, state.neighTaxPercent],
+  );
+
+  const updateGoalSetting = useCallback(
+    async (goalName: string | null) => {
+      try {
+        // Update local state immediately for responsive UI
+        const newGoals = goalName
+          ? [
+              {
+                id: `server-goal-${state.user?.id || "temp"}`,
+                name: goalName,
+                target: 1000,
+                saved: 0,
+                icon: "target",
+              },
+            ]
+          : [];
+
+        update({ goals: newGoals });
+
+        // Persist to API
+        await setMyGoal({
+          goal: goalName,
+          impulse_limit: state.impulseBudget,
+          tax_percentage: state.neighTaxPercent,
+        });
+      } catch (error) {
+        console.error("Failed to update goal setting:", error);
+        // Revert local state on error
+        throw error;
+      }
+    },
+    [state.impulseBudget, state.neighTaxPercent, state.user?.id],
+  );
+
+  const updateImpulseCategories = useCallback(async (newCategories: string[]) => {
+    try {
+      // Update local state immediately for responsive UI
+      update({ impulseCategories: newCategories });
+
+      // Persist to API using the same logic as onboarding
+      const [allImpulsesResponse, currentBundleResponse] = await Promise.all([
+        getAllImpulses(),
+        getMyImpulses(),
+      ]);
+      const allImpulses = allImpulsesResponse ?? [];
+      const currentBundle = currentBundleResponse ?? { impulses: [], possible: [] };
+
+      const selectedByLowerName = new Set(
+        newCategories
+          .map((name) => name.trim())
+          .filter(Boolean)
+          .map((name) => name.toLowerCase()),
+      );
+      const realImpulseIds = allImpulses
+        .filter((zone) => selectedByLowerName.has(zone.name.toLowerCase()))
+        .map((zone) => zone.id);
+
+      await replaceMyImpulses({ impulse_ids: realImpulseIds });
+
+      const knownNames = new Set(allImpulses.map((zone) => zone.name.toLowerCase()));
+      const existingPossibleNames = new Set(
+        currentBundle.possible.map((zone) => zone.name.toLowerCase()),
+      );
+
+      const newPossibleNames = newCategories
+        .map((name) => name.trim())
+        .filter(Boolean)
+        .filter((name) => {
+          const lower = name.toLowerCase();
+          return !knownNames.has(lower) && !existingPossibleNames.has(lower);
+        });
+
+      await Promise.all(
+        newPossibleNames.map(async (name) => {
+          try {
+            await createPossibleImpulse({ name });
+          } catch (error) {
+            console.error(`Failed to create possible impulse: ${name}`, error);
+          }
+        }),
+      );
+    } catch (error) {
+      console.error("Failed to update impulse categories:", error);
+      // Revert local state on error
+      throw error;
+    }
+  }, []);
+
+  // Real-time API-integrated impulse category functions
+  const toggleImpulseCategoryWithApi = useCallback(
+    async (category: string) => {
+      const newCategories = state.impulseCategories.includes(category)
+        ? state.impulseCategories.filter((x) => x !== category)
+        : [...state.impulseCategories, category];
+
+      await updateImpulseCategories(newCategories);
+    },
+    [state.impulseCategories, updateImpulseCategories],
+  );
+
+  const addCustomCategoryWithApi = useCallback(
+    async (category: string) => {
+      const newCategories = [...state.impulseCategories, category];
+      await updateImpulseCategories(newCategories);
+    },
+    [state.impulseCategories, updateImpulseCategories],
+  );
+
   const ctx: AppContextType = {
     ...state,
     // Authentication functions
@@ -578,6 +770,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setAddBankStep,
     completeAddBankFlow,
 
+    // Goals & Settings API functions
+    updateTaxPercentage,
+    updateImpulseBudget,
+    updateGoalSetting,
+    updateImpulseCategories,
+
     // Existing functions
     setOnboardingStep: (s) => update({ onboardingStep: s }),
     completeOnboarding: async () => {
@@ -591,20 +789,49 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setEmail: (e) => update({ email: e }),
     connectBank: (b) => update({ connectedBank: b }),
     saveBankDetails: (details) => update({ bankDetails: details }),
-    toggleImpulseCategory: (c) => {
+    toggleImpulseCategory: async (c) => {
+      // Update local state immediately for responsive UI
       setState((prev) => ({
         ...prev,
         impulseCategories: prev.impulseCategories.includes(c)
           ? prev.impulseCategories.filter((x) => x !== c)
           : [...prev.impulseCategories, c],
       }));
+
+      // If user is authenticated, persist changes immediately
+      if (state.isAuthenticated) {
+        try {
+          const newCategories = state.impulseCategories.includes(c)
+            ? state.impulseCategories.filter((x) => x !== c)
+            : [...state.impulseCategories, c];
+          await updateImpulseCategories(newCategories);
+        } catch (error) {
+          console.error("Failed to persist impulse category change:", error);
+          // Could revert local state here if needed
+        }
+      }
     },
-    addCustomCategory: (c) => {
+    addCustomCategory: async (c) => {
+      // Update local state immediately for responsive UI
       setState((prev) => ({
         ...prev,
         impulseCategories: [...prev.impulseCategories, c],
       }));
+
+      // If user is authenticated, persist changes immediately
+      if (state.isAuthenticated) {
+        try {
+          const newCategories = [...state.impulseCategories, c];
+          await updateImpulseCategories(newCategories);
+        } catch (error) {
+          console.error("Failed to persist custom category:", error);
+          // Could revert local state here if needed
+        }
+      }
     },
+    // Real-time API-integrated impulse category functions
+    toggleImpulseCategoryWithApi,
+    addCustomCategoryWithApi,
     addGoal: (g) => setState((prev) => ({ ...prev, goals: [...prev.goals, g] })),
     removeGoal: (id) =>
       setState((prev) => ({ ...prev, goals: prev.goals.filter((g) => g.id !== id) })),

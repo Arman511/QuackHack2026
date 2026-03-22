@@ -12,6 +12,7 @@ vi.mock("@/api/http", () => ({
 }));
 
 import {
+  addMoney,
   listAccounts,
   createTransaction,
   listMyTransactions,
@@ -72,6 +73,19 @@ describe("bank API", () => {
     await setupBankAccounts(body);
     expect(mockApiRequest).toHaveBeenCalledWith(
       "/api/bank/accounts/setup",
+      expect.objectContaining({ method: "POST", body }),
+    );
+  });
+
+  it("addMoney calls POST /api/bank/accounts/add-money", async () => {
+    const body = {
+      sort_code: "112233",
+      account_number: "12345678",
+      amount: 50,
+    } as Parameters<typeof addMoney>[0];
+    await addMoney(body);
+    expect(mockApiRequest).toHaveBeenCalledWith(
+      "/api/bank/accounts/add-money",
       expect.objectContaining({ method: "POST", body }),
     );
   });
