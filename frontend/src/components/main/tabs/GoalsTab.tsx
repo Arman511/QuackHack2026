@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Target } from "lucide-react";
 
 const GoalsTab = () => {
-  const { goals, updateGoal, neighTaxPercent, setNeighTaxPercent } = useApp();
+  const { goals, updateGoal, neighTaxPercent, updateTaxPercentage } = useApp();
   const [justifyModal, setJustifyModal] = useState<string | null>(null);
   const [justification, setJustification] = useState("");
   const [pendingTax, setPendingTax] = useState<number | null>(null);
+  const [isUpdatingTax, setIsUpdatingTax] = useState(false);
 
   const getIcon = (iconName: string) => {
     const iconMap: Record<string, string> = {
@@ -43,21 +44,37 @@ const GoalsTab = () => {
     );
   };
 
-  const handleTaxChange = (newTax: number) => {
+  const handleTaxChange = async (newTax: number) => {
     if (newTax < neighTaxPercent) {
       setPendingTax(newTax);
       setJustifyModal("tax");
     } else {
-      setNeighTaxPercent(newTax);
+      try {
+        setIsUpdatingTax(true);
+        await updateTaxPercentage(newTax);
+      } catch (error) {
+        console.error("Failed to update tax percentage:", error);
+        // Could show error message to user here
+      } finally {
+        setIsUpdatingTax(false);
+      }
     }
   };
 
-  const submitJustification = () => {
+  const submitJustification = async () => {
     if (justification.trim() && pendingTax !== null) {
-      setNeighTaxPercent(pendingTax);
-      setJustifyModal(null);
-      setJustification("");
-      setPendingTax(null);
+      try {
+        setIsUpdatingTax(true);
+        await updateTaxPercentage(pendingTax);
+        setJustifyModal(null);
+        setJustification("");
+        setPendingTax(null);
+      } catch (error) {
+        console.error("Failed to update tax percentage:", error);
+        // Could show error message to user here
+      } finally {
+        setIsUpdatingTax(false);
+      }
     }
   };
 
@@ -115,13 +132,14 @@ const GoalsTab = () => {
             <button
               key={pct}
               onClick={() => handleTaxChange(pct)}
-              className={`py-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.96] border ${
+              disabled={isUpdatingTax}
+              className={`py-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.96] border disabled:opacity-50 ${
                 neighTaxPercent === pct
                   ? "bg-primary text-primary-foreground border-primary"
                   : "bg-secondary text-secondary-foreground border-border"
               }`}
             >
-              {pct}%
+              {isUpdatingTax ? "..." : `${pct}%`}
             </button>
           ))}
         </div>
@@ -157,10 +175,10 @@ const GoalsTab = () => {
               </Button>
               <Button
                 onClick={submitJustification}
-                disabled={!justification.trim()}
+                disabled={!justification.trim() || isUpdatingTax}
                 className="flex-1 active:scale-[0.97]"
               >
-                Submit
+                {isUpdatingTax ? "Updating..." : "Submit"}
               </Button>
             </div>
           </div>
