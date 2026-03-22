@@ -16,6 +16,7 @@ import {
   getMyImpulses,
   replaceMyImpulses,
   createPossibleImpulse,
+  removeMyPossibleImpulse,
   adminGetImpulses,
   adminCreateImpulse,
   adminPatchImpulse,
@@ -57,6 +58,14 @@ describe("impulses API", () => {
     expect(mockApiRequest).toHaveBeenCalledWith(
       "/api/impulses/possible",
       expect.objectContaining({ method: "POST", body }),
+    );
+  });
+
+  it("removeMyPossibleImpulse calls DELETE /api/impulses/possible/:id", async () => {
+    await removeMyPossibleImpulse(4);
+    expect(mockApiRequest).toHaveBeenCalledWith(
+      "/api/impulses/possible/4",
+      expect.objectContaining({ method: "DELETE" }),
     );
   });
 

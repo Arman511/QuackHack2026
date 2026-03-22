@@ -140,6 +140,12 @@ export interface SetupBankAccountsRequest {
   saving: SetupBankAccountDetails;
 }
 
+export interface AddMoneyRequest {
+  sort_code: string;
+  account_number: string;
+  amount: number;
+}
+
 export interface CreateBankAccountsResponse {
   current: BankAccountPublic;
   saving: BankAccountPublic;

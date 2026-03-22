@@ -93,6 +93,12 @@ class SetupBankAccountsRequest(BaseModel):
     saving: SetupBankAccountDetails
 
 
+class AddMoneyRequest(BaseModel):
+    sort_code: str
+    account_number: str
+    amount: int = Field(gt=0)
+
+
 class BankAccountPublic(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
