@@ -267,3 +267,7 @@ data/*
 .sources.*
 .source.swp
 .githooks/pre-commit
+tests/
+.vscode/
+.githooks/
+.github/

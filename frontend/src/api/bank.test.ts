@@ -125,8 +125,8 @@ describe("bank API", () => {
 
   it("createTransactionFromWebhook calls webhook endpoint with skipAuthRefresh", async () => {
     const body: Parameters<typeof createTransactionFromWebhook>[0] = {
-      user_id: 1,
-      source_account_id: 1,
+      sort_code: "112233",
+      account_number: "11111111",
       amount: 12.5,
       timestamp: "2026-01-01T00:00:00Z",
       merchant: "Webhook Merchant",
@@ -147,10 +147,8 @@ describe("bank API", () => {
 
   it("transferBetweenAccounts calls transfer endpoint with POST body", async () => {
     const body: Parameters<typeof transferBetweenAccounts>[0] = {
-      source_account_number: "11111111",
-      source_sort_code: "112233",
-      destination_account_number: "22222222",
-      destination_sort_code: "445566",
+      source_account_id: 1,
+      destination_account_id: 2,
       amount: 75,
     };
 
