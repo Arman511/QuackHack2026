@@ -29,8 +29,8 @@ const DashboardTab = () => {
   // Use real transactions if available, otherwise fallback to mock data
   const displayTransactions = realTransactions.length > 0 ? realTransactions : transactions;
 
-  const budgetPercent = Math.min((impulseSpent / impulseBudget) * 100, 100);
-  const impulseTransactions = displayTransactions.filter((t) => t.isImpulse);
+  const budgetPercent = impulseBudget > 0 ? Math.min((impulseSpent / impulseBudget) * 100, 100) : 0;
+  const impulseTransactions = displayTransactions?.filter((t) => t?.isImpulse) || [];
 
   // Build heatmap for the last 28 days
   const heatmapDays = useMemo(() => {
@@ -225,7 +225,7 @@ const DashboardTab = () => {
       <div className="card-neigh animate-fade-up" style={{ animationDelay: "500ms" }}>
         <div className="flex items-center gap-2 mb-3">
           <p className="text-sm font-medium">Punishment History</p>
-          <img src="/horse-head.png" alt="Horse" className="w-6 h-6 object-contain inline" />
+          <img src="/horse-head.png" alt="Horse" className="w-7 h-7 object-contain inline" />
         </div>
         <div className="space-y-3">
           {punishments.map((p, i) => (
