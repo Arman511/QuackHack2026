@@ -53,6 +53,12 @@
       "description": "Scope possible impulse zones to users",
       "sqlite": "009_add_user_id_to_possible_impulse_zones.sqlite.sql",
       "postgresql": "009_add_user_id_to_possible_impulse_zones.postgresql.sql"
+    },
+    {
+      "id": "010_set_default_admin_roles",
+      "description": "Ensure seeded admin user has ADMIN,USER roles",
+      "sqlite": "010_set_default_admin_roles.sqlite.sql",
+      "postgresql": "010_set_default_admin_roles.postgresql.sql"
     }
   ]
 }
