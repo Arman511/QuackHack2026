@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useApp } from "@/hooks/useApp";
 import { Button } from "@/components/ui/button";
 import { Target } from "lucide-react";
+import { formatPounds } from "@/utils/currency";
 
 interface GoalsTabProps {
   logout: () => void;
@@ -141,7 +142,7 @@ const GoalsTab = ({ logout }: GoalsTabProps) => {
                 <div className="flex-1">
                   <p className="text-sm font-medium">{goal.name}</p>
                   <p className="text-xs text-muted-foreground tabular-nums">
-                    £{goal.saved} of £{goal.target}
+                    £{formatPounds(goal.saved)} of £{goal.target}
                   </p>
                 </div>
                 <span className="text-sm font-bold text-primary tabular-nums">

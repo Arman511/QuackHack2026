@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# Images ReadMe
+.assets
+
 # Distribution / packaging
 .Python
 build/
@@ -267,3 +270,7 @@ data/*
 .sources.*
 .source.swp
 .githooks/pre-commit
+tests/
+.vscode/
+.githooks/
+.github/

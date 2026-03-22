@@ -83,7 +83,7 @@ describe("GoalsTab", () => {
   it("shows goal card when a goal exists", async () => {
     await renderTab({ withGoal: true });
     expect(screen.getByText("Travel")).toBeInTheDocument();
-    expect(screen.getByText(/£300 of £1000/)).toBeInTheDocument();
+    expect(screen.getByText(/£300.00 of £1000/)).toBeInTheDocument();
   });
 
   it("shows justification modal when neigh-tax is lowered", async () => {
