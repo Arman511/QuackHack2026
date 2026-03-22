@@ -116,6 +116,19 @@ class TransactionORM(Base):
     )
 
 
+class TransactionPunishmentORM(Base):
+    __tablename__ = "transaction_punishments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=False, index=True
+    )
+    tax_amount: Mapped[int] = mapped_column(Integer, nullable=False)
+    timestamp: Mapped[datetime] = mapped_column(
+        DateTime(timezone=False), nullable=False, index=True
+    )
+
+
 class UserMetadataORM(Base):
     __tablename__ = "user_metadata"
 

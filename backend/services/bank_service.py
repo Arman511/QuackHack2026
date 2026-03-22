@@ -22,6 +22,7 @@ from backend.models import (
     TransactionCreate,
     TransactionWebhookCreate,
     TransactionHydratedPublic,
+    TransactionPunishmentPublic,
     TransactionPublic,
     UserDB,
     UserGoalSetRequest,
@@ -37,6 +38,9 @@ from backend.models import (
 from backend.repositories.bank_account_repository import BankAccountRepository
 from backend.repositories.impulse_zone_repository import ImpulseZoneRepository
 from backend.repositories.transaction_repository import TransactionRepository
+from backend.repositories.transaction_punishment_repository import (
+    TransactionPunishmentRepository,
+)
 from backend.repositories.user_metadata_repository import UserMetadataRepository
 from backend.utils.config import (
     MACRODROID_OVERSPEND_TRIGGER_SLUGS,
@@ -93,8 +97,6 @@ def create_user_transaction(
             detail="Insufficient funds in the source account for this transaction",
         )
 
-
-    
     transaction = TransactionRepository(db).create_transaction(
         user_id=current_user.id,
         source_account_id=payload.source_account_id,
@@ -105,7 +107,7 @@ def create_user_transaction(
         possible_impulse_zone_id=payload.possible_impulse_zone_id,
     )
     logger.info("Transaction created transaction_id=%s", _id_for_log(transaction))
-    
+
     # Deduct transaction amount from source account
     new_source_balance = source_account.amount - payload.amount
     account_repo.update_amount(source_account.id, new_source_balance)
@@ -114,7 +116,7 @@ def create_user_transaction(
         source_account.id,
         new_source_balance,
     )
-    
+
     # If user has money remaining, calculate and deduct tax (based on transaction amount) to goal savings account
     if new_source_balance > 0:
         metadata = UserMetadataRepository(db).get_by_user_id(current_user.id)
@@ -133,7 +135,7 @@ def create_user_transaction(
                     tax_amount,
                     tax_deducted_balance,
                 )
-                
+
                 # Add tax to goal savings account
                 goal_account = account_repo.get_by_id(metadata.bank_account_id)
                 if goal_account:
@@ -145,7 +147,17 @@ def create_user_transaction(
                         tax_amount,
                         new_goal_balance,
                     )
-    
+                TransactionPunishmentRepository(db).create_tax_collection(
+                    user_id=current_user.id,
+                    tax_amount=tax_amount,
+                    timestamp=payload.timestamp,
+                )
+                logger.info(
+                    "Recorded transaction punishment user_id=%s tax_amount=%s",
+                    current_user.id,
+                    tax_amount,
+                )
+
     _maybe_trigger_over_budget_macro(
         db,
         user_id=current_user.id,
@@ -190,7 +202,7 @@ def create_webhook_transaction(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Bank account not found for provided account number and sort code",
         )
-    
+
     if source_account.amount - payload.amount < 0:
         logger.warning(
             "Webhook transaction denied due to insufficient funds account_id=%s current_amount=%s transaction_amount=%s",
@@ -216,7 +228,7 @@ def create_webhook_transaction(
         "Webhook transaction created transaction_id=%s",
         _id_for_log(transaction),
     )
-    
+
     # Deduct transaction amount from source account
     new_source_balance = source_account.amount - payload.amount
     account_repo.update_amount(source_account.id, new_source_balance)
@@ -225,7 +237,7 @@ def create_webhook_transaction(
         source_account.id,
         new_source_balance,
     )
-    
+
     # If user has money remaining, calculate and deduct tax (based on transaction amount) to goal savings account
     if new_source_balance > 0:
         metadata = UserMetadataRepository(db).get_by_user_id(source_account.user_id)
@@ -244,7 +256,7 @@ def create_webhook_transaction(
                     tax_amount,
                     tax_deducted_balance,
                 )
-                
+
                 # Add tax to goal savings account
                 goal_account = account_repo.get_by_id(metadata.bank_account_id)
                 if goal_account:
@@ -256,7 +268,17 @@ def create_webhook_transaction(
                         tax_amount,
                         new_goal_balance,
                     )
-    
+                TransactionPunishmentRepository(db).create_tax_collection(
+                    user_id=source_account.user_id,
+                    tax_amount=tax_amount,
+                    timestamp=payload.timestamp,
+                )
+                logger.info(
+                    "Recorded webhook transaction punishment user_id=%s tax_amount=%s",
+                    source_account.user_id,
+                    tax_amount,
+                )
+
     _maybe_trigger_over_budget_macro(
         db,
         user_id=source_account.user_id,
@@ -327,6 +349,20 @@ def list_user_transactions_hydrated(
     rows = TransactionRepository(db).get_by_user_id_hydrated(current_user.id)
     logger.debug(
         "Fetched %s hydrated transactions for user_id=%s",
+        len(rows),
+        current_user.id,
+    )
+    return rows
+
+
+def list_user_transaction_punishments(
+    db: Session,
+    *,
+    current_user: UserDB,
+) -> list[TransactionPunishmentPublic]:
+    rows = TransactionPunishmentRepository(db).list_by_user_id(current_user.id)
+    logger.debug(
+        "Fetched %s transaction punishments for user_id=%s",
         len(rows),
         current_user.id,
     )
@@ -929,7 +965,7 @@ def _maybe_trigger_over_budget_macro(
         start=start,
         end=end,
     )
-    
+
     previous_total = total - transaction_amount
     if previous_total <= limit_value < total:
         slug = _pick_macrodroid_trigger_slug()
@@ -952,7 +988,7 @@ def get_user_limit_status(
     )
 
     limit_value = metadata.impulse_limit if metadata else None
-    passed = bool(limit_value is not None and total > limit_value*100)
+    passed = bool(limit_value is not None and total > limit_value * 100)
     result = UserLimitStatusPublic(
         current_month_expenditure=total,
         impulse_limit=limit_value,

@@ -187,6 +187,13 @@ export interface TransactionHydratedPublic extends TransactionPublic {
   possible_impulse_zone_name?: string | null;
 }
 
+export interface TransactionPunishmentPublic {
+  id: number;
+  user_id: number;
+  tax_amount: number;
+  timestamp: string;
+}
+
 export interface TransactionSearchItemPublic {
   id: number;
   user_id: number;

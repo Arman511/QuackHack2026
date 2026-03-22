@@ -196,6 +196,15 @@ class TransactionHydratedPublic(TransactionPublic):
     possible_impulse_zone_name: str | None = None
 
 
+class TransactionPunishmentPublic(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    user_id: int
+    tax_amount: int
+    timestamp: datetime
+
+
 class TransactionSearchItemPublic(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

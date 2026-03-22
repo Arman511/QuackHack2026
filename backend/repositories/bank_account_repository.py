@@ -158,7 +158,7 @@ class BankAccountRepository:
         saving_sort_code: str,
     ) -> tuple[BankAccountPublic, BankAccountPublic]:
         """Create CURRENT and SAVING accounts for a user using explicit details.
-        
+
         Both accounts are created in a single transaction. If the saving account
         creation fails, the current account creation is rolled back.
         """

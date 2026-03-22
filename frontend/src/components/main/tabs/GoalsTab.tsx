@@ -14,6 +14,7 @@ const GoalsTab = ({ logout }: GoalsTabProps) => {
     user,
     fetchBankAccounts,
     updateGoal,
+    punishments,
     neighTaxPercent,
     updateTaxPercentage,
   } = useApp();
@@ -124,7 +125,8 @@ const GoalsTab = ({ logout }: GoalsTabProps) => {
         </div>
 
         {goals.map((goal, i) => {
-          const percent = Math.min((goal.saved / goal.target) * 100, 100);
+          const basePercent = goal.target > 0 ? (goal.saved / goal.target) * 100 : 0;
+          const percent = Math.min(basePercent + punishments.length, 100);
           const IconComponent = getIcon(goal.icon);
           return (
             <div
@@ -170,10 +172,11 @@ const GoalsTab = ({ logout }: GoalsTabProps) => {
               key={pct}
               onClick={() => handleTaxChange(pct)}
               disabled={isUpdatingTax}
-              className={`py-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.96] border disabled:opacity-50 ${neighTaxPercent === pct
+              className={`py-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.96] border disabled:opacity-50 ${
+                neighTaxPercent === pct
                   ? "bg-primary text-primary-foreground border-primary"
                   : "bg-secondary text-secondary-foreground border-border"
-                }`}
+              }`}
             >
               {isUpdatingTax ? "..." : `${pct}%`}
             </button>
