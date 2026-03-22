@@ -1,10 +1,14 @@
 import { useApp } from "@/hooks/useApp";
 import { useMemo, useEffect } from "react";
-import { AlertTriangle, Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
-const DashboardTab = () => {
+interface DashboardTabProps {
+  logout: () => void;
+}
+
+const DashboardTab = ({ logout }: DashboardTabProps) => {
   const {
     totalSaved,
     impulseBudget,
@@ -17,6 +21,7 @@ const DashboardTab = () => {
     clearTransactionsError,
     punishments,
     user,
+    neighTaxPercent, // Add this to get the tax percentage
   } = useApp();
 
   // Fetch transactions when component mounts
@@ -72,12 +77,20 @@ const DashboardTab = () => {
 
   const maxSpend = Math.max(...heatmapDays.map((d) => d.total), 1);
 
+  // Calculate the multiplier based on tax percentage
+  const multiplier = 1 + neighTaxPercent / 100; // e.g., 100% tax = 2x, 200% tax = 3x
+
   return (
     <div className="p-4 space-y-5">
       {/* Header */}
-      <div className="flex items-center gap-2 animate-fade-up">
-        <img src="/horse-head.png" alt="Horse" className="w-10 h-10 object-contain" />
-        <h1 className="text-lg font-bold">Neigh-ver Go Broke!</h1>
+      <div className="flex items-center justify-between animate-fade-up">
+        <div className="flex items-center gap-2">
+          <img src="/horse-head.png" alt="Horse" className="w-10 h-10 object-contain" />
+          <h1 className="text-lg font-bold">Neigh-ver Go Broke!</h1>
+        </div>
+        <Button variant="outline" size="sm" onClick={logout}>
+          Log Out
+        </Button>
       </div>
 
       {/* Transaction Loading State */}
@@ -119,11 +132,11 @@ const DashboardTab = () => {
         </Alert>
       )}
 
-      {/* Savings Vault */}
+      {/* Money Locked Away */}
       <div className="card-neigh text-center animate-fade-up" style={{ animationDelay: "100ms" }}>
         <div className="flex items-center justify-center gap-2 mb-2">
           <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
-            Savings Vault
+            Money Locked Away
           </p>
           <img src="/coin.png" alt="Coin" className="w-4 h-4 object-contain" />
         </div>
@@ -142,23 +155,25 @@ const DashboardTab = () => {
               cy="50"
               r="42"
               fill="none"
-              stroke="var(--color-savings)"
+              stroke="var(--color-impulse)"
               strokeWidth="8"
               strokeDasharray={`${(totalSaved / 2000) * 264} 264`}
               strokeLinecap="round"
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-xl font-bold">£{totalSaved}</span>
+            <span className="text-xl font-bold text-impulse">£{totalSaved}</span>
           </div>
         </div>
-        <p className="text-xs text-muted-foreground">saved so far</p>
+        <p className="text-xs text-muted-foreground mb-1">
+          Because you cannot be trusted yourself.
+        </p>
       </div>
 
       {/* Impulse Budget */}
       <div className="card-neigh animate-fade-up" style={{ animationDelay: "200ms" }}>
         <div className="flex justify-between items-center mb-3">
-          <span className="text-sm font-medium">Impulse Budget</span>
+          <span className="text-sm font-medium">Impulse Budget Spent</span>
           <span className="text-sm font-bold tabular-nums">
             £{impulseSpent} / £{impulseBudget}
           </span>
@@ -179,8 +194,8 @@ const DashboardTab = () => {
         </div>
         {budgetPercent > 80 && (
           <div className="flex items-center gap-1 text-xs text-impulse mt-2">
-            <AlertTriangle size={12} />
-            <span>Whoa there cowboy, budget nearly gone!</span>
+            <img src="/coin.png" alt="Coin" className="w-3 h-3 object-contain" />
+            <span>We're stepping in — you've proven you can't manage money responsibly.</span>
           </div>
         )}
       </div>
@@ -293,44 +308,73 @@ const DashboardTab = () => {
 
       {/* Recent Impulse Purchases */}
       <div className="card-neigh animate-fade-up" style={{ animationDelay: "400ms" }}>
-        <p className="text-sm font-medium mb-3">Recent Impulse Buys</p>
+        <div className="mb-3">
+          <p className="text-sm font-medium mb-1">Poor Financial Choices</p>
+          <p className="text-xs text-muted-foreground">
+            We charged you {((neighTaxPercent / 100) * 100).toFixed(0)}% extra on these purchases
+            because you clearly can't control yourself. This money is now protecting your goals
+            instead.
+          </p>
+        </div>
         <div className="space-y-3">
-          {impulseTransactions.slice(0, 5).map((tx, i) => (
-            <div
-              key={tx.id}
-              className="flex items-start justify-between animate-fade-up"
-              style={{ animationDelay: `${450 + i * 60}ms` }}
-            >
-              <div>
-                <p className="text-sm font-medium">{tx.description}</p>
-                <p className="text-xs text-muted-foreground italic">{tx.horseMessage}</p>
+          {impulseTransactions.length > 0 ? (
+            impulseTransactions.slice(0, 5).map((tx, i) => (
+              <div
+                key={tx.id}
+                className="flex items-start justify-between animate-fade-up"
+                style={{ animationDelay: `${450 + i * 60}ms` }}
+              >
+                <div>
+                  <p className="text-sm font-medium">{tx.description}</p>
+                  <p className="text-xs text-muted-foreground italic">{tx.horseMessage}</p>
+                </div>
+                <span className="text-sm font-bold text-impulse tabular-nums whitespace-nowrap ml-3">
+                  -£{tx.amount.toFixed(2)}
+                </span>
               </div>
-              <span className="text-sm font-bold text-impulse tabular-nums whitespace-nowrap ml-3">
-                -£{tx.amount.toFixed(2)}
-              </span>
+            ))
+          ) : (
+            <div className="text-center py-4">
+              <p className="text-sm text-muted-foreground">No wasteful spending yet!</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                You're keeping money for your goals 🐎
+              </p>
             </div>
-          ))}
+          )}
         </div>
       </div>
 
-      {/* Training Sessions */}
+      {/* Name and Shame */}
       <div className="card-neigh animate-fade-up" style={{ animationDelay: "500ms" }}>
-        <div className="flex items-center gap-2 mb-3">
-          <p className="text-sm font-medium">Training Sessions</p>
+        <div className="flex items-center gap-2 mb-2">
+          <p className="text-sm font-medium">Name and Shame</p>
           <img src="/horse-head.png" alt="Horse" className="w-7 h-7 object-contain inline" />
         </div>
+        <p className="text-xs text-muted-foreground mb-3">
+          When you exceed your spending limit, we intervene with punishments because you clearly
+          need external accountability to protect your financial goals.
+        </p>
         <div className="space-y-3">
-          {punishments.map((p, i) => (
-            <div
-              key={p.id}
-              className="rounded-xl bg-secondary p-3 animate-fade-up"
-              style={{ animationDelay: `${550 + i * 80}ms` }}
-            >
-              <p className="text-xs text-muted-foreground mb-1">{p.transactionDesc}</p>
-              <p className="text-sm">{p.punishment}</p>
-              <p className="text-xs text-muted-foreground mt-1">{p.date}</p>
+          {punishments.length > 0 ? (
+            punishments.map((p, i) => (
+              <div
+                key={p.id}
+                className="rounded-xl bg-secondary p-3 animate-fade-up"
+                style={{ animationDelay: `${550 + i * 80}ms` }}
+              >
+                <p className="text-xs text-muted-foreground mb-1">{p.transactionDesc}</p>
+                <p className="text-sm">{p.punishment}</p>
+                <p className="text-xs text-muted-foreground mt-1">{p.date}</p>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-4">
+              <p className="text-sm text-muted-foreground">No intervention needed yet!</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Your goals are safe from wasteful spending 🐎
+              </p>
             </div>
-          ))}
+          )}
         </div>
       </div>
     </div>

@@ -21,15 +21,10 @@ const MainApp = () => {
   return (
     <div className="min-h-screen pb-20">
       <div className="max-w-lg mx-auto">
-        <div className="p-4 pb-0 flex justify-end">
-          <Button variant="outline" size="sm" onClick={logout}>
-            Log Out
-          </Button>
-        </div>
-        {activeTab === "dashboard" && <DashboardTab />}
-        {activeTab === "goals" && <GoalsTab />}
-        {activeTab === "notifications" && <NotificationsTab />}
-        {activeTab === "profile" && <ProfileTab />}
+        {activeTab === "dashboard" && <DashboardTab logout={logout} />}
+        {activeTab === "goals" && <GoalsTab logout={logout} />}
+        {activeTab === "notifications" && <NotificationsTab logout={logout} />}
+        {activeTab === "profile" && <ProfileTab logout={logout} />}
       </div>
 
       <nav className="bottom-nav">

@@ -16,6 +16,10 @@ const getNotificationIcon = (
   const content = `${notification.title} ${notification.message}`.toLowerCase();
 
   if (notification.type === "impulse") {
+    // Budget warning specific
+    if (content.includes("budget warning") || content.includes("budget")) {
+      return () => <img src="/coin.png" alt="Coin" className="w-14 h-14 object-contain" />;
+    }
     // Gaming/Steam related
     if (content.includes("steam") || content.includes("video game") || content.includes("gaming")) {
       return () => <img src="/controller.png" alt="Gaming" className="w-14 h-14 object-contain" />;

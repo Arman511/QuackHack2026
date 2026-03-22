@@ -3,7 +3,11 @@ import { useApp } from "@/hooks/useApp";
 import { Button } from "@/components/ui/button";
 import { Target } from "lucide-react";
 
-const GoalsTab = () => {
+interface GoalsTabProps {
+  logout: () => void;
+}
+
+const GoalsTab = ({ logout }: GoalsTabProps) => {
   const { goals, updateGoal, neighTaxPercent, updateTaxPercentage } = useApp();
   const [justifyModal, setJustifyModal] = useState<string | null>(null);
   const [justification, setJustification] = useState("");
@@ -14,7 +18,7 @@ const GoalsTab = () => {
     const iconMap: Record<string, string> = {
       travel: "/travel.png",
       shield: "/sheild.png", // Note: filename is "sheild" not "shield"
-      shopping: "/shopping.png",
+      shopping: "/clothes.png", // Changed from shopping.png to clothes.png
       house: "/house.png",
       debt: "/debt.png",
       target: "/target.png", // Add target image for custom goals
@@ -80,9 +84,18 @@ const GoalsTab = () => {
 
   return (
     <div className="p-4 space-y-5">
-      <div className="flex items-center gap-2">
-        <img src="/target.png" alt="Target" className="w-10 h-10 object-contain animate-fade-up" />
-        <h1 className="text-lg font-bold animate-fade-up">Savings Goals</h1>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <img
+            src="/target.png"
+            alt="Target"
+            className="w-10 h-10 object-contain animate-fade-up"
+          />
+          <h1 className="text-lg font-bold animate-fade-up">Savings Goals</h1>
+        </div>
+        <Button variant="outline" size="sm" onClick={logout}>
+          Log Out
+        </Button>
       </div>
 
       <div className="space-y-3">

@@ -207,6 +207,29 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       userData.tax_percentage != null ||
       selectedImpulses.length > 0;
 
+    const getGoalIcon = (goalName: string) => {
+      const name = goalName.toLowerCase();
+
+      if (name.includes("shopping") || name.includes("clothes") || name.includes("fashion")) {
+        return "shopping";
+      }
+      if (name.includes("travel") || name.includes("holiday") || name.includes("vacation")) {
+        return "travel";
+      }
+      if (name.includes("emergency") || name.includes("security") || name.includes("fund")) {
+        return "shield";
+      }
+      if (name.includes("house") || name.includes("home") || name.includes("deposit")) {
+        return "house";
+      }
+      if (name.includes("debt") || name.includes("loan") || name.includes("credit")) {
+        return "debt";
+      }
+
+      // Default fallback
+      return "target";
+    };
+
     update({
       goals: goalName
         ? [
@@ -215,7 +238,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
               name: goalName,
               target: 1000,
               saved: 0,
-              icon: "target",
+              icon: getGoalIcon(goalName),
             },
           ]
         : [],
