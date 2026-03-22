@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useApp } from "@/hooks/useApp";
 import { Button } from "@/components/ui/button";
 import { Target } from "lucide-react";
@@ -8,11 +8,25 @@ interface GoalsTabProps {
 }
 
 const GoalsTab = ({ logout }: GoalsTabProps) => {
-  const { goals, updateGoal, neighTaxPercent, updateTaxPercentage } = useApp();
+  const {
+    goals,
+    totalSaved,
+    user,
+    fetchBankAccounts,
+    updateGoal,
+    neighTaxPercent,
+    updateTaxPercentage,
+  } = useApp();
   const [justifyModal, setJustifyModal] = useState<string | null>(null);
   const [justification, setJustification] = useState("");
   const [pendingTax, setPendingTax] = useState<number | null>(null);
   const [isUpdatingTax, setIsUpdatingTax] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      fetchBankAccounts();
+    }
+  }, [user, fetchBankAccounts]);
 
   const getIcon = (iconName: string) => {
     const iconMap: Record<string, string> = {
@@ -99,6 +113,16 @@ const GoalsTab = ({ logout }: GoalsTabProps) => {
       </div>
 
       <div className="space-y-3">
+        <div className="card-neigh animate-fade-up" style={{ animationDelay: "50ms" }}>
+          <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium mb-1">
+            Total Saved
+          </p>
+          <p className="text-2xl font-bold text-primary tabular-nums">£{totalSaved.toFixed(2)}</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Total across all connected savings accounts.
+          </p>
+        </div>
+
         {goals.map((goal, i) => {
           const percent = Math.min((goal.saved / goal.target) * 100, 100);
           const IconComponent = getIcon(goal.icon);
@@ -146,11 +170,10 @@ const GoalsTab = ({ logout }: GoalsTabProps) => {
               key={pct}
               onClick={() => handleTaxChange(pct)}
               disabled={isUpdatingTax}
-              className={`py-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.96] border disabled:opacity-50 ${
-                neighTaxPercent === pct
+              className={`py-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.96] border disabled:opacity-50 ${neighTaxPercent === pct
                   ? "bg-primary text-primary-foreground border-primary"
                   : "bg-secondary text-secondary-foreground border-border"
-              }`}
+                }`}
             >
               {isUpdatingTax ? "..." : `${pct}%`}
             </button>

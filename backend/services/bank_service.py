@@ -81,7 +81,20 @@ def create_user_transaction(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Source account does not belong to the authenticated user",
         )
+    if source_account.amount - payload.amount < 0:
+        logger.warning(
+            "Webhook transaction denied due to insufficient funds account_id=%s current_amount=%s transaction_amount=%s",
+            source_account.id,
+            source_account.amount,
+            payload.amount,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Insufficient funds in the source account for this transaction",
+        )
 
+
+    
     transaction = TransactionRepository(db).create_transaction(
         user_id=current_user.id,
         source_account_id=payload.source_account_id,
@@ -92,6 +105,47 @@ def create_user_transaction(
         possible_impulse_zone_id=payload.possible_impulse_zone_id,
     )
     logger.info("Transaction created transaction_id=%s", _id_for_log(transaction))
+    
+    # Deduct transaction amount from source account
+    new_source_balance = source_account.amount - payload.amount
+    account_repo.update_amount(source_account.id, new_source_balance)
+    logger.info(
+        "Deducted transaction amount from source account account_id=%s new_balance=%s",
+        source_account.id,
+        new_source_balance,
+    )
+    
+    # If user has money remaining, calculate and deduct tax (based on transaction amount) to goal savings account
+    if new_source_balance > 0:
+        metadata = UserMetadataRepository(db).get_by_user_id(current_user.id)
+        if metadata and metadata.tax_percentage and metadata.bank_account_id:
+            # Tax is calculated as percentage of transaction amount
+            tax_to_collect = int((payload.amount * metadata.tax_percentage) / 100)
+            # But take only what's available in the remaining balance
+            tax_amount = min(tax_to_collect, new_source_balance)
+            if tax_amount > 0:
+                # Deduct tax from source account
+                tax_deducted_balance = new_source_balance - tax_amount
+                account_repo.update_amount(source_account.id, tax_deducted_balance)
+                logger.info(
+                    "Deducted tax from source account account_id=%s tax_amount=%s new_balance=%s",
+                    source_account.id,
+                    tax_amount,
+                    tax_deducted_balance,
+                )
+                
+                # Add tax to goal savings account
+                goal_account = account_repo.get_by_id(metadata.bank_account_id)
+                if goal_account:
+                    new_goal_balance = goal_account.amount + tax_amount
+                    account_repo.update_amount(goal_account.id, new_goal_balance)
+                    logger.info(
+                        "Added tax to goal savings account account_id=%s tax_amount=%s new_balance=%s",
+                        goal_account.id,
+                        tax_amount,
+                        new_goal_balance,
+                    )
+    
     _maybe_trigger_over_budget_macro(
         db,
         user_id=current_user.id,
@@ -136,6 +190,18 @@ def create_webhook_transaction(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Bank account not found for provided account number and sort code",
         )
+    
+    if source_account.amount - payload.amount < 0:
+        logger.warning(
+            "Webhook transaction denied due to insufficient funds account_id=%s current_amount=%s transaction_amount=%s",
+            source_account.id,
+            source_account.amount,
+            payload.amount,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Insufficient funds in the source account for this transaction",
+        )
 
     transaction = TransactionRepository(db).create_transaction(
         user_id=source_account.user_id,
@@ -150,6 +216,47 @@ def create_webhook_transaction(
         "Webhook transaction created transaction_id=%s",
         _id_for_log(transaction),
     )
+    
+    # Deduct transaction amount from source account
+    new_source_balance = source_account.amount - payload.amount
+    account_repo.update_amount(source_account.id, new_source_balance)
+    logger.info(
+        "Deducted transaction amount from source account account_id=%s new_balance=%s",
+        source_account.id,
+        new_source_balance,
+    )
+    
+    # If user has money remaining, calculate and deduct tax (based on transaction amount) to goal savings account
+    if new_source_balance > 0:
+        metadata = UserMetadataRepository(db).get_by_user_id(source_account.user_id)
+        if metadata and metadata.tax_percentage and metadata.bank_account_id:
+            # Tax is calculated as percentage of transaction amount
+            tax_to_collect = int((payload.amount * metadata.tax_percentage) / 100)
+            # But take only what's available in the remaining balance
+            tax_amount = min(tax_to_collect, new_source_balance)
+            if tax_amount > 0:
+                # Deduct tax from source account
+                tax_deducted_balance = new_source_balance - tax_amount
+                account_repo.update_amount(source_account.id, tax_deducted_balance)
+                logger.info(
+                    "Deducted tax from source account account_id=%s tax_amount=%s new_balance=%s",
+                    source_account.id,
+                    tax_amount,
+                    tax_deducted_balance,
+                )
+                
+                # Add tax to goal savings account
+                goal_account = account_repo.get_by_id(metadata.bank_account_id)
+                if goal_account:
+                    new_goal_balance = goal_account.amount + tax_amount
+                    account_repo.update_amount(goal_account.id, new_goal_balance)
+                    logger.info(
+                        "Added tax to goal savings account account_id=%s tax_amount=%s new_balance=%s",
+                        goal_account.id,
+                        tax_amount,
+                        new_goal_balance,
+                    )
+    
     _maybe_trigger_over_budget_macro(
         db,
         user_id=source_account.user_id,
@@ -822,6 +929,7 @@ def _maybe_trigger_over_budget_macro(
         start=start,
         end=end,
     )
+    
     previous_total = total - transaction_amount
     if previous_total <= limit_value < total:
         slug = _pick_macrodroid_trigger_slug()
