@@ -9,6 +9,7 @@ from backend.models import (
     UserLimitStatusPublic,
     UserMetadataPublic,
     UserRead,
+    UserTaxPercentagePatchRequest,
     UserUpdate,
 )
 from backend.services.bank_service import (
@@ -19,6 +20,7 @@ from backend.services.bank_service import (
 from backend.services.user_service import (
     admin_patch_user,
     delete_user,
+    patch_current_user_tax_percentage,
     update_current_user_profile,
     admin_get_user_by_id,
 )
@@ -52,6 +54,21 @@ def set_my_goal(
     """Set or update the authenticated user's goal and spending controls."""
     logger.info("Setting goal metadata for user_id=%s", current_user.id)
     return set_user_goal(db, current_user=current_user, payload=payload)
+
+
+@router.patch("/me/tax-percentage", response_model=UserMetadataPublic)
+def patch_my_tax_percentage(
+    payload: UserTaxPercentagePatchRequest,
+    db: db_dependency,
+    current_user: current_user_dependency,
+):
+    """Patch authenticated user's tax percentage."""
+    logger.info("Patching tax percentage for user_id=%s", current_user.id)
+    return patch_current_user_tax_percentage(
+        db,
+        current_user=current_user,
+        tax_percentage=payload.tax_percentage,
+    )
 
 
 @router.get("/me/is-passed-limit", response_model=UserLimitStatusPublic)

@@ -77,6 +77,10 @@ export interface UserGoalSetRequest {
   tax_percentage?: number | null;
 }
 
+export interface UserTaxPercentagePatchRequest {
+  tax_percentage: number;
+}
+
 export interface UserMetadataPublic {
   id: number;
   user_id: number;

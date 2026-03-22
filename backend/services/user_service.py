@@ -2,7 +2,15 @@ from fastapi import HTTPException, status
 import logging
 from sqlalchemy.orm import Session
 
-from backend.models import UserAdminPatch, UserDB, UserRead, UserTypeEnum, UserUpdate
+from backend.models import (
+    UserAdminPatch,
+    UserDB,
+    UserMetadataPublic,
+    UserRead,
+    UserTypeEnum,
+    UserUpdate,
+)
+from backend.repositories.user_metadata_repository import UserMetadataRepository
 from backend.repositories.user_repository import UserRepository
 from backend.services.auth_service import get_password_hash, roles_to_csv
 
@@ -134,3 +142,32 @@ def delete_user(
         user_id,
     )
     return {"deleted": True}
+
+
+def patch_current_user_tax_percentage(
+    db: Session,
+    *,
+    current_user: UserDB,
+    tax_percentage: int,
+) -> UserMetadataPublic:
+    """Update only tax percentage for current user metadata."""
+    logger.info(
+        "Patching tax percentage for user_id=%s tax_percentage=%s",
+        current_user.id,
+        tax_percentage,
+    )
+    metadata_repo = UserMetadataRepository(db)
+    existing = metadata_repo.get_by_user_id(current_user.id)
+    patched = metadata_repo.set_goal(
+        user_id=current_user.id,
+        goal=existing.goal if existing else None,
+        bank_account_id=existing.bank_account_id if existing else None,
+        impulse_limit=existing.impulse_limit if existing else None,
+        tax_percentage=tax_percentage,
+    )
+    logger.info(
+        "Tax percentage patched for user_id=%s metadata_id=%s",
+        current_user.id,
+        patched.id,
+    )
+    return patched
