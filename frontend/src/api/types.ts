@@ -242,4 +242,8 @@ export interface HTTPValidationError {
   detail?: ValidationError[];
 }
 
+export interface DeletedResponse {
+  deleted: boolean;
+}
+
 export type EmptyResponse = Record<string, never>;

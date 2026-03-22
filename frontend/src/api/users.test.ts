@@ -12,6 +12,7 @@ vi.mock("@/api/http", () => ({
 }));
 
 import {
+  deleteUser,
   updateMyProfile,
   setMyGoal,
   getMyLimitStatus,
@@ -68,6 +69,14 @@ describe("users API", () => {
     expect(mockApiRequest).toHaveBeenCalledWith(
       "/api/users/7",
       expect.objectContaining({ method: "PATCH", body }),
+    );
+  });
+
+  it("deleteUser calls DELETE /api/users/:id", async () => {
+    await deleteUser(11);
+    expect(mockApiRequest).toHaveBeenCalledWith(
+      "/api/users/11",
+      expect.objectContaining({ method: "DELETE" }),
     );
   });
 });
