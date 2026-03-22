@@ -156,7 +156,7 @@ const ProfileTab = () => {
         {!bankAccountsLoading && bankAccounts.length === 0 && connectedBank && (
           <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
             <span className="text-sm font-medium">{connectedBank}</span>
-            <span className="text-xs text-muted-foreground">Setup pending</span>
+            <span className="text-xs text-muted-foreground">Connected</span>
           </div>
         )}
 

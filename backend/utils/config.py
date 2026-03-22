@@ -12,6 +12,10 @@ DB_PORT = os.getenv("DB_PORT", 5432)
 DB_DIALECT = os.getenv("DB_DIALECT", "sqlite").lower()
 SQLITE_DB_PATH = os.getenv("SQLITE_DB_PATH", "./data/stables.db")
 DATABASE_URL = os.getenv("DATABASE_URL")
+DB_POOL_SIZE = int(os.getenv("DB_POOL_SIZE", "20"))
+DB_MAX_OVERFLOW = int(os.getenv("DB_MAX_OVERFLOW", "40"))
+DB_POOL_TIMEOUT = int(os.getenv("DB_POOL_TIMEOUT", "30"))
+DB_POOL_RECYCLE = int(os.getenv("DB_POOL_RECYCLE", "1800"))
 
 SECRET_KEY = os.getenv("SECRET_KEY", "")
 if not SECRET_KEY or SECRET_KEY.strip() == "":

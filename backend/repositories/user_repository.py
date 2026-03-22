@@ -45,6 +45,12 @@ class UserRepository:
         LIMIT :limit OFFSET :offset
         """)
 
+    SQL_DELETE_USER_BY_ID = text("""
+        DELETE FROM users
+        WHERE id = :user_id
+        RETURNING id
+        """)
+
     def __init__(self, db: Session):
         self.db = db
 
@@ -280,3 +286,21 @@ class UserRepository:
             logger.debug("Admin user lookup miss user_id=%s", user_id)
             return None
         return UserDB(**row)
+
+    def delete_user_by_id(self, user_id: int) -> bool:
+        """Delete a user by ID."""
+        row = (
+            self.db.execute(
+                self.SQL_DELETE_USER_BY_ID,
+                {"user_id": user_id},
+            )
+            .mappings()
+            .first()
+        )
+        self.db.commit()
+        deleted = row is not None
+        if deleted:
+            logger.info("Deleted user user_id=%s", user_id)
+        else:
+            logger.debug("Delete user miss user_id=%s", user_id)
+        return deleted

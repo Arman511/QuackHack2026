@@ -2,6 +2,7 @@ from fastapi import APIRouter
 import logging
 
 from backend.models import (
+    DeletedResponse,
     PossibleImpulseZonePublic,
     UserAdminPatch,
     UserGoalSetRequest,
@@ -17,6 +18,7 @@ from backend.services.bank_service import (
 )
 from backend.services.user_service import (
     admin_patch_user,
+    delete_user,
     update_current_user_profile,
     admin_get_user_by_id,
 )
@@ -97,3 +99,16 @@ def patch_user_as_admin(
         "Admin patch user actor_id=%s target_user_id=%s", admin_user.id, user_id
     )
     return admin_patch_user(db, actor=admin_user, user_id=user_id, payload=payload)
+
+
+@router.delete("/{user_id}", response_model=DeletedResponse)
+def delete_user_account(
+    user_id: int,
+    db: db_dependency,
+    current_user: current_user_dependency,
+):
+    """Delete a user account (self or admin)."""
+    logger.info(
+        "Delete user requested actor_id=%s target_user_id=%s", current_user.id, user_id
+    )
+    return delete_user(db, actor=current_user, user_id=user_id)
