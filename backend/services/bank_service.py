@@ -1041,6 +1041,12 @@ def _trigger_over_budget_macro(url: str) -> None:
         )
 
 
+def _is_past_limit(total: int, limit_value: int | None) -> bool:
+    if limit_value is None:
+        return False
+    return total > limit_value * 100
+
+
 def _maybe_trigger_over_budget_macro(
     db: Session,
     *,
@@ -1065,14 +1071,18 @@ def _maybe_trigger_over_budget_macro(
     )
 
     previous_total = total - transaction_amount
+    was_past_limit = _is_past_limit(previous_total, limit_value)
+    is_past_limit = _is_past_limit(total, limit_value)
     logger.info(
-        "Checking over-budget macro trigger user_id=%s previous_total=%s new_total=%s limit=%s",
+        "Checking over-budget macro trigger user_id=%s previous_total=%s new_total=%s limit=%s, was_past_limit=%s is_past_limit=%s",
         user_id,
         previous_total,
         total,
         limit_value,
+        was_past_limit,
+        is_past_limit
     )
-    if previous_total <= limit_value < total:
+    if not was_past_limit and is_past_limit:
         slug = _pick_macrodroid_trigger_slug()
         url = _build_macrodroid_trigger_url(slug)
         _trigger_over_budget_macro(url)
@@ -1093,7 +1103,7 @@ def get_user_limit_status(
     )
 
     limit_value = metadata.impulse_limit if metadata else None
-    passed = bool(limit_value is not None and total > limit_value * 100)
+    passed = _is_past_limit(total, limit_value)
     result = UserLimitStatusPublic(
         current_month_expenditure=total,
         impulse_limit=limit_value,
