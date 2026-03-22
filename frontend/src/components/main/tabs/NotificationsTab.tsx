@@ -1,5 +1,6 @@
 import { useApp } from "@/hooks/useApp";
-import { Bell, Skull, Vault, Megaphone } from "lucide-react";
+import { Skull, Vault, Megaphone } from "lucide-react";
+import { Notification } from "@/data/mockData";
 
 const typeColors: Record<string, string> = {
   impulse: "bg-impulse/10 text-impulse",
@@ -8,11 +9,52 @@ const typeColors: Record<string, string> = {
   info: "bg-secondary text-muted-foreground",
 };
 
-const typeIcons: Record<string, React.ComponentType<{ size?: number }>> = {
-  impulse: () => <img src="/horse-head.png" alt="Horse" className="w-5 h-5 object-contain" />,
-  punishment: Skull,
-  savings: Vault,
-  info: Megaphone,
+// Function to determine the appropriate icon based on notification content
+const getNotificationIcon = (
+  notification: Notification,
+): React.ComponentType<{ size?: number }> => {
+  const content = `${notification.title} ${notification.message}`.toLowerCase();
+
+  if (notification.type === "impulse") {
+    // Gaming/Steam related
+    if (content.includes("steam") || content.includes("video game") || content.includes("gaming")) {
+      return () => <img src="/controller.png" alt="Gaming" className="w-14 h-14 object-contain" />;
+    }
+    // Food related (takeaway, food delivery, coffee)
+    if (
+      content.includes("takeaway") ||
+      content.includes("food") ||
+      content.includes("deliveroo") ||
+      content.includes("coffee")
+    ) {
+      return () => <img src="/carrot.png" alt="Food" className="w-14 h-14 object-contain" />;
+    }
+    // Default impulse icon
+    return () => <img src="/horse-head.png" alt="Horse" className="w-14 h-14 object-contain" />;
+  }
+
+  if (notification.type === "punishment") {
+    // Horse neigh related punishments
+    if (content.includes("neigh") || content.includes("nfc tap")) {
+      return () => <img src="/neigh.png" alt="Neigh" className="w-14 h-14 object-contain" />;
+    }
+    // Hobby horsing related punishments
+    if (content.includes("hobby horsing")) {
+      return () => (
+        <img src="/hobby-horse.png" alt="Hobby Horse" className="w-14 h-14 object-contain" />
+      );
+    }
+    // Default punishment icon
+    return Skull;
+  }
+
+  // Default icons for other types
+  const typeIcons: Record<string, React.ComponentType<{ size?: number }>> = {
+    savings: Vault,
+    info: Megaphone,
+  };
+
+  return typeIcons[notification.type] || Megaphone;
 };
 
 const NotificationsTab = () => {
@@ -22,7 +64,11 @@ const NotificationsTab = () => {
     <div className="p-4 space-y-5">
       <div className="flex items-center gap-2">
         <h1 className="text-lg font-bold animate-fade-up">Notifications</h1>
-        <Bell size={20} className="text-muted-foreground animate-fade-up" />
+        <img
+          src="/notification.png"
+          alt="Notifications"
+          className="w-10 h-10 object-contain animate-fade-up"
+        />
       </div>
 
       <div className="space-y-3">
@@ -34,15 +80,25 @@ const NotificationsTab = () => {
           >
             <div className="flex items-start gap-3">
               <span
-                className={`w-9 h-9 rounded-xl flex items-center justify-center text-base shrink-0 ${typeColors[n.type]}`}
+                className={`w-16 h-16 rounded-xl flex items-center justify-center text-base shrink-0 ${typeColors[n.type]}`}
               >
                 {(() => {
-                  const IconComponent = typeIcons[n.type];
-                  if (n.type === "impulse") {
+                  const IconComponent = getNotificationIcon(n);
+
+                  // Check if it's one of our custom image components
+                  if (
+                    n.type === "impulse" ||
+                    (n.type === "punishment" &&
+                      (n.message.toLowerCase().includes("neigh") ||
+                        n.message.toLowerCase().includes("nfc tap") ||
+                        n.message.toLowerCase().includes("hobby horsing")))
+                  ) {
                     return <IconComponent />;
+                  } else {
+                    // It's a Lucide icon
+                    const LucideIcon = IconComponent as React.ComponentType<{ size?: number }>;
+                    return <LucideIcon size={28} />;
                   }
-                  const LucideIcon = IconComponent as React.ComponentType<{ size?: number }>;
-                  return <LucideIcon size={16} />;
                 })()}
               </span>
               <div className="flex-1 min-w-0">
