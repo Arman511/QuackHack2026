@@ -180,6 +180,7 @@ class TransactionRepository:
         merchant: str,
         impulse_zone_id: int | None = None,
         possible_impulse_zone_id: int | None = None,
+        commit: bool = True,
     ) -> TransactionPublic:
         """Create a new transaction."""
         logger.info(
@@ -203,7 +204,8 @@ class TransactionRepository:
             .mappings()
             .first()
         )
-        self.db.commit()
+        if commit:
+            self.db.commit()
         if row is None:
             logger.error(
                 "Transaction create failed user_id=%s source_account_id=%s",
