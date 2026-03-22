@@ -500,12 +500,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       const accounts = await listAccounts();
       const totalSavedCalculated = calculateTotalSavedFromAccounts(accounts);
 
-      update({
+      setState((prev) => ({
+        ...prev,
         bankAccounts: accounts,
         totalSaved: totalSavedCalculated,
-        goals: state.goals.map((goal) => ({ ...goal, saved: totalSavedCalculated })),
+        goals: prev.goals.map((goal) => ({ ...goal, saved: totalSavedCalculated })),
         bankAccountsLoading: false,
-      });
+      }));
     } catch (error) {
       console.error("Failed to fetch bank accounts:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to load bank accounts";
@@ -514,7 +515,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         bankAccountsError: errorMessage,
       });
     }
-  }, [calculateTotalSavedFromAccounts, state.goals]);
+  }, [calculateTotalSavedFromAccounts]);
 
   const refreshBankData = async () => {
     await fetchBankAccounts();
@@ -586,17 +587,18 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       // Money locked away is the sum of all savings account balances.
       const totalSavedCalculated = calculateTotalSavedFromAccounts(accounts);
 
-      update({
+      setState((prev) => ({
+        ...prev,
         realTransactions: transformedTransactions,
         realTransactionsLoading: false,
         bankAccounts: accounts,
         punishments: transformedPunishments,
         impulseSpent: impulseTotal,
         totalSaved: totalSavedCalculated,
-        goals: state.goals.map((goal) => ({ ...goal, saved: totalSavedCalculated })),
+        goals: prev.goals.map((goal) => ({ ...goal, saved: totalSavedCalculated })),
         // Update transactions array for backward compatibility
         transactions: transformedTransactions,
-      });
+      }));
     } catch (error) {
       console.error("Failed to fetch transactions:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to load transactions";
@@ -605,12 +607,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         realTransactionsError: errorMessage,
       });
     }
-  }, [
-    calculateTotalSavedFromAccounts,
-    state.goals,
-    transformApiPunishment,
-    transformApiTransaction,
-  ]);
+  }, [calculateTotalSavedFromAccounts, transformApiPunishment, transformApiTransaction]);
 
   const refreshTransactionData = async () => {
     await fetchTransactions();
