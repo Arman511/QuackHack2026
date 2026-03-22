@@ -73,6 +73,19 @@ describe("BankDetailsPage", () => {
     expect(screen.getByRole("button", { name: /Connect Accounts/i })).toBeInTheDocument();
   });
 
+  it("limits account number inputs to 8 digits", async () => {
+    await renderPage();
+
+    const checkingInput = screen.getByPlaceholderText("12345678") as HTMLInputElement;
+    const savingsInput = screen.getByPlaceholderText("87654321") as HTMLInputElement;
+
+    fireEvent.change(checkingInput, { target: { value: "123456789999" } });
+    fireEvent.change(savingsInput, { target: { value: "876543210000" } });
+
+    expect(checkingInput.value).toBe("12345678");
+    expect(savingsInput.value).toBe("87654321");
+  });
+
   it("renders Back button", async () => {
     await renderPage();
     expect(screen.getByText(/← Back/i)).toBeInTheDocument();

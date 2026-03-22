@@ -17,6 +17,13 @@ import {
 } from "@/data/mockData";
 import { login, register, me, logout as apiLogout } from "@/api/auth";
 import { listAccounts, listMyTransactions } from "@/api/bank";
+import {
+  createPossibleImpulse,
+  getAllImpulses,
+  getMyImpulses,
+  replaceMyImpulses,
+} from "@/api/impulses";
+import { setMyGoal } from "@/api/users";
 import { tokenStore } from "@/api/http";
 import type {
   UserLoginRequest,
@@ -105,7 +112,7 @@ interface AppContextType extends AppState {
 
   // Existing functions
   setOnboardingStep: (s: number) => void;
-  completeOnboarding: () => void;
+  completeOnboarding: () => Promise<void>;
   setEmail: (e: string) => void;
   connectBank: (b: string) => void;
   saveBankDetails: (details: BankDetails) => void;
@@ -166,20 +173,131 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
   const update = (partial: Partial<AppState>) => setState((prev) => ({ ...prev, ...partial }));
 
+  const defaultImpulseBudget = 100;
+  const defaultTaxPercent = 100;
+
+  const hydrateOnboardingState = useCallback(async (userData: UserMePublic) => {
+    let selectedImpulses: string[] = [];
+
+    try {
+      const impulseBundle = await getMyImpulses();
+      const realImpulses = impulseBundle?.impulses ?? [];
+      const possibleImpulses = impulseBundle?.possible ?? [];
+      selectedImpulses = [
+        ...realImpulses.map((zone) => zone.name),
+        ...possibleImpulses.map((zone) => zone.name),
+      ];
+    } catch (error) {
+      console.error("Failed to fetch impulse bundle:", error);
+    }
+
+    const goalName = userData.goal?.trim();
+    const hasOnboardingData =
+      !!goalName ||
+      userData.impulse_limit != null ||
+      userData.tax_percentage != null ||
+      selectedImpulses.length > 0;
+
+    update({
+      goals: goalName
+        ? [
+          {
+            id: `server-goal-${userData.id}`,
+            name: goalName,
+            target: 1000,
+            saved: 0,
+            icon: "target",
+          },
+        ]
+        : [],
+      impulseBudget: userData.impulse_limit ?? defaultImpulseBudget,
+      neighTaxPercent: userData.tax_percentage ?? defaultTaxPercent,
+      impulseCategories: selectedImpulses,
+      isOnboarded: hasOnboardingData,
+    });
+
+    return hasOnboardingData;
+  }, []);
+
+  const persistOnboardingState = useCallback(async (snapshot: AppState) => {
+    const goalName = snapshot.goals[0]?.name?.trim() || null;
+
+    await setMyGoal({
+      goal: goalName,
+      impulse_limit: snapshot.impulseBudget,
+      tax_percentage: snapshot.neighTaxPercent,
+    });
+
+    const [allImpulsesResponse, currentBundleResponse] = await Promise.all([
+      getAllImpulses(),
+      getMyImpulses(),
+    ]);
+    const allImpulses = allImpulsesResponse ?? [];
+    const currentBundle = currentBundleResponse ?? { impulses: [], possible: [] };
+
+    const selectedByLowerName = new Set(
+      snapshot.impulseCategories.map((name) => name.trim()).filter(Boolean).map((name) => name.toLowerCase()),
+    );
+    const realImpulseIds = allImpulses
+      .filter((zone) => selectedByLowerName.has(zone.name.toLowerCase()))
+      .map((zone) => zone.id);
+
+    await replaceMyImpulses({ impulse_ids: realImpulseIds });
+
+    const knownNames = new Set(allImpulses.map((zone) => zone.name.toLowerCase()));
+    const existingPossibleNames = new Set(
+      currentBundle.possible.map((zone) => zone.name.toLowerCase()),
+    );
+
+    const newPossibleNames = snapshot.impulseCategories
+      .map((name) => name.trim())
+      .filter(Boolean)
+      .filter((name) => {
+        const lower = name.toLowerCase();
+        return !knownNames.has(lower) && !existingPossibleNames.has(lower);
+      });
+
+    await Promise.all(
+      newPossibleNames.map(async (name) => {
+        try {
+          await createPossibleImpulse({ name });
+        } catch (error) {
+          console.error(`Failed to create possible impulse: ${name}`, error);
+        }
+      }),
+    );
+  }, []);
+
   // Check for existing authentication on mount
   useEffect(() => {
     const checkExistingAuth = async () => {
-      const tokens = tokenStore.getTokens();
-      if (tokens?.access_token) {
+      const accessToken = tokenStore.getAccessToken();
+      if (accessToken) {
         try {
           update({ authLoading: true, authError: null });
           const userData = await me();
+          const hasOnboardingData = await hydrateOnboardingState(userData);
+
           update({
             isAuthenticated: true,
             user: userData,
             email: userData.email || "",
             authLoading: false,
+            isOnboarded: hasOnboardingData,
           });
+
+          try {
+            const accountsResponse = await listAccounts();
+            const accounts = accountsResponse ?? [];
+            update({
+              bankAccounts: accounts,
+              onboardingStep: hasOnboardingData ? 1 : accounts.length > 0 ? 3 : 1,
+            });
+
+            await fetchTransactions();
+          } catch (error) {
+            console.error("Failed to hydrate bank data on auth check:", error);
+          }
         } catch (error) {
           console.error("Auth check failed:", error);
           tokenStore.clear();
@@ -201,26 +319,29 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const handleLogin = async (credentials: UserLoginRequest) => {
     try {
       update({ authLoading: true, authError: null });
-      const tokenData = await login(credentials);
+      await login(credentials);
       const userData = await me();
+      const hasOnboardingData = await hydrateOnboardingState(userData);
+
       update({
         isAuthenticated: true,
         user: userData,
         email: userData.email || "",
         authLoading: false,
-        onboardingStep: userData.total_impulse_spent !== undefined ? 0 : 1, // Skip onboarding if user has data
+        isOnboarded: hasOnboardingData,
       });
 
       // Fetch user's bank accounts and transactions after successful login
       try {
         // Fetch bank accounts first to determine onboarding flow
-        const accounts = await listAccounts();
+        const accountsResponse = await listAccounts();
+        const accounts = accountsResponse ?? [];
 
         // Determine appropriate onboarding step based on user data and bank accounts
         let appropriateOnboardingStep = 1; // Default to first step
 
-        if (userData.total_impulse_spent !== undefined) {
-          appropriateOnboardingStep = 0; // Skip onboarding completely if user has data
+        if (hasOnboardingData) {
+          appropriateOnboardingStep = 1;
         } else if (accounts.length > 0) {
           appropriateOnboardingStep = 3; // Skip bank steps if accounts exist
         }
@@ -459,7 +580,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     // Existing functions
     setOnboardingStep: (s) => update({ onboardingStep: s }),
-    completeOnboarding: () => update({ isOnboarded: true }),
+    completeOnboarding: async () => {
+      update({ isOnboarded: true });
+      try {
+        await persistOnboardingState(state);
+      } catch (error) {
+        console.error("Failed to persist onboarding state:", error);
+      }
+    },
     setEmail: (e) => update({ email: e }),
     connectBank: (b) => update({ connectedBank: b }),
     saveBankDetails: (details) => update({ bankDetails: details }),
