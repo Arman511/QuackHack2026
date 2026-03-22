@@ -58,6 +58,20 @@ class BankAccountRepository:
         RETURNING id, user_id, bank_account_id, account_number, sort_code, name, provider, type, amount, created_at, updated_at
         """)
 
+    SQL_DEBIT_ACCOUNT = text("""
+        UPDATE bank_accounts
+        SET amount = amount - :amount, updated_at = CURRENT_TIMESTAMP
+        WHERE id = :account_id AND amount >= :amount
+        RETURNING id, user_id, bank_account_id, account_number, sort_code, name, provider, type, amount, created_at, updated_at
+        """)
+
+    SQL_CREDIT_ACCOUNT = text("""
+        UPDATE bank_accounts
+        SET amount = amount + :amount, updated_at = CURRENT_TIMESTAMP
+        WHERE id = :account_id
+        RETURNING id, user_id, bank_account_id, account_number, sort_code, name, provider, type, amount, created_at, updated_at
+        """)
+
     SQL_SELECT_BY_ACCOUNT_NUMBER_AND_SORT_CODE = text("""
         SELECT id, user_id, bank_account_id, account_number, sort_code, name, provider, type, amount, created_at, updated_at
         FROM bank_accounts
@@ -321,3 +335,51 @@ class BankAccountRepository:
         account = BankAccountPublic(**row)
         logger.debug("Updated bank account amount account_id=%s", account.id)
         return account
+
+    def transfer_between_accounts(
+        self,
+        *,
+        source_account_id: int,
+        destination_account_id: int,
+        amount: int,
+    ) -> tuple[BankAccountPublic, BankAccountPublic]:
+        """Transfer funds atomically between two accounts."""
+        logger.info(
+            "Transferring funds source_account_id=%s destination_account_id=%s amount=%s",
+            source_account_id,
+            destination_account_id,
+            amount,
+        )
+        if source_account_id == destination_account_id:
+            raise ValueError("Source and destination accounts must be different")
+
+        try:
+            source_row = (
+                self.db.execute(
+                    self.SQL_DEBIT_ACCOUNT,
+                    {"account_id": source_account_id, "amount": amount},
+                )
+                .mappings()
+                .first()
+            )
+            if source_row is None:
+                self.db.rollback()
+                raise ValueError("Insufficient funds in source account")
+
+            destination_row = (
+                self.db.execute(
+                    self.SQL_CREDIT_ACCOUNT,
+                    {"account_id": destination_account_id, "amount": amount},
+                )
+                .mappings()
+                .first()
+            )
+            if destination_row is None:
+                self.db.rollback()
+                raise RuntimeError("Destination account was not found")
+
+            self.db.commit()
+            return BankAccountPublic(**source_row), BankAccountPublic(**destination_row)
+        except Exception:
+            self.db.rollback()
+            raise

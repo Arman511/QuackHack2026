@@ -14,6 +14,7 @@ from backend.models import (
     CreateBankAccountsRequest,
     SetupBankAccountDetails,
     SetupBankAccountsRequest,
+    TransferBetweenAccountsRequest,
     TransactionDateRangeQuery,
     UserDB,
     UserTypeEnum,
@@ -385,6 +386,138 @@ def test_add_money_to_account_rejects_missing_account(monkeypatch) -> None:
         exc_info.value.detail
         == "Bank account not found for provided account number and sort code"
     )
+
+
+def test_transfer_between_my_accounts_rejects_same_account() -> None:
+    payload = TransferBetweenAccountsRequest(
+        source_account_id=1,
+        destination_account_id=1,
+        amount=100,
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        bank_service.transfer_between_my_accounts(
+            db=cast(Session, object()),
+            current_user=cast(UserDB, SimpleNamespace(id=7)),
+            payload=payload,
+        )
+
+    assert exc_info.value.status_code == 400
+    assert exc_info.value.detail == "Source and destination accounts must be different"
+
+
+def test_transfer_between_my_accounts_rejects_when_destination_not_owned(
+    monkeypatch,
+) -> None:
+    payload = TransferBetweenAccountsRequest(
+        source_account_id=1,
+        destination_account_id=2,
+        amount=250,
+    )
+
+    class FakeBankAccountRepository:
+        def __init__(self, db):
+            pass
+
+        def get_by_id_and_user_id(self, *, account_id, user_id):
+            if account_id == 1:
+                return SimpleNamespace(id=1, user_id=user_id, amount=1000)
+            return None
+
+    monkeypatch.setattr(
+        bank_service, "BankAccountRepository", FakeBankAccountRepository
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        bank_service.transfer_between_my_accounts(
+            db=cast(Session, object()),
+            current_user=cast(UserDB, SimpleNamespace(id=7)),
+            payload=payload,
+        )
+
+    assert exc_info.value.status_code == 403
+    assert (
+        exc_info.value.detail
+        == "Destination account does not belong to the authenticated user"
+    )
+
+
+def test_transfer_between_my_accounts_succeeds(monkeypatch) -> None:
+    payload = TransferBetweenAccountsRequest(
+        source_account_id=11,
+        destination_account_id=12,
+        amount=500,
+    )
+    calls = {}
+
+    class FakeBankAccountRepository:
+        def __init__(self, db):
+            calls["db"] = db
+
+        def get_by_id_and_user_id(self, *, account_id, user_id):
+            if account_id == 11:
+                return SimpleNamespace(id=11, user_id=user_id, amount=2500)
+            if account_id == 12:
+                return SimpleNamespace(id=12, user_id=user_id, amount=300)
+            return None
+
+        def transfer_between_accounts(
+            self, *, source_account_id, destination_account_id, amount
+        ):
+            calls["transfer"] = {
+                "source_account_id": source_account_id,
+                "destination_account_id": destination_account_id,
+                "amount": amount,
+            }
+            return (
+                SimpleNamespace(
+                    id=11,
+                    user_id=77,
+                    bank_account_id="src",
+                    account_number="12345678",
+                    sort_code="112233",
+                    name="Source",
+                    provider=BankProviderEnum.REV_O_TROT,
+                    type=AccountTypeEnum.CURRENT,
+                    amount=2000,
+                    created_at=datetime(2026, 1, 1, 12, 0, 0),
+                    updated_at=datetime(2026, 1, 1, 12, 5, 0),
+                ),
+                SimpleNamespace(
+                    id=12,
+                    user_id=77,
+                    bank_account_id="dst",
+                    account_number="87654321",
+                    sort_code="112233",
+                    name="Destination",
+                    provider=BankProviderEnum.REV_O_TROT,
+                    type=AccountTypeEnum.SAVING,
+                    amount=800,
+                    created_at=datetime(2026, 1, 1, 12, 0, 0),
+                    updated_at=datetime(2026, 1, 1, 12, 5, 0),
+                ),
+            )
+
+    marker_db = cast(Session, object())
+    monkeypatch.setattr(
+        bank_service, "BankAccountRepository", FakeBankAccountRepository
+    )
+
+    result = bank_service.transfer_between_my_accounts(
+        db=marker_db,
+        current_user=cast(UserDB, SimpleNamespace(id=77)),
+        payload=payload,
+    )
+
+    assert calls["db"] is marker_db
+    assert calls["transfer"] == {
+        "source_account_id": 11,
+        "destination_account_id": 12,
+        "amount": 500,
+    }
+    assert result.transferred_amount == 500
+    assert result.source_account.id == 11
+    assert result.destination_account.id == 12
 
 
 def test_add_money_to_account_rejects_non_owner_for_non_admin(monkeypatch) -> None:
