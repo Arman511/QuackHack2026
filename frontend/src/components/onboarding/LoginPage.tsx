@@ -134,13 +134,16 @@ const LoginPage = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           {!isLogin && (
             <>
               <div className="grid grid-cols-2 gap-3 animate-fade-up">
                 <div>
-                  <label className="text-sm font-medium mb-1.5 block">First Name</label>
+                  <label htmlFor="firstName" className="text-sm font-medium mb-1.5 block">
+                    First Name
+                  </label>
                   <input
+                    id="firstName"
                     type="text"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
@@ -150,8 +153,11 @@ const LoginPage = () => {
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-1.5 block">Last Name</label>
+                  <label htmlFor="lastName" className="text-sm font-medium mb-1.5 block">
+                    Last Name
+                  </label>
                   <input
+                    id="lastName"
                     type="text"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
@@ -187,8 +193,11 @@ const LoginPage = () => {
           </div>
           {!isLogin && (
             <div className="animate-fade-up">
-              <label className="text-sm font-medium mb-1.5 block">Confirm Password</label>
+              <label htmlFor="confirmPassword" className="text-sm font-medium mb-1.5 block">
+                Confirm Password
+              </label>
               <input
+                id="confirmPassword"
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
