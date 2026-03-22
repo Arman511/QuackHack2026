@@ -1,15 +1,40 @@
 import { useApp } from "@/hooks/useApp";
-import { useMemo } from "react";
-import { Vault, AlertTriangle, Skull } from "lucide-react";
+import { useMemo, useEffect } from "react";
+import { Vault, AlertTriangle, Loader2, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 
 const DashboardTab = () => {
-  const { totalSaved, impulseBudget, impulseSpent, transactions, punishments } = useApp();
+  const {
+    totalSaved,
+    impulseBudget,
+    impulseSpent,
+    transactions,
+    realTransactions,
+    realTransactionsLoading,
+    realTransactionsError,
+    fetchTransactions,
+    clearTransactionsError,
+    punishments,
+    user,
+  } = useApp();
+
+  // Fetch transactions when component mounts
+  useEffect(() => {
+    if (user) {
+      fetchTransactions();
+    }
+  }, [user, fetchTransactions]);
+
+  // Use real transactions if available, otherwise fallback to mock data
+  const displayTransactions = realTransactions.length > 0 ? realTransactions : transactions;
+
   const budgetPercent = Math.min((impulseSpent / impulseBudget) * 100, 100);
-  const impulseTransactions = transactions.filter((t) => t.isImpulse);
+  const impulseTransactions = displayTransactions.filter((t) => t.isImpulse);
 
   // Build heatmap for the last 28 days
   const heatmapDays = useMemo(() => {
-    const days: { date: string; total: number; txs: typeof transactions }[] = [];
+    const days: { date: string; total: number; txs: typeof displayTransactions }[] = [];
     for (let i = 27; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
@@ -31,6 +56,45 @@ const DashboardTab = () => {
         <h1 className="text-lg font-bold">Neigh-ver Go Broke!</h1>
       </div>
 
+      {/* Transaction Loading State */}
+      {realTransactionsLoading && (
+        <div
+          className="card-neigh animate-fade-up flex items-center gap-2 justify-center py-4"
+          style={{ animationDelay: "50ms" }}
+        >
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span className="text-sm text-muted-foreground">Loading your transactions...</span>
+        </div>
+      )}
+
+      {/* Transaction Error State */}
+      {realTransactionsError && (
+        <Alert variant="destructive" className="animate-fade-up" style={{ animationDelay: "50ms" }}>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="flex items-center justify-between">
+            <span>{realTransactionsError}</span>
+            <div className="flex gap-2">
+              <Button
+                variant="link"
+                size="sm"
+                className="h-auto p-0 text-destructive underline"
+                onClick={fetchTransactions}
+              >
+                Retry
+              </Button>
+              <Button
+                variant="link"
+                size="sm"
+                className="h-auto p-0 text-destructive underline"
+                onClick={clearTransactionsError}
+              >
+                Dismiss
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Savings Vault */}
       <div className="card-neigh text-center animate-fade-up" style={{ animationDelay: "100ms" }}>
         <div className="flex items-center justify-center gap-2 mb-2">
@@ -46,7 +110,7 @@ const DashboardTab = () => {
               cy="50"
               r="42"
               fill="none"
-              stroke="hsl(var(--border))"
+              stroke="var(--color-border)"
               strokeWidth="8"
             />
             <circle
@@ -54,7 +118,7 @@ const DashboardTab = () => {
               cy="50"
               r="42"
               fill="none"
-              stroke="hsl(var(--savings))"
+              stroke="var(--color-savings)"
               strokeWidth="8"
               strokeDasharray={`${(totalSaved / 2000) * 264} 264`}
               strokeLinecap="round"
@@ -82,10 +146,10 @@ const DashboardTab = () => {
               width: `${budgetPercent}%`,
               backgroundColor:
                 budgetPercent > 80
-                  ? "hsl(var(--impulse))"
+                  ? "var(--color-impulse)"
                   : budgetPercent > 50
-                    ? "hsl(var(--warning))"
-                    : "hsl(var(--savings))",
+                    ? "var(--color-warning)"
+                    : "var(--color-savings)",
             }}
           />
         </div>
@@ -110,8 +174,8 @@ const DashboardTab = () => {
                 style={{
                   backgroundColor:
                     day.total === 0
-                      ? "hsl(var(--secondary))"
-                      : `hsl(var(--primary) / ${0.2 + intensity * 0.8})`,
+                      ? "var(--color-secondary)"
+                      : `color-mix(in srgb, var(--color-primary) ${(0.2 + intensity * 0.8) * 100}%, transparent)`,
                 }}
                 title={`${day.date}: £${day.total.toFixed(2)}`}
               />
@@ -125,7 +189,9 @@ const DashboardTab = () => {
               <div
                 key={opacity}
                 className="w-3 h-3 rounded-sm"
-                style={{ backgroundColor: `hsl(var(--primary) / ${opacity})` }}
+                style={{
+                  backgroundColor: `color-mix(in srgb, var(--color-primary) ${opacity * 100}%, transparent)`,
+                }}
               />
             ))}
           </div>
@@ -160,7 +226,6 @@ const DashboardTab = () => {
         <div className="flex items-center gap-2 mb-3">
           <p className="text-sm font-medium">Punishment History</p>
           <img src="/horse-head.png" alt="Horse" className="w-6 h-6 object-contain inline" />
-          <Skull size={16} className="text-muted-foreground" />
         </div>
         <div className="space-y-3">
           {punishments.map((p, i) => (
