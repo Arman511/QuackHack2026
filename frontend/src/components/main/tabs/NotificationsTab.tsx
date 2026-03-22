@@ -1,5 +1,6 @@
 import { useApp } from "@/hooks/useApp";
 import { Skull, Vault, Megaphone } from "lucide-react";
+import { Notification } from "@/data/mockData";
 
 const typeColors: Record<string, string> = {
   impulse: "bg-impulse/10 text-impulse",
@@ -9,7 +10,9 @@ const typeColors: Record<string, string> = {
 };
 
 // Function to determine the appropriate icon based on notification content
-const getNotificationIcon = (notification: any): React.ComponentType<{ size?: number }> => {
+const getNotificationIcon = (
+  notification: Notification,
+): React.ComponentType<{ size?: number }> => {
   const content = `${notification.title} ${notification.message}`.toLowerCase();
 
   if (notification.type === "impulse") {
