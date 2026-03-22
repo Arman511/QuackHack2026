@@ -17,7 +17,38 @@ HAS_FRONTEND_NODE_MODULES := $(if $(wildcard frontend/node_modules),yes,no)
 HAS_TESTS_DIR := $(if $(wildcard tests),yes,no)
 HAS_FRONTEND_TEST_SCRIPT := $(shell python -c "import json, pathlib; p = pathlib.Path('frontend/package.json'); print('yes' if p.exists() and 'test' in json.loads(p.read_text()).get('scripts', {}) else 'no')" 2>$(NULL_DEVICE))
 
-.PHONY: serve serve-local local build format lint test back-cover front-cover cover down down-local install-hooks
+.PHONY: install serve serve-local local build format lint test back-cover front-cover cover down down-local install-hooks
+
+install:
+ifeq ($(OS),Windows_NT)
+	@where uv >NUL 2>NUL || (echo "uv not found; installing uv" && powershell -ExecutionPolicy Bypass -c "irm https://astral.sh/uv/install.ps1 | iex")
+	@where pnpm >NUL 2>NUL || (echo "pnpm not found; installing pnpm" && npm install -g pnpm)
+	@uv sync
+	@pnpm --dir frontend install --frozen-lockfile
+else
+	@if ! command -v uv >/dev/null 2>&1; then \
+		echo "uv not found; installing uv"; \
+		curl -LsSf https://astral.sh/uv/install.sh | sh; \
+	fi
+	@if ! command -v pnpm >/dev/null 2>&1; then \
+		echo "pnpm not found; installing pnpm"; \
+		if command -v corepack >/dev/null 2>&1; then \
+			corepack enable && corepack prepare pnpm@latest --activate; \
+		elif command -v npm >/dev/null 2>&1; then \
+			npm install -g pnpm; \
+		else \
+			echo "npm/corepack not found; install Node.js first"; \
+			exit 1; \
+		fi; \
+	fi
+	@UV_CMD=$$(command -v uv || echo "$$HOME/.local/bin/uv"); \
+	if [ ! -x "$$UV_CMD" ]; then \
+		echo "uv install did not produce an executable in PATH"; \
+		exit 1; \
+	fi; \
+	"$$UV_CMD" sync
+	@pnpm --dir frontend install --frozen-lockfile
+endif
 
 serve:
 	$(COMPOSE) -f $(COMPOSE_FILE) up --build -d
