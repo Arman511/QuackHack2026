@@ -34,6 +34,7 @@ class TransactionPunishmentRepository:
         user_id: int,
         tax_amount: int,
         timestamp: datetime,
+        commit: bool = True,
     ) -> TransactionPunishmentPublic:
         row = (
             self.db.execute(
@@ -47,7 +48,8 @@ class TransactionPunishmentRepository:
             .mappings()
             .first()
         )
-        self.db.commit()
+        if commit:
+            self.db.commit()
         if row is None:
             logger.error(
                 "Failed to create transaction punishment user_id=%s tax_amount=%s",

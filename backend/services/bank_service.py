@@ -228,6 +228,7 @@ def create_webhook_transaction(
             merchant=payload.merchant,
             impulse_zone_id=payload.impulse_zone_id,
             possible_impulse_zone_id=payload.possible_impulse_zone_id,
+            commit=False,
         )
         logger.info(
             "Webhook transaction created transaction_id=%s",
@@ -236,7 +237,7 @@ def create_webhook_transaction(
 
         # Deduct transaction amount from source account
         new_source_balance = source_account.amount - payload.amount
-        account_repo.update_amount(source_account.id, new_source_balance)
+        account_repo.update_amount(source_account.id, new_source_balance, commit=False)
         logger.info(
             "Deducted transaction amount from source account account_id=%s new_balance=%s",
             source_account.id,
@@ -254,7 +255,9 @@ def create_webhook_transaction(
                 if tax_amount > 0:
                     # Deduct tax from source account
                     tax_deducted_balance = new_source_balance - tax_amount
-                    account_repo.update_amount(source_account.id, tax_deducted_balance)
+                    account_repo.update_amount(
+                        source_account.id, tax_deducted_balance, commit=False
+                    )
                     logger.info(
                         "Deducted tax from source account account_id=%s tax_amount=%s new_balance=%s",
                         source_account.id,
@@ -266,7 +269,9 @@ def create_webhook_transaction(
                     goal_account = account_repo.get_by_id(metadata.bank_account_id)
                     if goal_account:
                         new_goal_balance = goal_account.amount + tax_amount
-                        account_repo.update_amount(goal_account.id, new_goal_balance)
+                        account_repo.update_amount(
+                            goal_account.id, new_goal_balance, commit=False
+                        )
                         logger.info(
                             "Added tax to goal savings account account_id=%s tax_amount=%s new_balance=%s",
                             goal_account.id,
@@ -277,6 +282,7 @@ def create_webhook_transaction(
                         user_id=source_account.user_id,
                         tax_amount=tax_amount,
                         timestamp=payload.timestamp,
+                        commit=False,
                     )
                     logger.info(
                         "Recorded webhook transaction punishment user_id=%s tax_amount=%s",
@@ -296,6 +302,9 @@ def create_webhook_transaction(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Transaction processing failed and was rolled back",
         ) from e
+
+    # Commit the outer transaction
+    db.commit()
 
     _maybe_trigger_over_budget_macro(
         db,

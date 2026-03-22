@@ -313,7 +313,9 @@ class BankAccountRepository:
             return None
         return BankAccountPublic(**row)
 
-    def update_amount(self, account_id: int, new_amount: int) -> BankAccountPublic:
+    def update_amount(
+        self, account_id: int, new_amount: int, commit: bool = True
+    ) -> BankAccountPublic:
         """Update the balance of a bank account."""
         logger.info(
             "Updating bank account amount account_id=%s amount=%s",
@@ -328,7 +330,8 @@ class BankAccountRepository:
             .mappings()
             .first()
         )
-        self.db.commit()
+        if commit:
+            self.db.commit()
         if row is None:
             logger.error("Bank account amount update failed account_id=%s", account_id)
             raise RuntimeError("Failed to update account amount")

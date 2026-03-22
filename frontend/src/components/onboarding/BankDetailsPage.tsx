@@ -10,29 +10,37 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useState } from "react";
 import { bankOptions } from "@/data/mockData";
-import { setupBankAccounts } from "@/api/bank";
-import { transformFormToApiPayload } from "@/utils/bankMapper";
+import { createBankAccounts } from "@/api/bank";
 import { toast } from "@/utils/toast";
+import type { AccountTypeEnum, BankProviderEnum } from "@/api/types";
+
+const bankProviderMap: Record<string, BankProviderEnum> = {
+  "Mane-zo": "MANE-ZO",
+  "Rev-o-trot": "REV-O-TROT",
+  "Buck-lays": "BUCK-LAYS",
+  "Hay-ch SBC": "HAY-CHSBC",
+};
 
 const formSchema = z.object({
-  // Shared sort code for both accounts
   sortCode: z
     .string()
     .min(6, "Sort code must be 6 digits")
     .max(8, "Sort code must be 6-8 characters"),
-
-  // Checking account details
-  checkingAccountNumber: z.string().regex(/^\d{8}$/, "Account number must be exactly 8 digits"),
-  checkingAccountName: z.string().min(1, "Account name is required"),
-
-  // Savings account details
-  savingsAccountNumber: z.string().regex(/^\d{8}$/, "Account number must be exactly 8 digits"),
-  savingsAccountName: z.string().min(1, "Account name is required"),
+  accountNumber: z.string().regex(/^\d{8}$/, "Account number must be exactly 8 digits"),
+  accountType: z.enum(["CURRENT", "SAVING"]),
+  amount: z.number().min(0, "Amount must be non-negative"),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -56,10 +64,9 @@ const BankDetailsPage = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       sortCode: "",
-      checkingAccountNumber: "",
-      checkingAccountName: "",
-      savingsAccountNumber: "",
-      savingsAccountName: "",
+      accountNumber: "",
+      accountType: "CURRENT",
+      amount: 0,
     },
   });
 
@@ -73,30 +80,28 @@ const BankDetailsPage = () => {
       setIsSubmitting(true);
       setError(null);
 
-      // Transform form data to API payload
-      const apiPayload = transformFormToApiPayload(connectedBank, data);
+      // Get the provider enum value
+      const provider = bankProviderMap[connectedBank];
+      if (!provider) {
+        throw new Error(`Unknown bank provider: ${connectedBank}`);
+      }
 
-      // Call the setupBankAccounts API
-      const response = await setupBankAccounts(apiPayload);
+      // Convert amount to pence (API expects cents)
+      const amountInPence = Math.round(data.amount * 100);
 
-      // Save the bank details to context (for backward compatibility)
-      const bankDetails = {
-        bank: connectedBank,
-        sortCode: data.sortCode,
-        checkingAccount: {
-          number: data.checkingAccountNumber,
-          name: data.checkingAccountName,
-        },
-        savingsAccount: {
-          number: data.savingsAccountNumber,
-          name: data.savingsAccountName,
-        },
-      };
-
-      saveBankDetails(bankDetails);
+      // Call the createBankAccounts API
+      const response = await createBankAccounts({
+        provider,
+        type: data.accountType,
+        account_number: data.accountNumber,
+        sort_code: data.sortCode.replace(/-/g, ""),
+        amount: amountInPence,
+      });
 
       // Show success message
-      toast("Bank accounts connected successfully! 🐎");
+      toast(
+        `${data.accountType === "CURRENT" ? "Checking" : "Savings"} account created successfully! 🐎`,
+      );
 
       if (isAddBankMode) {
         // Complete add bank flow and return to main app
@@ -106,13 +111,11 @@ const BankDetailsPage = () => {
         setOnboardingStep(3);
       }
     } catch (error) {
-      console.error("Bank setup failed:", error);
+      console.error("Bank account creation failed:", error);
 
       // Show user-friendly error message
       const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Failed to connect bank accounts. Please try again.";
+        error instanceof Error ? error.message : "Failed to create bank account. Please try again.";
 
       setError(errorMessage);
     } finally {
@@ -141,10 +144,10 @@ const BankDetailsPage = () => {
           >
             ← Back
           </button>
-          <h2 className="text-xl font-bold">Connect to {connectedBank}</h2>
+          <h2 className="text-xl font-bold">Create Bank Account</h2>
         </div>
         <p className="text-muted-foreground text-sm mt-1">
-          Enter your account details to link your checking and savings accounts.
+          Enter your {connectedBank} account details to create a new account.
         </p>
       </div>
 
@@ -185,28 +188,25 @@ const BankDetailsPage = () => {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Shared Sort Code */}
+          {/* Account Type Selection */}
           <div className="card-neigh animate-fade-up" style={{ animationDelay: "100ms" }}>
-            <h3 className="font-semibold mb-4">Bank Details</h3>
+            <h3 className="font-semibold mb-4">Account Type</h3>
             <FormField
               control={form.control}
-              name="sortCode"
+              name="accountType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Sort Code</FormLabel>
+                  <FormLabel>Select Account Type</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="12-34-56"
-                      {...field}
-                      onChange={(e) => {
-                        // Auto-format sort code with dashes
-                        let value = e.target.value.replace(/\D/g, "");
-                        if (value.length >= 2) value = value.slice(0, 2) + "-" + value.slice(2);
-                        if (value.length >= 5) value = value.slice(0, 5) + "-" + value.slice(5, 7);
-                        field.onChange(value);
-                      }}
-                      maxLength={8}
-                    />
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select account type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="CURRENT">Checking Account</SelectItem>
+                        <SelectItem value="SAVING">Savings Account</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -214,18 +214,30 @@ const BankDetailsPage = () => {
             />
           </div>
 
-          {/* Checking Account */}
+          {/* Bank Details */}
           <div className="card-neigh animate-fade-up" style={{ animationDelay: "200ms" }}>
-            <h3 className="font-semibold mb-4">Checking Account</h3>
+            <h3 className="font-semibold mb-4">Bank Details</h3>
             <div className="space-y-4">
               <FormField
                 control={form.control}
-                name="checkingAccountName"
+                name="sortCode"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Account Name</FormLabel>
+                    <FormLabel>Sort Code</FormLabel>
                     <FormControl>
-                      <Input placeholder="My Checking Account" {...field} />
+                      <Input
+                        placeholder="12-34-56"
+                        {...field}
+                        onChange={(e) => {
+                          // Auto-format sort code with dashes
+                          let value = e.target.value.replace(/\D/g, "");
+                          if (value.length >= 2) value = value.slice(0, 2) + "-" + value.slice(2);
+                          if (value.length >= 5)
+                            value = value.slice(0, 5) + "-" + value.slice(5, 7);
+                          field.onChange(value);
+                        }}
+                        maxLength={8}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -233,7 +245,7 @@ const BankDetailsPage = () => {
               />
               <FormField
                 control={form.control}
-                name="checkingAccountNumber"
+                name="accountNumber"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Account Number</FormLabel>
@@ -256,46 +268,29 @@ const BankDetailsPage = () => {
             </div>
           </div>
 
-          {/* Savings Account */}
+          {/* Initial Amount */}
           <div className="card-neigh animate-fade-up" style={{ animationDelay: "300ms" }}>
-            <h3 className="font-semibold mb-4">Savings Account</h3>
-            <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="savingsAccountName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Account Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="My Savings Account" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="savingsAccountNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Account Number</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="87654321"
-                        {...field}
-                        maxLength={8}
-                        onChange={(e) => {
-                          // Only allow numbers
-                          const value = e.target.value.replace(/\D/g, "").slice(0, 8);
-                          field.onChange(value);
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <h3 className="font-semibold mb-4">Initial Amount</h3>
+            <FormField
+              control={form.control}
+              name="amount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Amount (£)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="0.00"
+                      {...field}
+                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                      step="0.01"
+                      min="0"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
 
           <Button
@@ -307,11 +302,11 @@ const BankDetailsPage = () => {
             {isSubmitting ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                <span>Connecting accounts...</span>
+                <span>Creating account...</span>
               </>
             ) : (
               <>
-                <span>Connect Accounts</span>
+                <span>Create Account</span>
                 <img src="/horse-gallop.png" alt="Horse" className="w-5 h-5 object-contain" />
               </>
             )}
