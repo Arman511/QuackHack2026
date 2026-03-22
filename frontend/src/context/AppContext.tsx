@@ -122,8 +122,8 @@ interface AppContextType extends AppState {
   setEmail: (e: string) => void;
   connectBank: (b: string) => void;
   saveBankDetails: (details: BankDetails) => void;
-  toggleImpulseCategory: (c: string) => void;
-  addCustomCategory: (c: string) => void;
+  toggleImpulseCategory: (c: string) => Promise<void>;
+  addCustomCategory: (c: string) => Promise<void>;
   // Real-time API-integrated impulse category functions
   toggleImpulseCategoryWithApi: (category: string) => Promise<void>;
   addCustomCategoryWithApi: (category: string) => Promise<void>;
@@ -766,19 +766,45 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setEmail: (e) => update({ email: e }),
     connectBank: (b) => update({ connectedBank: b }),
     saveBankDetails: (details) => update({ bankDetails: details }),
-    toggleImpulseCategory: (c) => {
+    toggleImpulseCategory: async (c) => {
+      // Update local state immediately for responsive UI
       setState((prev) => ({
         ...prev,
         impulseCategories: prev.impulseCategories.includes(c)
           ? prev.impulseCategories.filter((x) => x !== c)
           : [...prev.impulseCategories, c],
       }));
+
+      // If user is authenticated, persist changes immediately
+      if (state.isAuthenticated) {
+        try {
+          const newCategories = state.impulseCategories.includes(c)
+            ? state.impulseCategories.filter((x) => x !== c)
+            : [...state.impulseCategories, c];
+          await updateImpulseCategories(newCategories);
+        } catch (error) {
+          console.error("Failed to persist impulse category change:", error);
+          // Could revert local state here if needed
+        }
+      }
     },
-    addCustomCategory: (c) => {
+    addCustomCategory: async (c) => {
+      // Update local state immediately for responsive UI
       setState((prev) => ({
         ...prev,
         impulseCategories: [...prev.impulseCategories, c],
       }));
+
+      // If user is authenticated, persist changes immediately
+      if (state.isAuthenticated) {
+        try {
+          const newCategories = [...state.impulseCategories, c];
+          await updateImpulseCategories(newCategories);
+        } catch (error) {
+          console.error("Failed to persist custom category:", error);
+          // Could revert local state here if needed
+        }
+      }
     },
     // Real-time API-integrated impulse category functions
     toggleImpulseCategoryWithApi,
