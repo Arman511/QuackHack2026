@@ -6,6 +6,8 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    volumes:
+      - ./data:/app/data
     environment:
       SECRET_KEY: ${SECRET_KEY:-dev-secret-change-me}
       DB_DIALECT: sqlite
