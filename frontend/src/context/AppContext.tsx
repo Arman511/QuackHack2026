@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+  useCallback,
+} from "react";
 import {
   mockTransactions,
   mockPunishments,
@@ -299,7 +306,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Bank Account functions
-  const fetchBankAccounts = async () => {
+  const fetchBankAccounts = useCallback(async () => {
     try {
       update({ bankAccountsLoading: true, bankAccountsError: null });
       const accounts = await listAccounts();
@@ -316,7 +323,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         bankAccountsError: errorMessage,
       });
     }
-  };
+  }, []);
 
   const refreshBankData = async () => {
     await fetchBankAccounts();
@@ -350,7 +357,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     return messages[Math.floor(Math.random() * messages.length)];
   };
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     try {
       update({ realTransactionsLoading: true, realTransactionsError: null });
       const apiTransactions = await listMyTransactions();
@@ -376,7 +383,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         realTransactionsError: errorMessage,
       });
     }
-  };
+  }, []);
 
   const refreshTransactionData = async () => {
     await fetchTransactions();
