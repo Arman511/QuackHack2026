@@ -99,6 +99,18 @@ class AddMoneyRequest(BaseModel):
     amount: int = Field(gt=0)
 
 
+class TransferBetweenAccountsRequest(BaseModel):
+    source_account_id: int
+    destination_account_id: int
+    amount: int = Field(gt=0)
+
+
+class TransferBetweenAccountsResponse(BaseModel):
+    source_account: BankAccountPublic
+    destination_account: BankAccountPublic
+    transferred_amount: int
+
+
 class BankAccountPublic(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

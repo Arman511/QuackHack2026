@@ -31,6 +31,8 @@ from backend.models import (
     UserMePublic,
     UserMetadataPublic,
     SetupBankAccountsRequest,
+    TransferBetweenAccountsRequest,
+    TransferBetweenAccountsResponse,
     PaginatedTransactionSearchResponse,
     TransactionSearchItemPublic,
     UserTypeEnum,
@@ -339,6 +341,77 @@ def add_money_to_account(
         updated.amount,
     )
     return updated
+
+
+def transfer_between_my_accounts(
+    db: Session,
+    *,
+    current_user: UserDB,
+    payload: TransferBetweenAccountsRequest,
+) -> TransferBetweenAccountsResponse:
+    logger.info(
+        "Transfer requested user_id=%s source_account_id=%s destination_account_id=%s amount=%s",
+        current_user.id,
+        payload.source_account_id,
+        payload.destination_account_id,
+        payload.amount,
+    )
+    if payload.source_account_id == payload.destination_account_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Source and destination accounts must be different",
+        )
+
+    account_repo = BankAccountRepository(db)
+    source_account = account_repo.get_by_id_and_user_id(
+        account_id=payload.source_account_id,
+        user_id=current_user.id,
+    )
+    if source_account is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Source account does not belong to the authenticated user",
+        )
+
+    destination_account = account_repo.get_by_id_and_user_id(
+        account_id=payload.destination_account_id,
+        user_id=current_user.id,
+    )
+    if destination_account is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Destination account does not belong to the authenticated user",
+        )
+
+    if source_account.amount < payload.amount:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Insufficient funds in source account",
+        )
+
+    try:
+        updated_source, updated_destination = account_repo.transfer_between_accounts(
+            source_account_id=payload.source_account_id,
+            destination_account_id=payload.destination_account_id,
+            amount=payload.amount,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+
+    logger.info(
+        "Transfer completed user_id=%s source_new_amount=%s destination_new_amount=%s",
+        current_user.id,
+        updated_source.amount,
+        updated_destination.amount,
+    )
+    return TransferBetweenAccountsResponse(
+        source_account=updated_source,
+        destination_account=updated_destination,
+        transferred_amount=payload.amount,
+    )
 
 
 def list_user_transactions_hydrated(

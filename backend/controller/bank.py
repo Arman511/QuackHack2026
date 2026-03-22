@@ -9,6 +9,8 @@ from backend.models import (
     CreateBankAccountsRequest,
     CreateBankAccountsResponse,
     SetupBankAccountsRequest,
+    TransferBetweenAccountsRequest,
+    TransferBetweenAccountsResponse,
     PaginatedTransactionSearchResponse,
     TransactionDateRangeQuery,
     TransactionCreate,
@@ -29,6 +31,7 @@ from backend.services.bank_service import (
     list_my_accounts,
     search_user_transactions_by_date,
     setup_bank_accounts_for_user,
+    transfer_between_my_accounts,
 )
 from backend.utils.dependencies import (
     admin_user_dependency,
@@ -181,6 +184,27 @@ def add_money(
         payload.amount,
     )
     return add_money_to_account(db, current_user=current_user, payload=payload)
+
+
+@router.post("/accounts/transfer", response_model=TransferBetweenAccountsResponse)
+def transfer_between_accounts(
+    payload: TransferBetweenAccountsRequest,
+    db: db_dependency,
+    current_user: current_user_dependency,
+):
+    """Transfer money between two authenticated user's bank accounts."""
+    logger.info(
+        "Transfer API request user_id=%s source_account_id=%s destination_account_id=%s amount=%s",
+        current_user.id,
+        payload.source_account_id,
+        payload.destination_account_id,
+        payload.amount,
+    )
+    return transfer_between_my_accounts(
+        db,
+        current_user=current_user,
+        payload=payload,
+    )
 
 
 @router.get("/admin/summary", response_model=list[TransactionPublic])
