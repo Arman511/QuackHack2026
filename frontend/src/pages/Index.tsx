@@ -1,11 +1,12 @@
 import { AppProvider } from "@/context/AppContext";
 import { useApp } from "@/hooks/useApp";
 import OnboardingFlow from "@/components/onboarding/OnboardingFlow";
+import AddBankFlow from "@/components/onboarding/AddBankFlow";
 import MainApp from "@/components/main/MainApp";
 import LoginPage from "@/components/onboarding/LoginPage";
 
 const AppContent = () => {
-  const { isAuthenticated, isOnboarded, authLoading } = useApp();
+  const { isAuthenticated, isOnboarded, authLoading, isAddBankMode } = useApp();
 
   // Show loading spinner while checking authentication
   if (authLoading) {
@@ -22,6 +23,11 @@ const AppContent = () => {
   // Show login page if not authenticated
   if (!isAuthenticated) {
     return <LoginPage />;
+  }
+
+  // Show add bank flow if user is adding a new bank
+  if (isAddBankMode) {
+    return <AddBankFlow />;
   }
 
   // Show onboarding if authenticated but not onboarded

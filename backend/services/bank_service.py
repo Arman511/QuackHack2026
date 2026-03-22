@@ -247,7 +247,11 @@ def create_bank_accounts_for_user(
     )
     account_repo = BankAccountRepository(db)
 
-    account_name_suffix = "Current Account" if payload.type == AccountTypeEnum.CURRENT else "Saving Account"
+    account_name_suffix = (
+        "Current Account"
+        if payload.type == AccountTypeEnum.CURRENT
+        else "Saving Account"
+    )
     try:
         created_account = account_repo.create_account(
             user_id=current_user.id,

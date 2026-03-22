@@ -6,13 +6,15 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    volumes:
+      - ./data:/app/data
     environment:
       DB_DIALECT: sqlite
     networks:
       default:
         aliases:
           - neigh-ver-go-broke
-  
+
 networks:
   default:
     name: zoraxy_proxy

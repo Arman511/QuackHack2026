@@ -45,7 +45,7 @@ const GoalsPage = () => {
     } else {
       clearGoals();
       addGoal({
-        id: `g-${Date.now()}`,
+        id: crypto.randomUUID(),
         name: preset.name,
         target: 1000,
         saved: 0,
@@ -58,7 +58,7 @@ const GoalsPage = () => {
     if (customName.trim() && customTarget) {
       clearGoals();
       addGoal({
-        id: `g-${Date.now()}`,
+        id: crypto.randomUUID(),
         name: customName,
         target: Number(customTarget),
         saved: 0,

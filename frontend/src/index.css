@@ -1,205 +1,248 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Playfair+Display:wght@700;800&display=swap");
 @import "tailwindcss";
 
-@layer base {
-  :root {
-    --background: 25 25% 92%;
-    --foreground: 25 20% 16%;
+@theme {
+  --color-background: #f3f0e9;
+  --color-foreground: #2d1b12;
 
-    --card: 36 30% 98%;
-    --card-foreground: 25 20% 16%;
+  --color-card: #faf9f8;
+  --color-card-foreground: #2d1b12;
 
-    --popover: 36 30% 98%;
-    --popover-foreground: 25 20% 16%;
+  --color-popover: #faf9f8;
+  --color-popover-foreground: #2d1b12;
 
-    --primary: 20 45% 35%;
-    --primary-foreground: 0 0% 100%;
+  --color-primary: #a0673a;
+  --color-primary-foreground: #ffffff;
 
-    --secondary: 25 25% 90%;
-    --secondary-foreground: 25 20% 16%;
+  --color-secondary: #e8ddd2;
+  --color-secondary-foreground: #2d1b12;
 
-    --muted: 25 15% 92%;
-    --muted-foreground: 25 10% 50%;
+  --color-muted: #f0e7dc;
+  --color-muted-foreground: #6b5b4c;
 
-    --accent: 25 50% 45%;
-    --accent-foreground: 0 0% 100%;
+  --color-accent: #d4a574;
+  --color-accent-foreground: #ffffff;
 
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
+  --color-destructive: #dc2626;
+  --color-destructive-foreground: #ffffff;
 
-    --border: 25 20% 88%;
-    --input: 25 20% 88%;
-    --ring: 20 45% 35%;
+  --color-border: #d4c2a8;
+  --color-input: #d4c2a8;
+  --color-ring: #a0673a;
 
-    --radius: 0.75rem;
+  --radius: 0.75rem;
 
-    --savings: 20 45% 35%;
-    --impulse: 0 72% 51%;
-    --warning: 38 92% 50%;
-    --horse-brown: 25 40% 35%;
-    --horse-cream: 39 33% 96%;
-    --horse-tan: 30 30% 80%;
+  --color-savings: #a0673a;
+  --color-impulse: #dc2626;
+  --color-warning: #eab308;
+  --color-horse-brown: #8b5730;
+  --color-horse-cream: #faf7f4;
+  --color-horse-tan: #c4a882;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+  --color-sidebar-background: #fafafa;
+  --color-sidebar-foreground: #525252;
+  --color-sidebar-primary: #171717;
+  --color-sidebar-primary-foreground: #fafafa;
+  --color-sidebar-accent: #f5f5f5;
+  --color-sidebar-accent-foreground: #171717;
+  --color-sidebar-border: #e5e7eb;
+  --color-sidebar-ring: #3b82f6;
+
+  --font-sans: "DM Sans", system-ui, sans-serif;
+  --font-display: "Playfair Display", serif;
+
+  --animate-gallop: gallop 0.6s ease-in-out infinite;
+  --animate-fade-up: fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-fade-in: fade-in 0.5s ease-out both;
+  --animate-slide-in-right: slide-in-right 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-wrap: break-word;
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+.text-gradient-horse {
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  background-image: linear-gradient(135deg, var(--color-horse-brown), var(--color-primary));
+}
+
+.card-neigh {
+  background: var(--color-card);
+  border-radius: 1rem;
+  border: 1px solid var(--color-border);
+  padding: 1.25rem;
+  transition: box-shadow 0.2s;
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--color-border) 35%, transparent);
+}
+.card-neigh:hover {
+  box-shadow: 0 4px 20px color-mix(in srgb, var(--color-border) 50%, transparent);
+}
+
+.bubble-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+  border: 1px solid;
+  background: var(--color-secondary);
+  border-color: var(--color-border);
+  color: var(--color-foreground);
+}
+.bubble-tag:hover {
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--color-border) 40%, transparent);
+}
+.bubble-tag:active {
+  transform: scale(0.96);
+}
+.bubble-tag[data-selected="true"] {
+  background: color-mix(in srgb, var(--color-primary) 5%, transparent);
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-primary) 20%, transparent);
+}
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--color-card);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0.5rem 0;
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  z-index: 50;
+}
+.bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+  transition: color 0.15s;
+  color: var(--color-muted-foreground);
+}
+.bottom-nav-item[data-active="true"] {
+  color: var(--color-primary);
+}
+
+/* Custom Range Slider Styling */
+.slider::-webkit-slider-thumb {
+  appearance: none;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: #8b5730;
+  cursor: pointer;
+  box-shadow: 0 2px 6px color-mix(in srgb, #8b5730 40%, transparent);
+  border: 2px solid #d4a574;
+  transition: all 0.2s ease;
+}
+
+.slider::-webkit-slider-thumb:hover {
+  box-shadow: 0 4px 12px color-mix(in srgb, #8b5730 50%, transparent);
+  transform: scale(1.1);
+}
+
+.slider::-moz-range-thumb {
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: #8b5730;
+  cursor: pointer;
+  box-shadow: 0 2px 6px color-mix(in srgb, #8b5730 40%, transparent);
+  border: 2px solid #d4a574;
+  transition: all 0.2s ease;
+}
+
+.slider::-moz-range-thumb:hover {
+  box-shadow: 0 4px 12px color-mix(in srgb, #8b5730 50%, transparent);
+  transform: scale(1.1);
+}
+
+.slider::-webkit-slider-track {
+  height: 12px;
+  border-radius: 6px;
+}
+
+.slider::-moz-range-track {
+  height: 12px;
+  border-radius: 6px;
+  border: none;
+}
+
+@keyframes gallop {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
   }
 }
 
-@layer base {
-  * {
-    border-color: hsl(var(--border));
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+    filter: blur(4px);
   }
-
-  body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-    font-family: "DM Sans", system-ui, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    overflow-wrap: break-word;
-  }
-
-  h1,
-  h2,
-  h3 {
-    text-wrap: balance;
-  }
-
-  p {
-    text-wrap: pretty;
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
   }
 }
 
-@layer utilities {
-  .text-gradient-horse {
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    background-image: linear-gradient(135deg, hsl(var(--horse-brown)), hsl(var(--primary)));
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 
-@layer components {
-  .card-neigh {
-    background: hsl(var(--card));
-    border-radius: 1rem;
-    border: 1px solid hsl(var(--border));
-    padding: 1.25rem;
-    transition: box-shadow 0.2s;
-    box-shadow: 0 1px 3px hsl(var(--border) / 0.35);
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
   }
-  .card-neigh:hover {
-    box-shadow: 0 4px 20px hsl(var(--border) / 0.5);
-  }
-
-  .bubble-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    padding: 0.5rem 1rem;
-    border-radius: 9999px;
-    font-size: 0.875rem;
-    line-height: 1.25rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    user-select: none;
-    border: 1px solid;
-    background: hsl(var(--secondary));
-    border-color: hsl(var(--border));
-    color: hsl(var(--foreground));
-  }
-  .bubble-tag:hover {
-    box-shadow: 0 2px 8px hsl(var(--border) / 0.4);
-  }
-  .bubble-tag:active {
-    transform: scale(0.96);
-  }
-  .bubble-tag[data-selected="true"] {
-    background: hsl(var(--primary) / 0.05);
-    color: hsl(var(--primary));
-    border-color: hsl(var(--primary));
-    box-shadow: 0 4px 12px hsl(var(--primary) / 0.2);
-  }
-
-  .bottom-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: hsl(var(--card));
-    border-top: 1px solid hsl(var(--border));
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
-    padding: 0.5rem 0;
-    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
-    z-index: 50;
-  }
-  .bottom-nav-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.125rem;
-    padding: 0.375rem 0.75rem;
-    font-size: 0.75rem;
-    line-height: 1rem;
-    font-weight: 500;
-    transition: color 0.15s;
-    color: hsl(var(--muted-foreground));
-  }
-  .bottom-nav-item[data-active="true"] {
-    color: hsl(var(--primary));
-  }
-
-  /* Custom Range Slider Styling */
-  .slider::-webkit-slider-thumb {
-    appearance: none;
-    height: 20px;
-    width: 20px;
-    border-radius: 50%;
-    background: hsl(25deg 45% 45%);
-    cursor: pointer;
-    box-shadow: 0 2px 6px hsl(25deg 40% 30% / 0.4);
-    border: 2px solid hsl(25deg 60% 65%);
-    transition: all 0.2s ease;
-  }
-
-  .slider::-webkit-slider-thumb:hover {
-    box-shadow: 0 4px 12px hsl(25deg 40% 30% / 0.5);
-    transform: scale(1.1);
-  }
-
-  .slider::-moz-range-thumb {
-    height: 20px;
-    width: 20px;
-    border-radius: 50%;
-    background: hsl(25deg 45% 45%);
-    cursor: pointer;
-    box-shadow: 0 2px 6px hsl(25deg 40% 30% / 0.4);
-    border: 2px solid hsl(25deg 60% 65%);
-    transition: all 0.2s ease;
-  }
-
-  .slider::-moz-range-thumb:hover {
-    box-shadow: 0 4px 12px hsl(25deg 40% 30% / 0.5);
-    transform: scale(1.1);
-  }
-
-  .slider::-webkit-slider-track {
-    height: 12px;
-    border-radius: 6px;
-  }
-
-  .slider::-moz-range-track {
-    height: 12px;
-    border-radius: 6px;
-    border: none;
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }

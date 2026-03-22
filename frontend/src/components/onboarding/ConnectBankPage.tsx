@@ -2,12 +2,18 @@ import { useApp } from "@/hooks/useApp";
 import { bankOptions } from "@/data/mockData";
 
 const ConnectBankPage = () => {
-  const { connectedBank, connectBank, setOnboardingStep } = useApp();
+  const { connectedBank, connectBank, setOnboardingStep, isAddBankMode, setAddBankStep } = useApp();
 
   const handleBankSelect = (bankName: string) => {
     connectBank(bankName);
-    // Navigate to bank details page (step 2)
-    setOnboardingStep(2);
+
+    if (isAddBankMode) {
+      // Navigate to bank details in add bank flow (step 2)
+      setAddBankStep(2);
+    } else {
+      // Navigate to bank details page in regular onboarding (step 2)
+      setOnboardingStep(2);
+    }
   };
 
   return (
