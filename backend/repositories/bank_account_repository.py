@@ -77,6 +77,7 @@ class BankAccountRepository:
         provider: BankProviderEnum,
         account_type: AccountTypeEnum,
         initial_amount: int = 0,
+        commit: bool = True,
     ) -> BankAccountPublic:
         """Create a new bank account for a user."""
         logger.info(
@@ -102,7 +103,8 @@ class BankAccountRepository:
             .mappings()
             .first()
         )
-        self.db.commit()
+        if commit:
+            self.db.commit()
         if row is None:
             logger.error("Bank account create failed user_id=%s", user_id)
             raise RuntimeError("Failed to create bank account")
@@ -155,29 +157,43 @@ class BankAccountRepository:
         saving_account_number: str,
         saving_sort_code: str,
     ) -> tuple[BankAccountPublic, BankAccountPublic]:
-        """Create CURRENT and SAVING accounts for a user using explicit details."""
+        """Create CURRENT and SAVING accounts for a user using explicit details.
+        
+        Both accounts are created in a single transaction. If the saving account
+        creation fails, the current account creation is rolled back.
+        """
         logger.info("Creating explicit accounts for user_id=%s", user_id)
         current_initial_amount = 100000
         saving_initial_amount = 0
 
-        current_account = self.create_account(
-            user_id=user_id,
-            account_number=current_account_number,
-            sort_code=current_sort_code,
-            name=f"{provider.value} Current Account",
-            provider=provider,
-            account_type=AccountTypeEnum.CURRENT,
-            initial_amount=current_initial_amount,
-        )
-        saving_account = self.create_account(
-            user_id=user_id,
-            account_number=saving_account_number,
-            sort_code=saving_sort_code,
-            name=f"{provider.value} Saving Account",
-            provider=provider,
-            account_type=AccountTypeEnum.SAVING,
-            initial_amount=saving_initial_amount,
-        )
+        try:
+            current_account = self.create_account(
+                user_id=user_id,
+                account_number=current_account_number,
+                sort_code=current_sort_code,
+                name=f"{provider.value} Current Account",
+                provider=provider,
+                account_type=AccountTypeEnum.CURRENT,
+                initial_amount=current_initial_amount,
+                commit=False,
+            )
+            saving_account = self.create_account(
+                user_id=user_id,
+                account_number=saving_account_number,
+                sort_code=saving_sort_code,
+                name=f"{provider.value} Saving Account",
+                provider=provider,
+                account_type=AccountTypeEnum.SAVING,
+                initial_amount=saving_initial_amount,
+                commit=False,
+            )
+            self.db.commit()
+        except Exception as e:
+            logger.error(
+                "Failed to create accounts for user_id=%s: %s", user_id, str(e)
+            )
+            self.db.rollback()
+            raise
 
         return current_account, saving_account
 
