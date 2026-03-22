@@ -51,7 +51,7 @@ describe("DashboardTab", () => {
 
   it("shows total saved amount", async () => {
     await renderTab();
-    expect(screen.getByText("£240")).toBeInTheDocument();
+    expect(screen.getByText("£240.00")).toBeInTheDocument();
   });
 
   it("renders Impulse Budget Spent section", async () => {
@@ -61,7 +61,7 @@ describe("DashboardTab", () => {
 
   it("shows budget figures £45 / £100", async () => {
     await renderTab();
-    expect(screen.getByText("£45 / £100")).toBeInTheDocument();
+    expect(screen.getByText("£45.00 / £100")).toBeInTheDocument();
   });
 
   it("renders Poor Financial Choices section", async () => {

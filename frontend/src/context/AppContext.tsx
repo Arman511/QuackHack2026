@@ -27,6 +27,7 @@ import {
 } from "@/api/impulses";
 import { setMyGoal } from "@/api/users";
 import { tokenStore } from "@/api/http";
+import { formatPounds, penceToPounds } from "@/utils/currency";
 import type {
   UserLoginRequest,
   UserRegisterRequest,
@@ -211,7 +212,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       .filter((account) => account.type === "SAVING")
       .reduce((sum, account) => sum + account.amount, 0);
 
-    return totalSavingsInPence / 100;
+    return penceToPounds(totalSavingsInPence);
   }, []);
 
   const defaultImpulseBudget = 100;
@@ -529,7 +530,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const generateHorseMessage = useCallback((merchant: string, amount: number): string => {
     const messages = [
       `Neighhh! That ${merchant} purchase made your wallet lighter!`,
-      `Whoa there cowboy! ${merchant} just galloped away with £${amount}!`,
+      `Whoa there cowboy! ${merchant} just galloped away with £${formatPounds(amount)}!`,
       `*Horse snort* Another ${merchant} splurge? Really?`,
       `Giddy up to the savings coral instead of ${merchant}!`,
       `That ${merchant} purchase wasn't very stable financial behavior!`,
@@ -557,29 +558,34 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         merchant.includes("deposit");
       const inferredImpulse = !hasExplicitImpulseClassification && !isLikelyNonImpulseTransfer;
       const isImpulse = hasExplicitImpulseClassification || inferredImpulse;
+      const amountInPounds = penceToPounds(apiTx.amount);
 
       return {
         id: apiTx.id.toString(),
         date: apiTx.timestamp.split("T")[0],
         description: apiTx.merchant,
-        amount: apiTx.amount / 100, // Convert from cents to pounds
+        amount: amountInPounds,
         category: apiTx.impulse_zone_name || apiTx.possible_impulse_zone_name || "Purchase",
         isImpulse,
-        horseMessage: isImpulse ? generateHorseMessage(apiTx.merchant, apiTx.amount / 100) : "",
+        horseMessage: isImpulse ? generateHorseMessage(apiTx.merchant, amountInPounds) : "",
       };
     },
     [generateHorseMessage],
   );
 
   const transformApiPunishment = useCallback(
-    (apiPunishment: TransactionPunishmentPublic): Punishment => ({
-      id: apiPunishment.id.toString(),
-      date: apiPunishment.timestamp.split("T")[0],
-      transactionId: `tax-${apiPunishment.id}`,
-      transactionDesc: `Neigh-Tax: £${(apiPunishment.tax_amount / 100).toFixed(2)} collected`,
-      transactionAmount: apiPunishment.tax_amount / 100,
-      punishment: "Automatic tax transfer to your savings goal",
-    }),
+    (apiPunishment: TransactionPunishmentPublic): Punishment => {
+      const taxInPounds = penceToPounds(apiPunishment.tax_amount);
+
+      return {
+        id: apiPunishment.id.toString(),
+        date: apiPunishment.timestamp.split("T")[0],
+        transactionId: `tax-${apiPunishment.id}`,
+        transactionDesc: `Neigh-Tax: £${formatPounds(taxInPounds)} collected`,
+        transactionAmount: taxInPounds,
+        punishment: "Automatic tax transfer to your savings goal",
+      };
+    },
     [],
   );
 
