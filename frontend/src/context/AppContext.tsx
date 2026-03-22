@@ -538,17 +538,36 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const transformApiTransaction = useCallback(
-    (apiTx: TransactionHydratedPublic): Transaction => ({
-      id: apiTx.id.toString(),
-      date: apiTx.timestamp.split("T")[0],
-      description: apiTx.merchant,
-      amount: apiTx.amount / 100, // Convert from cents to pounds
-      category: apiTx.impulse_zone_name || "Other",
-      isImpulse: !!apiTx.impulse_zone_id,
-      horseMessage: apiTx.impulse_zone_id
-        ? generateHorseMessage(apiTx.merchant, apiTx.amount / 100)
-        : "",
-    }),
+    (apiTx: TransactionHydratedPublic): Transaction => {
+      const hasExplicitImpulseClassification =
+        apiTx.impulse_zone_id != null ||
+        apiTx.possible_impulse_zone_id != null ||
+        !!apiTx.impulse_zone_name ||
+        !!apiTx.possible_impulse_zone_name;
+
+      // Fallback for providers that do not tag impulse metadata yet:
+      // treat generic purchase/debit-like transactions as impulse so dashboard
+      // metrics and poor-choices list still reflect real activity.
+      const merchant = (apiTx.merchant || "").toLowerCase();
+      const isLikelyNonImpulseTransfer =
+        merchant.includes("salary") ||
+        merchant.includes("payroll") ||
+        merchant.includes("transfer") ||
+        merchant.includes("refund") ||
+        merchant.includes("deposit");
+      const inferredImpulse = !hasExplicitImpulseClassification && !isLikelyNonImpulseTransfer;
+      const isImpulse = hasExplicitImpulseClassification || inferredImpulse;
+
+      return {
+        id: apiTx.id.toString(),
+        date: apiTx.timestamp.split("T")[0],
+        description: apiTx.merchant,
+        amount: apiTx.amount / 100, // Convert from cents to pounds
+        category: apiTx.impulse_zone_name || apiTx.possible_impulse_zone_name || "Purchase",
+        isImpulse,
+        horseMessage: isImpulse ? generateHorseMessage(apiTx.merchant, apiTx.amount / 100) : "",
+      };
+    },
     [generateHorseMessage],
   );
 
