@@ -100,3 +100,37 @@ def admin_get_user_by_id(db: Session, actor: UserDB, user_id: int) -> UserRead:
         "Admin profile lookup success actor_id=%s target_user_id=%s", actor.id, user_id
     )
     return UserRead.model_validate(target)
+
+
+def delete_user(
+    db: Session,
+    *,
+    actor: UserDB,
+    user_id: int,
+) -> dict[str, bool]:
+    """Delete a user when actor is admin or deleting their own account."""
+    if actor.id != user_id and UserTypeEnum.ADMIN not in actor.roles:
+        logger.warning(
+            "Delete user denied actor_id=%s target_user_id=%s",
+            actor.id,
+            user_id,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only delete your own account unless you are an admin",
+        )
+
+    deleted = UserRepository(db).delete_user_by_id(user_id)
+    if not deleted:
+        logger.warning("Delete user target not found user_id=%s", user_id)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    logger.info(
+        "Delete user completed actor_id=%s target_user_id=%s",
+        actor.id,
+        user_id,
+    )
+    return {"deleted": True}

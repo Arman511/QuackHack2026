@@ -9,7 +9,7 @@ from backend.models import UserDB
 from backend.repositories.token_denylist_repository import TokenDenylistRepository
 from backend.repositories.user_repository import UserRepository
 from backend.services.auth_service import decode_token
-from backend.utils.config import JWT_ACCESS_COOKIE_NAME
+from backend.utils.config import JWT_ACCESS_COOKIE_NAME, JWT_REFRESH_COOKIE_NAME
 from backend.utils.database import SessionLocal
 
 logger = logging.getLogger(__name__)
@@ -56,6 +56,61 @@ def get_current_access_payload(
             detail="Token has been revoked",
         )
     logger.debug("Access payload accepted for subject=%s", payload.get("sub"))
+    return payload
+
+
+def get_current_refresh_payload(
+    db: db_dependency,
+    refresh_cookie: str | None = Cookie(default=None, alias=JWT_REFRESH_COOKIE_NAME),
+) -> dict:
+    if not refresh_cookie:
+        logger.warning("Refresh token missing from cookie")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing refresh token",
+        )
+
+    payload = decode_token(refresh_cookie, "refresh")
+    jti = str(payload.get("jti", ""))
+    if jti and TokenDenylistRepository(db).is_token_revoked(jti):
+        logger.warning("Rejected revoked refresh token jti=%s", jti)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has been revoked",
+        )
+    logger.debug("Refresh payload accepted for subject=%s", payload.get("sub"))
+    return payload
+
+
+def get_optional_access_payload(
+    db: db_dependency,
+    bearer_token: Annotated[str | None, Security(oauth2_scheme)] = None,
+    access_cookie: str | None = Cookie(default=None, alias=JWT_ACCESS_COOKIE_NAME),
+) -> dict | None:
+    token = bearer_token or access_cookie
+    if not token:
+        return None
+
+    payload = decode_token(token, "access")
+    jti = str(payload.get("jti", ""))
+    if jti and TokenDenylistRepository(db).is_token_revoked(jti):
+        logger.warning("Optional access token is revoked jti=%s", jti)
+        return None
+    return payload
+
+
+def get_optional_refresh_payload(
+    db: db_dependency,
+    refresh_cookie: str | None = Cookie(default=None, alias=JWT_REFRESH_COOKIE_NAME),
+) -> dict | None:
+    if not refresh_cookie:
+        return None
+
+    payload = decode_token(refresh_cookie, "refresh")
+    jti = str(payload.get("jti", ""))
+    if jti and TokenDenylistRepository(db).is_token_revoked(jti):
+        logger.warning("Optional refresh token is revoked jti=%s", jti)
+        return None
     return payload
 
 
