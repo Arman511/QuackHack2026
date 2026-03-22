@@ -12,6 +12,7 @@ Full-stack app with:
 - uv
 - Node.js 20+
 - pnpm
+- docker
 
 ## Backend Setup (uv)
 
