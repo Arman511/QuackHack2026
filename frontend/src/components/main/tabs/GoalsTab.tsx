@@ -2,28 +2,46 @@ import { useState } from "react";
 import { useApp } from "@/hooks/useApp";
 import { Button } from "@/components/ui/button";
 import { Target } from "lucide-react";
+import { patchMyTaxPercentage } from "@/api/users";
 
 const GoalsTab = () => {
   const { goals, updateGoal, neighTaxPercent, setNeighTaxPercent } = useApp();
   const [justifyModal, setJustifyModal] = useState<string | null>(null);
   const [justification, setJustification] = useState("");
   const [pendingTax, setPendingTax] = useState<number | null>(null);
+  const [isSavingTax, setIsSavingTax] = useState(false);
+
+  const persistTaxPercentage = async (nextTax: number, previousTax: number) => {
+    try {
+      setIsSavingTax(true);
+      await patchMyTaxPercentage({ tax_percentage: nextTax });
+    } catch (error) {
+      console.error("Failed to patch tax percentage:", error);
+      setNeighTaxPercent(previousTax);
+    } finally {
+      setIsSavingTax(false);
+    }
+  };
 
   const handleTaxChange = (newTax: number) => {
     if (newTax < neighTaxPercent) {
       setPendingTax(newTax);
       setJustifyModal("tax");
     } else {
+      const previousTax = neighTaxPercent;
       setNeighTaxPercent(newTax);
+      void persistTaxPercentage(newTax, previousTax);
     }
   };
 
   const submitJustification = () => {
     if (justification.trim() && pendingTax !== null) {
+      const previousTax = neighTaxPercent;
       setNeighTaxPercent(pendingTax);
       setJustifyModal(null);
       setJustification("");
       setPendingTax(null);
+      void persistTaxPercentage(pendingTax, previousTax);
     }
   };
 
@@ -78,6 +96,7 @@ const GoalsTab = () => {
             <button
               key={pct}
               onClick={() => handleTaxChange(pct)}
+              disabled={isSavingTax}
               className={`py-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.96] border ${
                 neighTaxPercent === pct
                   ? "bg-primary text-primary-foreground border-primary"
@@ -120,7 +139,7 @@ const GoalsTab = () => {
               </Button>
               <Button
                 onClick={submitJustification}
-                disabled={!justification.trim()}
+                disabled={!justification.trim() || isSavingTax}
                 className="flex-1 active:scale-[0.97]"
               >
                 Submit
