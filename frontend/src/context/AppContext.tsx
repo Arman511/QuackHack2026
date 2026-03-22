@@ -201,14 +201,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     update({
       goals: goalName
         ? [
-          {
-            id: `server-goal-${userData.id}`,
-            name: goalName,
-            target: 1000,
-            saved: 0,
-            icon: "target",
-          },
-        ]
+            {
+              id: `server-goal-${userData.id}`,
+              name: goalName,
+              target: 1000,
+              saved: 0,
+              icon: "target",
+            },
+          ]
         : [],
       impulseBudget: userData.impulse_limit ?? defaultImpulseBudget,
       neighTaxPercent: userData.tax_percentage ?? defaultTaxPercent,
@@ -236,7 +236,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     const currentBundle = currentBundleResponse ?? { impulses: [], possible: [] };
 
     const selectedByLowerName = new Set(
-      snapshot.impulseCategories.map((name) => name.trim()).filter(Boolean).map((name) => name.toLowerCase()),
+      snapshot.impulseCategories
+        .map((name) => name.trim())
+        .filter(Boolean)
+        .map((name) => name.toLowerCase()),
     );
     const realImpulseIds = allImpulses
       .filter((zone) => selectedByLowerName.has(zone.name.toLowerCase()))

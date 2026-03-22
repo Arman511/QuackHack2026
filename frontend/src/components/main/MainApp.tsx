@@ -41,11 +41,7 @@ const MainApp = () => {
             onClick={() => setActiveTab(tab.key)}
           >
             <span className="text-lg relative">
-              <img
-                src={`/${tab.icon}.png`}
-                alt={tab.label}
-                className="w-10 h-10 object-contain"
-              />
+              <img src={`/${tab.icon}.png`} alt={tab.label} className="w-10 h-10 object-contain" />
               {tab.key === "notifications" && unread > 0 && (
                 <span className="absolute -top-1 -right-2 w-4 h-4 bg-impulse text-[10px] font-bold text-primary-foreground rounded-full flex items-center justify-center">
                   {unread > 9 ? "9+" : unread}
