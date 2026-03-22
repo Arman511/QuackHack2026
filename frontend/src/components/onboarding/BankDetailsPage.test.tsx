@@ -58,14 +58,17 @@ const renderPage = async () => {
 describe("BankDetailsPage", () => {
   it("renders heading with connected bank name", async () => {
     await renderPage();
-    expect(screen.getByText(/Connect to Mane-zo/i)).toBeInTheDocument();
+    expect(screen.getByText(/Connect Bank Accounts/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Enter your Mane-zo account details to complete setup./i),
+    ).toBeInTheDocument();
   });
 
   it("renders sort code, checking, and savings fields", async () => {
     await renderPage();
     expect(screen.getByPlaceholderText("12-34-56")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("My Checking Account")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("My Savings Account")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Current account number")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Savings account number")).toBeInTheDocument();
   });
 
   it("renders Connect Accounts submit button", async () => {
@@ -76,8 +79,8 @@ describe("BankDetailsPage", () => {
   it("limits account number inputs to 8 digits", async () => {
     await renderPage();
 
-    const checkingInput = screen.getByPlaceholderText("12345678") as HTMLInputElement;
-    const savingsInput = screen.getByPlaceholderText("87654321") as HTMLInputElement;
+    const checkingInput = screen.getByPlaceholderText("Current account number") as HTMLInputElement;
+    const savingsInput = screen.getByPlaceholderText("Savings account number") as HTMLInputElement;
 
     fireEvent.change(checkingInput, { target: { value: "123456789999" } });
     fireEvent.change(savingsInput, { target: { value: "876543210000" } });
@@ -108,18 +111,12 @@ describe("BankDetailsPage", () => {
     fireEvent.change(screen.getByPlaceholderText("12-34-56"), {
       target: { value: "12-34-56" },
     });
-    // Fill checking account
-    fireEvent.change(screen.getByPlaceholderText("My Checking Account"), {
-      target: { value: "Main Checking" },
-    });
-    fireEvent.change(screen.getByPlaceholderText("12345678"), {
+    // Fill current account
+    fireEvent.change(screen.getByPlaceholderText("Current account number"), {
       target: { value: "12345678" },
     });
     // Fill savings account
-    fireEvent.change(screen.getByPlaceholderText("My Savings Account"), {
-      target: { value: "My Savings" },
-    });
-    fireEvent.change(screen.getByPlaceholderText("87654321"), {
+    fireEvent.change(screen.getByPlaceholderText("Savings account number"), {
       target: { value: "87654321" },
     });
 
