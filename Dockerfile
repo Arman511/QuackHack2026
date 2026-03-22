@@ -7,7 +7,7 @@ RUN if [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile; else pnpm ins
 COPY frontend ./
 RUN pnpm build
 
-from ghcr.io/astral-sh/uv:alpine AS builder
+FROM ghcr.io/astral-sh/uv:alpine AS builder
 WORKDIR /app
 COPY pyproject.toml uv.lock ./
 RUN uv sync --no-dev --frozen

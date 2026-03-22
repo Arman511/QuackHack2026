@@ -3,6 +3,7 @@ import type {
   BankAccountPublic,
   CreateBankAccountsRequest,
   CreateBankAccountsResponse,
+  PaginatedTransactionSearchResponse,
   SetupBankAccountsRequest,
   TransactionCreate,
   TransactionHydratedPublic,
@@ -30,18 +31,25 @@ export const createTransactionFromWebhook = (body: TransactionWebhookCreate) =>
 export const listMyTransactions = () =>
   apiRequest<TransactionHydratedPublic[]>("/api/bank/transactions/me");
 
-export const searchMyTransactions = (start: string | Date, end: string | Date) => {
+export const searchMyTransactions = (
+  start: string | Date,
+  end: string | Date,
+  page = 1,
+  pageSize = 50,
+) => {
   const query = new URLSearchParams({
     start: asIsoString(start),
     end: asIsoString(end),
+    page: String(page),
+    page_size: String(pageSize),
   });
-  return apiRequest<TransactionHydratedPublic[]>(
+  return apiRequest<PaginatedTransactionSearchResponse>(
     `/api/bank/transactions/search?${query.toString()}`,
   );
 };
 
 export const createBankAccounts = (body: CreateBankAccountsRequest) =>
-  apiRequest<CreateBankAccountsResponse>("/api/bank/accounts/create", {
+  apiRequest<BankAccountPublic>("/api/bank/accounts/create", {
     method: "POST",
     body,
   });

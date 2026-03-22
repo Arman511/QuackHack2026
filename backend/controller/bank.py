@@ -8,6 +8,7 @@ from backend.models import (
     CreateBankAccountsRequest,
     CreateBankAccountsResponse,
     SetupBankAccountsRequest,
+    PaginatedTransactionSearchResponse,
     TransactionDateRangeQuery,
     TransactionCreate,
     TransactionWebhookCreate,
@@ -85,12 +86,14 @@ def list_my_transactions(
     return list_user_transactions_hydrated(db, current_user=current_user)
 
 
-@router.get("/transactions/search", response_model=list[TransactionHydratedPublic])
+@router.get("/transactions/search", response_model=PaginatedTransactionSearchResponse)
 def search_my_transactions(
     start: datetime,
     end: datetime,
     db: db_dependency,
     current_user: current_user_dependency,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=500),
 ):
     """Search the authenticated user's transactions by date range."""
     logger.info(
@@ -103,25 +106,28 @@ def search_my_transactions(
         db,
         current_user=current_user,
         payload=TransactionDateRangeQuery(start=start, end=end),
+        page=page,
+        page_size=page_size,
     )
 
 
-@router.post("/accounts/create", response_model=CreateBankAccountsResponse)
+@router.post("/accounts/create", response_model=BankAccountPublic)
 def create_bank_accounts(
     payload: CreateBankAccountsRequest,
     db: db_dependency,
     current_user: current_user_dependency,
 ):
-    """Create default current and saving accounts for the authenticated user."""
+    """Create one bank account for the authenticated user."""
     logger.info(
-        "Creating default bank accounts user_id=%s provider=%s",
+        "Creating bank account user_id=%s provider=%s type=%s",
         current_user.id,
         payload.provider.value,
+        payload.type.value,
     )
     return create_bank_accounts_for_user(
         db,
         current_user=current_user,
-        provider=payload.provider,
+        payload=payload,
     )
 
 

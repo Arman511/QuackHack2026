@@ -20,7 +20,7 @@ HAS_FRONTEND_TEST_SCRIPT := $(shell python -c "import json, pathlib; p = pathlib
 .PHONY: serve serve-local local build format lint test back-cover front-cover cover down down-local install-hooks
 
 serve:
-	$(COMPOSE) -f $(COMPOSE_FILE) up --build
+	$(COMPOSE) -f $(COMPOSE_FILE) up --build -d
 
 serve-local:
 	$(COMPOSE) -f $(COMPOSE_LOCAL_FILE) up --build

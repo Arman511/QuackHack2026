@@ -76,6 +76,10 @@ class BankAccountCreate(BaseModel):
 
 class CreateBankAccountsRequest(BaseModel):
     provider: BankProviderEnum
+    type: AccountTypeEnum
+    account_number: str
+    sort_code: str
+    amount: int = Field(ge=0)
 
 
 class SetupBankAccountDetails(BaseModel):
@@ -184,6 +188,31 @@ class TransactionPublic(BaseModel):
 class TransactionHydratedPublic(TransactionPublic):
     impulse_zone_name: str | None = None
     possible_impulse_zone_name: str | None = None
+
+
+class TransactionSearchItemPublic(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    user_id: int
+    source_account_number: str | None = None
+    source_sort_code: str | None = None
+    amount: int
+    timestamp: datetime
+    merchant: str
+    impulse_zone_id: int | None = None
+    possible_impulse_zone_id: int | None = None
+    created_at: datetime
+    impulse_zone_name: str | None = None
+    possible_impulse_zone_name: str | None = None
+
+
+class PaginatedTransactionSearchResponse(BaseModel):
+    items: list[TransactionSearchItemPublic]
+    page: int
+    page_size: int
+    total: int
+    total_pages: int
 
 
 class TransactionDateRangeQuery(BaseModel):
