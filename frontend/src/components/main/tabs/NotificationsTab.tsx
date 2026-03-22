@@ -1,6 +1,11 @@
 import { useApp } from "@/hooks/useApp";
 import { Skull, Megaphone } from "lucide-react";
 import { Notification } from "@/data/mockData";
+import { Button } from "@/components/ui/button";
+
+interface NotificationsTabProps {
+  logout: () => void;
+}
 
 const typeColors: Record<string, string> = {
   impulse: "bg-impulse/10 text-impulse",
@@ -61,18 +66,23 @@ const getNotificationIcon = (
   return typeIcons[notification.type] || Megaphone;
 };
 
-const NotificationsTab = () => {
+const NotificationsTab = ({ logout }: NotificationsTabProps) => {
   const { notifications } = useApp();
 
   return (
     <div className="p-4 space-y-5">
-      <div className="flex items-center gap-2">
-        <img
-          src="/notification.png"
-          alt="Notifications"
-          className="w-10 h-10 object-contain animate-fade-up"
-        />
-        <h1 className="text-lg font-bold animate-fade-up">Notifications</h1>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <img
+            src="/notification.png"
+            alt="Notifications"
+            className="w-10 h-10 object-contain animate-fade-up"
+          />
+          <h1 className="text-lg font-bold animate-fade-up">Notifications</h1>
+        </div>
+        <Button variant="outline" size="sm" onClick={logout}>
+          Log Out
+        </Button>
       </div>
 
       <div className="space-y-3">

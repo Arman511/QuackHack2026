@@ -35,7 +35,7 @@ const SetEmailAndRender = () => {
     <>
       <button onClick={() => setEmail("rider@ranch.com")}>setEmail</button>
       <button onClick={() => connectBank("Mane-zo")}>setBank</button>
-      <ProfileTab />
+      <ProfileTab logout={vi.fn()} />
     </>
   );
 };

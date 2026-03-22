@@ -5,7 +5,11 @@ import { useEffect, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { impulseCategories } from "@/data/mockData";
 
-const ProfileTab = () => {
+interface ProfileTabProps {
+  logout: () => void;
+}
+
+const ProfileTab = ({ logout }: ProfileTabProps) => {
   const {
     email,
     user,
@@ -160,13 +164,18 @@ const ProfileTab = () => {
 
   return (
     <div className="p-4 space-y-5">
-      <div className="flex items-center gap-2">
-        <img
-          src="/profile.png"
-          alt="Profile"
-          className="w-10 h-10 object-contain animate-fade-up"
-        />
-        <h1 className="text-lg font-bold animate-fade-up">Profile</h1>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <img
+            src="/profile.png"
+            alt="Profile"
+            className="w-10 h-10 object-contain animate-fade-up"
+          />
+          <h1 className="text-lg font-bold animate-fade-up">Profile</h1>
+        </div>
+        <Button variant="outline" size="sm" onClick={logout}>
+          Log Out
+        </Button>
       </div>
 
       {/* Profile Info */}

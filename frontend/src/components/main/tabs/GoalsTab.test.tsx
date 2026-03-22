@@ -38,7 +38,7 @@ const WithGoal = () => {
       >
         addGoal
       </button>
-      <GoalsTab />
+      <GoalsTab logout={vi.fn()} />
     </>
   );
 };
@@ -46,7 +46,9 @@ const WithGoal = () => {
 const renderTab = async ({ withGoal = false } = {}) => {
   let result: ReturnType<typeof render>;
   await act(async () => {
-    result = render(<AppProvider>{withGoal ? <WithGoal /> : <GoalsTab />}</AppProvider>);
+    result = render(
+      <AppProvider>{withGoal ? <WithGoal /> : <GoalsTab logout={vi.fn()} />}</AppProvider>,
+    );
   });
   if (withGoal) {
     fireEvent.click(screen.getByText("addGoal"));
