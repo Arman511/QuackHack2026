@@ -12,7 +12,7 @@ services:
       default:
         aliases:
           - neigh-ver-go-broke
-  
+
 networks:
   default:
     name: zoraxy_proxy
