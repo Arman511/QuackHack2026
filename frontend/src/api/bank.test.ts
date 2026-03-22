@@ -12,13 +12,17 @@ vi.mock("@/api/http", () => ({
 }));
 
 import {
+  adminSearchTransactions,
   addMoney,
+  createTransactionFromWebhook,
   listAccounts,
+  listMyTransactionPunishments,
   createTransaction,
   listMyTransactions,
   searchMyTransactions,
   createBankAccounts,
   setupBankAccounts,
+  transferBetweenAccounts,
   adminSummary,
 } from "@/api/bank";
 import { apiRequest } from "@/api/http";
@@ -62,6 +66,20 @@ describe("bank API", () => {
     );
   });
 
+  it("searchMyTransactions serializes Date values and custom pagination", async () => {
+    const start = new Date("2026-02-01T00:00:00.000Z");
+    const end = new Date("2026-02-28T23:59:59.000Z");
+
+    await searchMyTransactions(start, end, 3, 25);
+
+    const url = String(mockApiRequest.mock.calls.at(-1)?.[0] ?? "");
+    expect(url).toContain("/api/bank/transactions/search?");
+    expect(url).toContain(`start=${encodeURIComponent(start.toISOString())}`);
+    expect(url).toContain(`end=${encodeURIComponent(end.toISOString())}`);
+    expect(url).toContain("page=3");
+    expect(url).toContain("page_size=25");
+  });
+
   it("createBankAccounts calls POST /api/bank/accounts/create", async () => {
     const body: Parameters<typeof createBankAccounts>[0] = {
       provider: "REV-O-TROT",
@@ -103,5 +121,54 @@ describe("bank API", () => {
     await adminSummary(2, 50);
     expect(mockApiRequest).toHaveBeenCalledWith(expect.stringContaining("page=2"));
     expect(mockApiRequest).toHaveBeenCalledWith(expect.stringContaining("page_size=50"));
+  });
+
+  it("createTransactionFromWebhook calls webhook endpoint with skipAuthRefresh", async () => {
+    const body: Parameters<typeof createTransactionFromWebhook>[0] = {
+      sort_code: "112233",
+      account_number: "11111111",
+      amount: 12.5,
+      timestamp: "2026-01-01T00:00:00Z",
+      merchant: "Webhook Merchant",
+    };
+
+    await createTransactionFromWebhook(body);
+
+    expect(mockApiRequest).toHaveBeenCalledWith(
+      "/api/bank/transactions/webhook",
+      expect.objectContaining({ method: "POST", body, skipAuthRefresh: true }),
+    );
+  });
+
+  it("listMyTransactionPunishments calls punishments endpoint", async () => {
+    await listMyTransactionPunishments();
+    expect(mockApiRequest).toHaveBeenCalledWith("/api/bank/transactions/punishments/me");
+  });
+
+  it("transferBetweenAccounts calls transfer endpoint with POST body", async () => {
+    const body: Parameters<typeof transferBetweenAccounts>[0] = {
+      source_account_id: 1,
+      destination_account_id: 2,
+      amount: 75,
+    };
+
+    await transferBetweenAccounts(body);
+
+    expect(mockApiRequest).toHaveBeenCalledWith(
+      "/api/bank/accounts/transfer",
+      expect.objectContaining({ method: "POST", body }),
+    );
+  });
+
+  it("adminSearchTransactions builds search endpoint with serialized date params", async () => {
+    const start = new Date("2026-03-01T00:00:00.000Z");
+    const end = new Date("2026-03-31T23:59:59.000Z");
+
+    await adminSearchTransactions(start, end);
+
+    const url = String(mockApiRequest.mock.calls.at(-1)?.[0] ?? "");
+    expect(url).toContain("/api/bank/admin/transactions/search?");
+    expect(url).toContain(`start=${encodeURIComponent(start.toISOString())}`);
+    expect(url).toContain(`end=${encodeURIComponent(end.toISOString())}`);
   });
 });
