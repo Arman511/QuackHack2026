@@ -11,12 +11,12 @@ dependencies = [
     "python-dotenv>=1.2.2",
     "sqlalchemy>=2.0.48",
     "uvicorn>=0.42.0",
-    "python-multipart>=0.0.22",
+    "python-multipart>=0.0.31",
 ]
 
 [dependency-groups]
 dev = [
-    "pytest>=9.0.2",
+    "pytest>=9.0.3",
     "pytest-cov>=7.0.0",
 ]
 
